@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="gb2312"?>
+<!--+++++++++++++++++++++++++++++++++++
+节点描述:
+*.id: 读卡器标识
+*.ip: 读卡器地址
+*.port: 读卡器端口
+*.tunnel: 所在通道
+*.printer: 绑定打印
+*.type: 读卡器类型,(0.现场;1.进厂;2.出厂)
+*.ledtext: LED显示内容
++++++++++++++++++++++++++++++++++++ -->
+<readers>
+  <config>
+    <local_port>1234</local_port>
+    <keep_readone>6000</keep_readone>
+    <keep_readkeep>2000</keep_readkeep>
+    <keep_elabel>300</keep_elabel>
+  </config>
+  <readone>
+    <item>
+      <id>ZT001</id>
+      <ip>17.0.89.181</ip>
+      <port>8000</port>
+      <tunnel>001</tunnel>
+      <uselabel>N</uselabel>
+      <options>key1=value;key2=values</options>
+    </item>
+  </readone>
+  <readkeep>
+    <item>
+      <id>FH001</id>
+      <ip>17.0.89.171</ip>
+      <port>8000</port>
+      <tunnel>FH001</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+  </readkeep>
+</readers>

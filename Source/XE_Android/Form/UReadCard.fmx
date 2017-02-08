@@ -1,0 +1,59 @@
+inherited FrmReadCard: TFrmReadCard
+  Caption = 'frmFormBase1'
+  ClientWidth = 400
+  OnActivate = FormActivate
+  OnKeyUp = FormKeyUp
+  DesignerMasterStyle = 0
+  inherited MainVertScrollBox: TScrollBox
+    Size.Width = 400.000000000000000000
+    Viewport.Width = 400.000000000000000000
+    Viewport.Height = 480.000000000000000000
+    inherited MainLayout: TLayout
+      Size.Width = 400.000000000000000000
+      object Label1: TLabel
+        StyledSettings = [Family, Style, FontColor]
+        Position.X = 32.000000000000000000
+        Position.Y = 88.000000000000000000
+        Size.Width = 82.000000000000000000
+        Size.Height = 23.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.Font.Size = 20.000000000000000000
+        Text = #21345#21495#65306
+      end
+      object EditCardNO: TEdit
+        Touch.InteractiveGestures = [LongTap, DoubleTap]
+        TabOrder = 1
+        TextSettings.Font.Size = 20.000000000000000000
+        Position.X = 40.000000000000000000
+        Position.Y = 144.000000000000000000
+        Size.Width = 305.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+        StyledSettings = [Family, Style, FontColor]
+        OnMouseEnter = EditMouseEnter
+      end
+      object BtnOK: TSpeedButton
+        StyledSettings = [Family, Style, FontColor]
+        Position.X = 112.000000000000000000
+        Position.Y = 376.000000000000000000
+        Size.Width = 73.000000000000000000
+        Size.Height = 48.000000000000000000
+        Size.PlatformDefault = False
+        Text = #30830#23450
+        TextSettings.Font.Size = 20.000000000000000000
+        OnClick = BtnOKClick
+      end
+      object BtnCancel: TSpeedButton
+        StyledSettings = [Family, Style, FontColor]
+        Position.X = 232.000000000000000000
+        Position.Y = 376.000000000000000000
+        Size.Width = 73.000000000000000000
+        Size.Height = 48.000000000000000000
+        Size.PlatformDefault = False
+        Text = #36820#22238
+        TextSettings.Font.Size = 20.000000000000000000
+        OnClick = BtnCancelClick
+      end
+    end
+  end
+end

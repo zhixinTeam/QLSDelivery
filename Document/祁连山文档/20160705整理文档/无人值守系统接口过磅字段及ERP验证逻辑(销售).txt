@@ -1,0 +1,36 @@
+TRANSPLANID       	提货单号 (必填)
+ITEMID                  物料     (必填)
+VehicleNum              车牌号
+VehicleType             车种
+applyvehicle            请车数  
+TareWeight              皮重     (必填)    
+GrossWeight             毛重     (必填)
+Netweight               净重     (必填) 
+PackQty                 袋数
+SampleID                试样编码
+CMTCW                   库位
+WeightMan               司磅员(来源至员工(EMPLTABLE)表)
+WeightTime              司磅时间(int) (必填) 
+WeightDate              司磅日期      (必填) 
+description             备注
+WeighingNum             磅单编号  (必填)
+
+1.过磅时，净重金额不能为0
+
+2.[过磅表字段 Origin 为 提货单时 如果过磅ReferenceQty字段(换算重量)值不为0时 判断
+[ConfirmedNetWeight(确认净重)-ReferenceQty字段(换算重量))/ReferenceQty字段(换算重量)]*100
+〉CMT_ToleranceRatioAllowed(允许正误差) 
+
+或者 
+
+[ConfirmedNetWeight(确认净重)-ReferenceQty字段(换算重量))/ReferenceQty字段(换算重量)]*100
+<CMT_NegativeRatolAllowed(允许负误差)
+
+并且CMT_packtype包装类型为袋装的数据 不允许发货
+
+ConfirmedNetWeight (确认净重) = GrossWeight(毛重) - TareWeight(皮重)
+
+ReferenceQty(换算重量) = GrossWeight(毛重) - TareWeight(皮重)]
+
+
+

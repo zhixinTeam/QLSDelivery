@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="gb2312"?>
+<codeprinter>
+  <config>
+    <enableprinter>1</enableprinter>
+    <!--启用喷码机 1,开启;其它,关闭 -->
+    <enablejsq>1</enablejsq>
+    <!--启用计数器连锁 1,开启;其它,关闭 -->
+  </config>
+  <printers>
+    <item id="1期北">
+      <ip>192.168.3.81</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT001</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="1期南">
+      <ip>192.168.3.82</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT002</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="2期北">
+      <ip>192.168.3.83</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT003</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="2期南">
+      <ip>192.168.3.84</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT004</tunnel>
+      <enable>1</enable>
+    </item>
+  </printers>
+</codeprinter>

@@ -1,0 +1,124 @@
+object MainForm: TMainForm
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 489
+  ClientWidth = 348
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnActivate = FormActivate
+  OnCreate = FormCreate
+  OnClose = FormClose
+  OnKeyUp = FormKeyUp
+  OnResize = FormResize
+  DesignerMasterStyle = 3
+  object ScaledLayout: TScaledLayout
+    Align = FitLeft
+    OriginalWidth = 348.000000000000000000
+    OriginalHeight = 487.199920654296900000
+    Position.Y = 1.000000000000000000
+    Size.Width = 348.000000000000000000
+    Size.Height = 487.199920654296900000
+    Size.PlatformDefault = False
+    object BtnReadCard: TSpeedButton
+      StyledSettings = [Family, Style, FontColor]
+      Position.X = 43.000000000000000000
+      Position.Y = 136.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 48.000000000000000000
+      Size.PlatformDefault = False
+      Text = #21047#21345#39564#25910
+      TextSettings.Font.Size = 20.000000000000000000
+      OnClick = BtnReadCardClick
+    end
+    object BtnExit: TSpeedButton
+      StyledSettings = [Family, Style, FontColor]
+      Position.X = 43.000000000000000000
+      Position.Y = 328.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 48.000000000000000000
+      Size.PlatformDefault = False
+      Text = #36864#20986
+      TextSettings.Font.Size = 20.000000000000000000
+      OnClick = BtnExitClick
+    end
+    object BtnSetup: TSpeedButton
+      StyledSettings = [Family, Style, FontColor]
+      Position.X = 43.000000000000000000
+      Position.Y = 232.000000000000000000
+      Size.Width = 240.000000000000000000
+      Size.Height = 48.000000000000000000
+      Size.PlatformDefault = False
+      Text = #35774#32622
+      TextSettings.Font.Size = 20.000000000000000000
+      OnClick = BtnSetupClick
+    end
+    object Label1: TLabel
+      Position.X = 40.000000000000000000
+      Position.Y = 40.000000000000000000
+      Size.Width = 265.000000000000000000
+      Size.Height = 73.000000000000000000
+      Size.PlatformDefault = False
+      Text = #27827#21335#24535#20449#31185#25216#31227#21160#32456#31471#39564#25910#31243#24207
+    end
+    object Layout_Menu: TLayout
+      Align = Client
+      Size.Width = 348.000000000000000000
+      Size.Height = 487.199920654296900000
+      Size.PlatformDefault = False
+      Visible = False
+      object Panel_Menu: TPanel
+        Align = Client
+        Size.Width = 348.000000000000000000
+        Size.Height = 487.199920654296900000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        object ScrollBox_Menu: TScrollBox
+          Align = Client
+          Size.Width = 348.000000000000000000
+          Size.Height = 487.199920654296900000
+          Size.PlatformDefault = False
+          TabOrder = 0
+          OnClick = ScrollBox_MenuClick
+          Viewport.Width = 348.000000000000000000
+          Viewport.Height = 487.200000000000000000
+          object Rectangle_Menu: TRectangle
+            Position.Y = 328.000000000000000000
+            Size.Width = 345.000000000000000000
+            Size.Height = 151.000000000000000000
+            Size.PlatformDefault = False
+            object BtnSet: TButton
+              Align = Center
+              Size.Width = 345.000000000000000000
+              Size.Height = 49.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              Text = #21442#25968#35774#32622
+              OnClick = BtnSetClick
+            end
+            object BtnExit2: TButton
+              Align = Bottom
+              Position.Y = 102.000000000000000000
+              Size.Width = 345.000000000000000000
+              Size.Height = 49.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 1
+              Text = #36864#20986#31243#24207
+              OnClick = BtnExitClick
+            end
+            object BtnLogin: TButton
+              Align = Top
+              Size.Width = 345.000000000000000000
+              Size.Height = 49.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 2
+              Text = #37325#26032#30331#24405
+              OnClick = BtnLoginClick
+            end
+          end
+        end
+      end
+    end
+  end
+end

@@ -1,0 +1,31 @@
+1.PLANQTY           	计划发出数量   (必填)
+
+2.VEHICLEId         	车辆编号
+
+3.VENDPICKINGLISTID 	经销商提货单号码
+
+4.TRANSPORTER       	承运商
+
+5.TRANSPLANID       	提货单号        (必填)
+
+6.SALESID           	销售订单号      (必填)
+
+7.SALESLINERECID    	销售订单行编码  (必填)
+
+8.COMPANYID         	发货账套        (必填)   
+
+9.Destinationcode   	到达站编号 
+
+10.WMSLocationId    	库位
+
+11.FYPlanStatus        状态(新建[0],删除[1])必填
+
+逻辑验证点：
+
+三角贸易订单不能在销售公司进行发货
+
+销售订单合同号为空不能进行发货
+
+QYD、QST、QGL 账套创建发运计划时，需验证对应车辆有没有未过磅和已过磅的发运计划记录，如果有则不允许创建发运计划
+
+计划发货数量大于剩余数量，无法创建此计划

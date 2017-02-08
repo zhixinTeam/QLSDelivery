@@ -1,0 +1,35 @@
+object fFormLog: TfFormLog
+  Left = 409
+  Top = 200
+  Width = 451
+  Height = 222
+  BorderIcons = [biSystemMenu]
+  Caption = #35745#25968#22120#26085#24535
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = #23435#20307
+  Font.Style = []
+  OldCreateOrder = False
+  OnClose = FormClose
+  OnCreate = FormCreate
+  PixelsPerInch = 96
+  TextHeight = 12
+  object MemoLog: TMemo
+    Left = 0
+    Top = 0
+    Width = 443
+    Height = 188
+    Align = alClient
+    BorderStyle = bsNone
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -16
+    Font.Name = #23435#20307
+    Font.Style = []
+    ParentFont = False
+    ScrollBars = ssBoth
+    TabOrder = 0
+  end
+end

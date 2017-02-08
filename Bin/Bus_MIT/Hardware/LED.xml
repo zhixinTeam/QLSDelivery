@@ -1,0 +1,102 @@
+   <?xml version="1.0" encoding="gb2312"?>
+<cards>
+  <card ID="11" Name="大厅" Group="A">
+    <param>
+      <type>5E1</type>
+      <ip>192.168.3.90</ip>
+      <port>5005</port>
+      <width>256</width>
+      <height>128</height>
+      <data_oe>1</data_oe>
+    </param>
+    <head_area>
+      <rect L="0" T="0" W="256" H="20" />
+      <text>     新安中联万基水泥有限公司欢迎您来提货     </text>
+      <fontname>宋体</fontname>
+      <fontsize>15</fontsize>
+      <fontbold>1</fontbold>
+      <fontspeed>8</fontspeed>
+      <fontkeep>0</fontkeep>
+      <fonteffect>4</fonteffect>
+    </head_area>
+    <data_area>
+      <rect L="2" T="20" W="252" H="96" />
+      <colwidth>
+        <w>63</w>
+        <w>63</w>
+        <w>63</w>
+        <w>63</w>
+      </colwidth>
+      <rownum>6</rownum>
+      <itemnum>5</itemnum>
+      <rowheight>16</rowheight>
+      <fontname>宋体</fontname>
+      <fontsize>9</fontsize>
+      <fontbold>0</fontbold>
+      <fontspeed>2</fontspeed>
+      <fontkeep>5</fontkeep>
+      <fonteffect>2</fonteffect>
+    </data_area>
+    <foot_area>
+      <rect L="2" T="116" W="252" H="12" />
+      <text>    ※.请tk进厂提货，提货道号请看大屏幕    </text>
+      <default>    ※.当前日期是: dt    </default>
+      <!--tk:车牌 dt:日期 tm:时间 -->
+      <fontname>宋体</fontname>
+      <fontsize>10</fontsize>
+      <fontbold>0</fontbold>
+      <fontspeed>6</fontspeed>
+      <fontkeep>0</fontkeep>
+      <fonteffect>4</fonteffect>
+    </foot_area>
+  </card>
+  <card ID="12" Name="外厅" Group="B">
+    <param>
+      <type>5E1</type>
+      <ip>192.168.3.89</ip>
+      <port>8000</port>
+      <width>288</width>
+      <height>192</height>
+      <data_oe>1</data_oe>
+    </param>
+    <head_area>
+      <rect L="0" T="0" W="288" H="30" />
+      <text>     新安中联万基水泥有限公司欢迎您来提货     </text>
+      <fontname>宋体</fontname>
+      <fontsize>18</fontsize>
+      <fontbold>1</fontbold>
+      <fontspeed>8</fontspeed>
+      <fontkeep>0</fontkeep>
+      <fonteffect>4</fonteffect>
+    </head_area>
+    <data_area>
+      <rect L="2" T="30" W="284" H="142" />
+      <colwidth>
+        <w>71</w>
+        <w>71</w>
+        <w>71</w>
+        <w>71</w>
+      </colwidth>
+      <rownum>7</rownum>
+      <rowheight>20</rowheight>
+      <fontname>宋体</fontname>
+      <fontsize>9</fontsize>
+      <fontbold>0</fontbold>
+      <fontspeed>2</fontspeed>
+      <fontkeep>5</fontkeep>
+      <fonteffect>2</fonteffect>
+    </data_area>
+    <foot_area>
+      <rect L="2" T="172" W="284" H="20" />
+      <text>    ※.请tk进厂提货，提货道号请看大屏幕    </text>
+      <default>    ※.当前日期是: dt    </default>
+      <!--tk:车牌 dt:日期 tm:时间 -->
+      <fontname>宋体</fontname>
+      <fontsize>16</fontsize>
+      <fontbold>0</fontbold>
+      <fontspeed>6</fontspeed>
+      <fontkeep>0</fontkeep>
+      <fonteffect>4</fonteffect>
+    </foot_area>
+  </card>
+</cards>

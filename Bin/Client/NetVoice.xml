@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="gb2312"?>
+<remotevoice>
+  <item id="FH001" name="语音合成服务">
+    <ip>192.168.212.116</ip>
+    <port>1301</port>
+    <enable>1</enable>
+    <!--是否启用 1,启用;其它,关闭 -->
+    <contents>
+      <content id="pound">
+        <object>pound</object>
+        <sleep>650</sleep>
+        <text>请[p500]pound称重完毕，请下磅</text>
+        <times>1</times>
+        <!-- 播发次数 -->
+        <interval>200</interval>
+        <!-- 重发间隔,单位秒 -->
+        <repeat>2</repeat>
+        <!-- 单内容循环 -->
+        <reinterval>1200</reinterval>
+        <!-- 单内容循环间隔 -->
+      </content>
+    </contents>
+    <resource>
+      <resour key="" value=""></resour>
+    </resource>
+  </item>
+</remotevoice>

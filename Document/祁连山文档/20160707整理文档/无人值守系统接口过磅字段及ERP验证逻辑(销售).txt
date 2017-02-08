@@ -1,0 +1,65 @@
+TRANSPLANID       	提货单号      (必填)
+ITEMID                  物料          (必填)
+VehicleNum              车牌号
+VehicleType             车种
+applyvehicle            请车数  
+TareWeight              皮重          (必填)    
+GrossWeight             毛重          (必填)
+Netweight               净重          (必填) 
+PackQty                 袋数
+SampleID                试样编码      (必填)
+CMTCW                   库位
+WeightMan               司磅员(来源至员工(EMPLTABLE)表)
+WeightTime              司磅时间(int) (必填) 
+WeightDate              司磅日期      (必填) 
+description             备注
+WeighingNum             磅单编号      (必填)
+salesId                 销售订单ID    (必填)
+SalesLineRecid          销售订单行ID  (必填)
+InventLocationId        仓库ID        (必填)
+xtDInventCenterId       生产线        (必填)
+
+
+1.过磅时，净重不能小于0
+
+2.毛重不能大于皮重
+
+2.[过磅表字段 Origin 为 提货单时 如果过磅ReferenceQty字段(换算重量)值不为0时 判断
+[ConfirmedNetWeight(确认净重)-ReferenceQty字段(换算重量))/ReferenceQty字段(换算重量)]*100
+〉CMT_ToleranceRatioAllowed(允许正误差) 
+
+或者 
+
+[ConfirmedNetWeight(确认净重)-ReferenceQty字段(换算重量))/ReferenceQty字段(换算重量)]*100
+<CMT_NegativeRatolAllowed(允许负误差)
+
+并且CMT_packtype包装类型为袋装的数据 不允许发货
+
+ConfirmedNetWeight (确认净重) = GrossWeight(毛重) - TareWeight(皮重)
+
+ReferenceQty(换算重量) = GrossWeight(毛重) - TareWeight(皮重)]
+
+XML = "<PRIMARY>";
+XML += "<TRANSPLANID>WRZS0001</TRANSPLANID>";
+XML += "<ITEMID>P302</ITEMID>";
+XML += "<VehicleNum></VehicleNum>";
+XML += "<VehicleType></VehicleType>";
+XML += "<applyvehicle></applyvehicle>";
+XML += "<TareWeight>1</TareWeight>";
+XML += "<GrossWeight>3</GrossWeight>";
+XML += "<Netweight>2</Netweight>";
+XML += "<PackQty></PackQty>";
+XML += "<SampleID>11</SampleID>";
+XML += "<CMTCW></CMTCW>";
+XML += "<WeightMan>erp1</WeightMan>";
+XML += "<WeightTime></WeightTime>";
+XML += "<WeightDate>2016-7-7</WeightDate>";
+XML += "<description></description>";
+XML += "<WeighingNum>WRZSBD001</WeighingNum>";
+XML += "<salesId>SO000491</salesId>";
+XML += "<SalesLineRecid>5637193422</SalesLineRecid>";
+XML += "<COMPANYID>QJT</COMPANYID>";
+XML += "<InventLocationId>A04</InventLocationId>";
+XML += "<xtDInventCenterId>SL1</xtDInventCenterId>";
+XML += "</PRIMARY>";
+

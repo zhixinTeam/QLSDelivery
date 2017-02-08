@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="gb2312"?>
+<!--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+节点: ports->item
+*.type: 表头类型
+*.port: 通讯端口
+*.rate: 波特率
+*.databit: 数据位
+*.stopbit: 停止位
+*.paritybit: 校验位(None,Odd,Even,Mark,Space)
+*.paritycheck: 启用校验,Y为启用
+*.charbegin: 数据开始标记
+*.charend: 数据结束标记
+*.packlen: 表头数据包长
+*.splittag: 多段分隔符
+*.splitpos: 有效段索引,从1开始,0时不分段
+*.invalidlen: 需截除的尾长度
+*.datamirror: 数据头尾镜像(反向)
+*.dataenlarge: 数据放大倍数,用于吨-公斤互换
+
+节点: cameras->item
+*.host: 摄像机IP
+*.port: 服务端口
+*.user: 登录名
+*.password: 登录密码
+*.picsize: 图片大小,(0.CIF;1.QCIF;2.D1)
+*.picquality:图片质量(0.最好;1.较好;2.一般)
+
+节点: tunnels->item
+*.port: 通讯端口,对应ports.item.id
+*.prober: 车辆检测器通道标识,对应TruckProber.xml.prober.tunnels.tunnel.id
+*.reader: 标签读卡器标识,对应Readers.item.id
+*.userinput: 手工输入,Y为允许
+*.factory: 所在工厂标识
+*.cardInterval: 两次读卡的间隔,单位秒.
+*.sampleNum: 读磅采样个数
+*.sampleFloat: 采样平均值和单值的浮动,单位公斤
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+<pounds>
+  <ports>
+	<item id="P1" name="3号磅">
+		<type>T800</type>
+		<port>com1</port>
+		<rate>9600</rate>
+		<databit>8</databit>
+		<stopbit>1</stopbit>
+		<paritybit>None</paritybit>
+		<paritycheck>N</paritycheck>
+		<charbegin>$02</charbegin>
+		<charend>$03</charend>
+		<packlen>11</packlen>
+		<splittag>$20</splittag>
+		<splitpos>0</splitpos>
+		<invalidlen>2</invalidlen>
+		<datamirror>0</datamirror>
+		<dataenlarge>0.0001</dataenlarge>
+	</item>
+  </ports>
+  <cameras>
+    <item id="C1" name="1号">
+		<host>192.168.212.151</host>
+		<port>8000</port>
+		<user>admin</user>
+		<password>gl12345678</password>
+		<picsize>0</picsize>
+		<picquality>1</picquality>
+    </item>
+  </cameras>
+  <tunnels>
+	<item id="GL03" name="3号磅">
+		<port>P1</port>
+		<prober>GL03</prober>
+		<reader>R1</reader>
+		<camera id="C1">34,35,36</camera>
+		<userinput>Y</userinput>
+		<factory>GL</factory>
+		<cardInterval>30</cardInterval>
+		<sampleNum>45</sampleNum>
+		<sampleFloat>20</sampleFloat>
+                <PoundMax>119</PoundMax>
+                <additional>Voice=NET;EmptyWeight=100;EmptyIdleLong=1;EmptyIdleShort=10;</additional>
+	</item>
+  </tunnels>
+</pounds>

@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2015/08/29 17:53:26.000.163,=C:\Users\Administrator.QH-20141209UNIE\Documents\RAD Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2015/08/29 17:54:07.000.040,=C:\Users\Administrator.QH-20141209UNIE\Documents\RAD Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2015/08/29 17:56:36.000.334,E:\Workdir2015\NFC_Samples_XE5_2\UMainFrom.fmx=C:\Users\Administrator.QH-20141209UNIE\Documents\RAD Studio\Projects\Unit1.fmx</Transaction>
+    <Transaction>2015/08/29 17:56:36.000.334,E:\Workdir2015\NFC_Samples_XE5_2\UMainFrom.pas=C:\Users\Administrator.QH-20141209UNIE\Documents\RAD Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2015/08/29 17:56:45.000.486,E:\Workdir2015\NFC_Samples_XE5_2\PNFCReadCard.dproj=C:\Users\Administrator.QH-20141209UNIE\Documents\RAD Studio\Projects\Project1.dproj</Transaction>
+    <Transaction>2015/09/06 15:02:54.000.894,=D:\NFC_Samples_XE5_2\Common\java\output\jar\NativeActivitySubclass.jar</Transaction>
+    <Transaction>2015/09/10 15:31:19.000.985,=D:\Delphi XE Android\PNFCReadCard\Form\UAndroidFormBase.pas</Transaction>
+    <Transaction>2015/09/10 15:32:11.000.313,=D:\Delphi XE Android\PNFCReadCard\Unit1.pas</Transaction>
+    <Transaction>2015/09/10 15:34:48.000.507,D:\Delphi XE Android\PNFCReadCard\Unit1.pas=D:\Delphi XE Android\PNFCReadCard\Form\UReadCard.pas</Transaction>
+    <Transaction>2015/09/10 15:34:48.000.507,D:\Delphi XE Android\PNFCReadCard\Unit1.fmx=D:\Delphi XE Android\PNFCReadCard\Form\UReadCard.fmx</Transaction>
+    <Transaction>2015/09/10 15:53:10.000.876,=D:\Delphi XE Android\PNFCReadCard\Unit1.pas</Transaction>
+    <Transaction>2015/09/10 15:59:20.000.229,D:\Delphi XE Android\PNFCReadCard\Unit1.fmx=D:\Delphi XE Android\PNFCReadCard\Form\UUserSetup.fmx</Transaction>
+    <Transaction>2015/09/10 15:59:20.000.229,D:\Delphi XE Android\PNFCReadCard\Unit1.pas=D:\Delphi XE Android\PNFCReadCard\Form\UUserSetup.pas</Transaction>
+    <Transaction>2015/09/10 16:16:03.000.502,=D:\Delphi XE Android\PNFCReadCard\Unit1.pas</Transaction>
+    <Transaction>2015/09/10 16:22:09.000.402,D:\Delphi XE Android\PNFCReadCard\Unit1.pas=D:\Delphi XE Android\PNFCReadCard\Form\UShowOrderInfo.pas</Transaction>
+    <Transaction>2015/09/10 16:22:09.000.402,D:\Delphi XE Android\PNFCReadCard\Unit1.fmx=D:\Delphi XE Android\PNFCReadCard\Form\UShowOrderInfo.fmx</Transaction>
+    <Transaction>2015/09/10 17:03:26.000.346,D:\Delphi XE Android\PNFCReadCard\Form\UShowOrderInfo.pas=</Transaction>
+    <Transaction>2015/09/10 17:03:34.000.657,D:\Delphi XE Android\PNFCReadCard\Form\UReadCard.pas=</Transaction>
+    <Transaction>2015/09/10 17:03:41.000.994,D:\Delphi XE Android\PNFCReadCard\Form\UUserSetup.pas=</Transaction>
+    <Transaction>2015/09/11 09:14:43.000.731,=D:\Delphi XE Android\PNFCReadCard\Unit1.pas</Transaction>
+    <Transaction>2015/09/11 09:15:20.000.895,D:\Delphi XE Android\PNFCReadCard\Unit1.fmx=D:\Delphi XE Android\PNFCReadCard\Form\ULogin.fmx</Transaction>
+    <Transaction>2015/09/11 09:15:20.000.895,D:\Delphi XE Android\PNFCReadCard\Unit1.pas=D:\Delphi XE Android\PNFCReadCard\Form\ULogin.pas</Transaction>
+    <Transaction>2015/09/11 10:47:53.000.482,D:\Delphi XE Android\PNFCReadCard\Form\ULogin.pas=</Transaction>
+  </Transactions>
+	<MobileDevice>T8DDU15210023969-Android</MobileDevice>
+</BorlandProject>

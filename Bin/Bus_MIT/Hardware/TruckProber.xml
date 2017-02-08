@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="gb2312"?>
+<probers>
+  <prober id="N1" name="车辆检测控制器">
+    <ip>192.168.212.120</ip>
+    <port>6000</port>
+    <enable>0</enable>
+    <tunnels>
+      <tunnel id="GL03" name="3号磅">
+        <in>1,2</in>
+        <out>1,2</out>
+      </tunnel>
+      <tunnel id="GL04" name="3号磅">
+        <in>3,4</in>
+        <out>3,4</out>
+      </tunnel>
+    </tunnels>
+  </prober>
+  <prober id="N2" name="车辆检测控制器">
+    <ip>192.168.212.121</ip>
+    <port>6000</port>
+    <enable>0</enable>
+    <tunnels>
+      <tunnel id="GL01" name="3号磅">
+        <in>1,2</in>
+        <out>1,2</out>
+      </tunnel>
+      <tunnel id="GL02" name="3号磅">
+        <in>3,4</in>
+        <out>3,4</out>
+      </tunnel>
+    </tunnels>
+  </prober>
+</probers>

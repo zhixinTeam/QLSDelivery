@@ -1,0 +1,30 @@
+PurchId                 采购订单ID (必填)
+PurchLineRecid          采购订单行RECID(PuchLine表recid字段) (必填)
+DlvModeId               交货方式 (数据来源表DlvMode-Code字段)
+applyvehicle            请车数  
+TareWeight              皮重     (必填)    
+GrossWeight             毛重     (必填)
+Netweight               净重     (必填) 
+CMTCW                   库位
+VehicleNum              车牌号
+WeightMan               司磅员(来源至员工(EMPLTABLE)表)(必填)
+WeightTime              司磅时间(int) 
+WeightDate              司磅日期      (必填) 
+description             备注
+WeighingNum             磅单编号  (必填)
+tabletransporter        运输商 (数据来自VendTable - AccountNum字段)
+companyid               账套ID   (必填)
+TransportBill           货运单号
+TransportBillQty        供应商发货量
+COMPANYID               账套(必填)
+
+采购过磅逻辑验证
+
+1.采购订单行的数量为负数，不允许创建过账磅单
+2.采购订单 %1 的状态为非未结算，不允许创建过账磅单 条件：purchline.PurchStatus != 1
+
+
+
+
+
+

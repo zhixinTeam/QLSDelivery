@@ -1,0 +1,2 @@
+"<Operation>""</Operation>"; i->新增 u->更新 d->删除
+"<innerOrderQY>""</innerOrderQY>" 三角贸易销售方销售区域

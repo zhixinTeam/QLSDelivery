@@ -1,0 +1,46 @@
+object FrmGetTruck: TFrmGetTruck
+  Left = 0
+  Top = 0
+  Caption = 'FrmGetTruck'
+  ClientHeight = 567
+  ClientWidth = 384
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object Label1: TLabel
+    Position.X = 24.000000000000000000
+    Position.Y = 96.000000000000000000
+    Size.Width = 185.000000000000000000
+    Size.Height = 23.000000000000000000
+    Size.PlatformDefault = False
+    Text = #35831#36755#20837#36710#29260#21495#30721#65306
+  end
+  object EditTruck: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    TabOrder = 1
+    Position.X = 40.000000000000000000
+    Position.Y = 144.000000000000000000
+    Size.Width = 305.000000000000000000
+    Size.Height = 32.000000000000000000
+    Size.PlatformDefault = False
+  end
+  object BtnOK: TSpeedButton
+    Position.X = 120.000000000000000000
+    Position.Y = 344.000000000000000000
+    Size.Width = 73.000000000000000000
+    Size.Height = 48.000000000000000000
+    Size.PlatformDefault = False
+    Text = #26597#35810
+    OnClick = BtnOKClick
+  end
+  object BtnCancel: TSpeedButton
+    Position.X = 256.000000000000000000
+    Position.Y = 344.000000000000000000
+    Size.Width = 73.000000000000000000
+    Size.Height = 48.000000000000000000
+    Size.PlatformDefault = False
+    Text = #36820#22238
+    OnClick = BtnCancelClick
+  end
+end

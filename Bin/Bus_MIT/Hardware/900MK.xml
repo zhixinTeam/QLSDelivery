@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="gb2312"?>
+<!--++++++++++++++++++++++++++++++++++++
+节点描述:
+*.id: 读头标识
+*.pound: 磅站标识
+*.printer: 绑定打印
+*.keeptime: 保持时间
+*.type: 1.进;2.出;3.磅;4.门闸;5.队列门闸
++++++++++++++++++++++++++++++++++++++-->
+<config>
+  <helper>
+    <ip>192.168.0.88</ip>
+    <port>8002</port>
+    <enable>N</enable>
+  </helper>
+  <readers>
+    <reader ID="16230277">
+      <type>1</type>
+      <pound>xx进</pound>
+    </reader>
+    <reader ID="16230293">
+      <type>2</type>
+      <pound>xx出</pound>
+      <printer>EPSON TM-U220 Receipt</printer>
+      <HYprinter>HP LaserJet Pro M201-M202 PCL 6</HYprinter>
+    </reader>
+    <reader ID="16230285">
+      <type>3</type>
+      <pound>GL03</pound>
+      <ExtReader>16230279</ExtReader>
+    </reader>
+    <reader ID="16230279">
+      <type>3</type>
+      <pound>GL03</pound>
+      <ExtReader>16230285</ExtReader>
+    </reader>
+	<reader ID="1403971023">
+      <type>3</type>
+      <pound>GL04</pound>
+    </reader>
+    <reader ID="1403971026">
+      <type>3</type>
+      <pound>GL04</pound>
+    </reader>
+  </readers>
+</config>
