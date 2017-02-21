@@ -146,7 +146,7 @@ begin
   Result := False;
   ListQuery.Items.Clear;
 
-  nStr := 'Select *,(B_Value-B_SentValue-IsNull(B_FreezeValue,0)) As B_MaxValue From $TB a, $MB b ' +
+  nStr := 'Select *,(B_Value-IsNull(B_SentValue,0)-IsNull(B_FreezeValue,0)) As B_MaxValue From $TB a, $MB b ' +
           'Where a.B_ID=b.M_ID ' +
           'And ((B_BStatus=''Y'') or (B_BStatus=''1'') or ((M_PurchType=''0'') and (B_BStatus=''0''))) '+
           'and B_Blocked=''0'' ';
@@ -189,12 +189,12 @@ begin
       FArea     := FieldByName('B_Area').AsString;
       FProject  := FieldByName('B_Project').AsString;
       FRecID    := FieldByName('B_RecID').AsString;
-      {if FieldByName('B_Value').AsFloat>0 then
-        FRestValue:= Format('%.2f', [FieldByName('B_MaxValue').AsFloat])
-      else}
       if FieldByName('B_Value').AsFloat>0 then
-        FRestValue:= Format('%.2f', [FieldByName('B_RestValue').AsFloat])
+        FRestValue:= Format('%.2f', [FieldByName('B_MaxValue').AsFloat])
       else
+      {if FieldByName('B_Value').AsFloat>0 then
+        FRestValue:= Format('%.2f', [FieldByName('B_RestValue').AsFloat])
+      else}
         FRestValue := '0.00';
 
       {if (FieldByName('B_MaxValue').AsFloat>0)

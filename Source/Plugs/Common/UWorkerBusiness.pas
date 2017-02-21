@@ -7135,29 +7135,24 @@ begin
 
       nVal := Float2Float(FPrice * FValue, cPrecision, True);
       //提货金额
-      if (FYSValid = sFlag_Yes) and (FTriaTrade <> '1') then   //判断是否空车出厂
+      if (FYSValid = sFlag_Yes) then   //判断是否空车出厂
       begin
-        nSQL := 'Select L_FYAX From %s Where L_ID = ''%s'' ';
-        nSQL := Format(nSQL, [sTable_Bill, FID]);
-        with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+        nDBZhiKa:=LoadZhiKaInfo(nBills[nIdx].FZhiKa,nHint);
+        with nDBZhiKa do
         begin
-          if FieldByName('L_FYAX').AsString<>'1' then
+          if FieldByName('Z_TriangleTrade').AsString <> '1' then
           begin
-            nDBZhiKa:=LoadZhiKaInfo(nBills[nIdx].FZhiKa,nHint);
-            with nDBZhiKa do
+            if FieldByName('C_ContQuota').AsString='1' then
             begin
-              if FieldByName('C_ContQuota').AsString='1' then
-              begin
-                nSQL := 'Update %s Set A_ConFreezeMoney=A_ConFreezeMoney-(%.2f) Where A_CID=''%s''';
-                nSQL := Format(nSQL, [sTable_CusAccount, nVal, FCusID]);
-              end else
-              begin
-                nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney-(%.2f) Where A_CID=''%s''';
-                nSQL := Format(nSQL, [sTable_CusAccount, nVal, FCusID]);
-              end;
-              FListA.Add(nSQL); //更新客户资金(可能不同客户)
-              WriteLog('['+FID+']Relese YKMoney: '+nSQL);
+              nSQL := 'Update %s Set A_ConFreezeMoney=A_ConFreezeMoney-(%.2f) Where A_CID=''%s''';
+              nSQL := Format(nSQL, [sTable_CusAccount, nVal, FCusID]);
+            end else
+            begin
+              nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney-(%.2f) Where A_CID=''%s''';
+              nSQL := Format(nSQL, [sTable_CusAccount, nVal, FCusID]);
             end;
+            FListA.Add(nSQL); //更新客户资金(可能不同客户)
+            WriteLog('['+FID+']Relese YKMoney: '+nSQL);
           end;
         end;
       end;
