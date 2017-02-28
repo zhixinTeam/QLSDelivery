@@ -427,7 +427,7 @@ begin
   with nBills[nIdx] do
   begin
     {$IFDEF GLPURCH}
-    if (FNextStatus=sFlag_TruckNone) then
+    if (FNextStatus=sFlag_TruckNone) and (FCardUsed=sFlag_Provide) then
     begin
       if SavePurchaseOrders(sFlag_TruckIn, nBills) then
       begin

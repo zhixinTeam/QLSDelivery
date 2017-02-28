@@ -3063,7 +3063,7 @@ var
   nSQL:string;
 begin
   Result:= 0.0;
-  nSQL := 'Select B_RestValue From %s Where B_RecID=''%s'' ';
+  nSQL := 'Select (B_Value-IsNull(B_SentValue,0)-IsNull(B_FreezeValue,0)) As B_RestValue From %s Where B_RecID=''%s'' ';
   nSQL := Format(nSQL, [sTable_OrderBase, nRecID]);
   WriteLog(nSQL);
   with FDM.QueryTemp(nSQL) do
