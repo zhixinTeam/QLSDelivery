@@ -320,6 +320,7 @@ begin
     begin
       if LoadAddTreaty(gStockList[i].FRecID,nNewPrice) then
         gStockList[i].FPrice:=nNewPrice;
+      gStockList[i].FValue:=GetZhikaYL(gStockList[i].FRecID);
     end;
   end else
   begin

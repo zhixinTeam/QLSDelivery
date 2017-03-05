@@ -126,6 +126,7 @@ const
   cBC_GetAXCompanyArea        = $0117;   //在线获取销售区域
   cBC_GetAXInVentSum          = $0118;   //在线获取生产线余量
   cBC_SyncAXwmsLocation       = $0119;   //同步库位信息到DL
+  cBC_GetSalesOrdValue        = $0120;   //获取订单行余量
 
 type
   PWorkerQueryFieldData = ^TWorkerQueryFieldData;

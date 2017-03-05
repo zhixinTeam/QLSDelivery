@@ -813,7 +813,7 @@ begin
             end;
           end;
         end;
-        nZhikaYL:=GetZhikaYL(FZhiKa,FRecID);
+        nZhikaYL:=GetZhikaYL(FRecID);
         if FType = sFlag_Dai then
         begin
           if nZhikaYL-FInnerData.FValue<0 then

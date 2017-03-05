@@ -271,7 +271,8 @@ begin
       begin
         SubItems.Add('---');
       end;
-      SubItems.Add(gStockList[i].FValue);
+      SubItems.Add(FormatFloat('0.00',GetZhikaYL(gStockList[i].FRecID)));
+      //SubItems.Add(gStockList[i].FValue);
     end;
   end;
 end;

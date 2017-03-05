@@ -138,6 +138,7 @@ type
     function GetAXTPRESTIGEMBYCONT(var nData: string): Boolean;//在线获取AX信用额度（客户-合同）信息到DL
     function GetAXCompanyArea(var nData: string): Boolean;//在线获取三角贸易订单的销售区域
     function GetInVentSum(var nData: string): Boolean;//在线获取生产线余量
+    function GetSalesOrdValue(var nData: string): Boolean;//获取订单行余量
     {$ENDIF}
   public
     constructor Create; override;
@@ -572,6 +573,7 @@ begin
    cBC_GetAXCompanyArea    : Result := GetAXCompanyArea(nData);
    cBC_GetAXInVentSum      : Result := GetInVentSum(nData);
    cBC_SyncAXwmsLocation   : Result := SyncAXwmsLocation(nData);
+   cBC_GetSalesOrdValue    : Result := GetSalesOrdValue(nData);
    {$ENDIF}
    else
     begin
@@ -3111,6 +3113,43 @@ begin
     Result:=True;
   finally
     gDBConnManager.ReleaseConnection(nDBWorker);
+  end;
+end;
+
+//获取订单行余量
+function TWorkerBusinessCommander.GetSalesOrdValue(var nData: string): Boolean;
+var nStr: string;
+    nSendValue,nTotalValue,nValue :Double;
+begin
+  Result := False;
+  nSendValue := 0;
+
+  nStr := 'select IsNull(SUM(L_Value),''0'') as SendValue from %s where L_LineRecID=''%s'' ';
+  nStr := Format(nStr,[sTable_Bill, Fin.FData]);
+  WriteLog(nStr);
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    nSendValue := Fields[0].AsFloat;
+  end;
+
+  nStr := 'select D_TotalValue from %s Where D_RECID=''%s''';
+  nStr := Format(nStr, [sTable_ZhiKaDtl, Fin.FData]);
+  WriteLog(nStr);
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    nTotalValue := Fields[0].AsFloat;
+    if (nTotalValue > 0) and (nTotalValue > nSendValue) then
+      nValue := nTotalValue-nSendValue
+    else
+      nValue := 0;
+    FOut.FData := FloatToStr(nValue);
+    Result := True;
+  end else
+  begin
+    FOut.FData := '0';
+    Result := True;
   end;
 end;
 

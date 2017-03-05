@@ -358,9 +358,6 @@ begin
     Exit;
   end;
 
-  //{$IFDEF YDKP}
-
-  //{$ELSE}
   if nTrucks[0].FStatus = sFlag_TruckIn then
   begin
     {$IFDEF GGJC}
@@ -383,7 +380,6 @@ begin
     {$ENDIF}
     Exit;
   end;
-  //{$ENDIF}
   
   if nCardType = sFlag_Provide then
   begin

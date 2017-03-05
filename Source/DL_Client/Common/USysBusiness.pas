@@ -315,7 +315,7 @@ function GetAutoInFactory(const nStockNo:string):Boolean;
 //获取是否自动进厂
 function GetCenterSUM(nStockNo,nCenterID:string):string;
 //获取生产线余量
-function GetZhikaYL(nZID,nRECID:string):Double;
+function GetZhikaYL(nRECID:string):Double;
 //获取纸卡余量
 function GetNeiDao(const nStockNo:string):Boolean;
 //获取内倒物料
@@ -3042,11 +3042,16 @@ begin
 end;
 
 //获取纸卡余量
-function GetZhikaYL(nZID,nRECID:string):Double;
+function GetZhikaYL(nRECID:string):Double;
 var
-  nSQL:string;
+  nOut: TWorkerBusinessCommand;
 begin
-  Result:= 0.0;
+  if CallBusinessCommand(cBC_GetSalesOrdValue, nRECID, '', @nOut) then
+  begin
+    Result := StrToFloat(nOut.FData);
+  end else Result := 0;
+
+  {Result:= 0.0;
   nSQL := 'Select D_Value From %s Where D_ZID=''%s'' and D_RECID=''%s'' ';
   nSQL := Format(nSQL, [sTable_ZhiKaDtl, nZID, nRECID]);
 
@@ -3054,7 +3059,7 @@ begin
   if RecordCount > 0 then
   begin
     Result:=FieldByName('D_Value').AsFloat;
-  end;
+  end; }
 end;
 
 //获取采购订单余量
