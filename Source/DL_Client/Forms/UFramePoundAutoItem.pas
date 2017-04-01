@@ -816,27 +816,28 @@ begin
         nZhikaYL:=GetZhikaYL(FRecID);
         if FType = sFlag_Dai then
         begin
-          if nZhikaYL-FInnerData.FValue<0 then
+          //if nZhikaYL-FInnerData.FValue<0 then
+          if nZhikaYL<0 then
           begin
             Result:=True;
             nStr := '车辆[ %s ]订单量不足,详情如下:' + #13#10#13#10 +
                     '订单量: %.2f吨,' + #13#10 +
                     '装车量: %.2f吨,' + #13#10 +
                     '需补交量: %.2f吨';
-            nStr := Format(nStr, [FTruck, nZhikaYL, FInnerData.FValue, Abs(nZhikaYL-FInnerData.FValue)]);
+            nStr := Format(nStr, [FTruck, nZhikaYL, FInnerData.FValue, Abs(nZhikaYL)]);
             nDaiWc:=nStr;
             Exit;
           end;
         end else
         begin
-          if nZhikaYL-nNet<0 then
+          if nZhikaYL-nNet+FInnerData.FValue<0 then
           begin
             Result:=True;
             nStr := '车辆[ %s ]订单量不足,详情如下:' + #13#10#13#10 +
                     '订单量: %.2f吨,' + #13#10 +
                     '装车量: %.2f吨,' + #13#10 +
                     '需补交量: %.2f吨';
-            nStr := Format(nStr, [FTruck, nZhikaYL, nNet, Abs(nZhikaYL-nNet)]);
+            nStr := Format(nStr, [FTruck, nZhikaYL, nNet, Abs(nZhikaYL-nNet+FInnerData.FValue)]);
             nDaiWc:=nStr;
             Exit;
           end;

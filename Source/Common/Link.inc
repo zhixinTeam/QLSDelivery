@@ -61,7 +61,7 @@
   //状态栏显示
   {$DEFINE HYRFID201}
   //华益读头
-  {$DEFINE GLPURCH} 
+  {.$DEFINE GLPURCH} 
   //古浪采购
   {.$DEFINE YDKP} 
   //永登、夏河、定西、平凉开票

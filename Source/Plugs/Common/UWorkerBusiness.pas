@@ -6844,6 +6844,7 @@ begin
             end else
             begin
               nData:='离线模式，获取三角贸易客户信息失败';
+              FOut.FData:=nData;
               Result:=True;
               Exit;
             end;
