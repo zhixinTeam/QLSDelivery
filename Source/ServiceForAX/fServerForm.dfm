@@ -81,4 +81,10 @@ object ServerForm: TServerForm
     Left = 72
     Top = 8
   end
+  object tmrRestart: TTimer
+    Enabled = False
+    OnTimer = tmrRestartTimer
+    Left = 120
+    Top = 8
+  end
 end

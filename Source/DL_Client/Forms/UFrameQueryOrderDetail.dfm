@@ -145,7 +145,7 @@ inherited fFrameOrderDetailQuery: TfFrameOrderDetailQuery
     inherited dxGroup1: TdxLayoutGroup
       inherited GroupSearch1: TdxLayoutGroup
         object dxLayout1Item7: TdxLayoutItem
-          Caption = #30917#21333#32534#21495':'
+          Caption = #27966#36710#21333#21495':'
           Control = EditBill
           ControlOptions.ShowBorder = False
         end
@@ -167,7 +167,7 @@ inherited fFrameOrderDetailQuery: TfFrameOrderDetailQuery
       end
       inherited GroupDetail1: TdxLayoutGroup
         object dxLayout1Item2: TdxLayoutItem
-          Caption = #30917#21333#32534#21495':'
+          Caption = #27966#36710#21333#21495':'
           Control = cxtxtdt3
           ControlOptions.ShowBorder = False
         end

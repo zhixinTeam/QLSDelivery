@@ -252,12 +252,19 @@ end;
 
 //Desc: 打印提货单
 procedure TfFrameBill.N1Click(Sender: TObject);
-var nStr: string;
+var
+  nStr,nIfFenChe: string;
 begin
   if cxView1.DataController.GetSelectedCount > 0 then
   begin
     nStr := SQLQuery.FieldByName('L_ID').AsString;
-    PrintBillReport(nStr, False);
+    {nIfFenChe := SQLQuery.FieldByName('L_IfFenChe').AsString;
+    if nIfFenChe='Y' then
+    begin
+      PrintBill4(nStr, False);
+      PrintBill6(nStr, False);
+    end else }
+      PrintBillReport(nStr, False);
   end;
 end;
 

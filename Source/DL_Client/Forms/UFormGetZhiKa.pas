@@ -67,6 +67,7 @@ TStockItem = record
     FPrice: string;
     FValue: string;
     FRecID: string;
+    FMemo: string;
   end;
 
 var
@@ -153,7 +154,6 @@ begin
   begin
     nCusName := FieldByName('Z_OrgAccountName').AsString;
   end;
-
   EditID.Text := nID;
 
   if GetStringsItemIndex(EditName.Properties.Items, nID) < 0 then
@@ -174,7 +174,6 @@ begin
           '((Z_SalesStatus=''0'') or '+
           '(Z_SalesStatus=''1'')))) '+
           'Order By Z_ID';
-
   nStr := Format(nStr, [sTable_ZhiKa, nID]);
 
   with EditZK.Properties do
@@ -186,7 +185,6 @@ begin
     if Items.Count > 0 then
       EditZK.ItemIndex := 0;
     //xxxxx
-
     ActiveControl := BtnOK;
     //准备开单
   end;
@@ -222,7 +220,7 @@ begin
   if EditZK.ItemIndex < 0 then Exit;
 
   SetLength(gStockList, 0);
-  nStr := 'Select D_StockName,D_Price,D_Value,D_Type,D_RECID From %s Where D_Blocked=''0'' and D_ZID=''%s''';
+  nStr := 'Select D_StockName,D_Price,D_Value,D_Type,D_RECID,D_Memo From %s Where D_Blocked=''0'' and D_ZID=''%s''';
   nStr := Format(nStr, [sTable_ZhiKaDtl, GetCtrlData(EditZK)]);
   with FDM.QueryTemp(nStr) do
   begin
@@ -246,9 +244,10 @@ begin
         if FShowPrice then
             nStr := Format('%.2f',[Fields[1].AsFloat])
         else nStr := '---';
-        FPrice:=nStr;
-        FValue:=Format('%.2f',[Fields[2].AsFloat]);
-        FRecID:=Fields[4].AsString;
+        FPrice := nStr;
+        FValue := Format('%.2f',[Fields[2].AsFloat]);
+        FRecID := Fields[4].AsString;
+        FMemo := Fields[5].AsString;
       end;
       Inc(nIdx);
       Next;
@@ -272,7 +271,7 @@ begin
         SubItems.Add('---');
       end;
       SubItems.Add(FormatFloat('0.00',GetZhikaYL(gStockList[i].FRecID)));
-      //SubItems.Add(gStockList[i].FValue);
+      SubItems.Add(gStockList[i].FMemo);
     end;
   end;
 end;

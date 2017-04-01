@@ -54,7 +54,6 @@ object fFrameCounter: TfFrameCounter
       Font.Style = []
       MaxLength = 8
       ParentFont = False
-      ReadOnly = True
       TabOrder = 1
     end
     object EditDai: TLabeledEdit

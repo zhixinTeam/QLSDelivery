@@ -157,10 +157,21 @@ begin
   nCID := SQLQuery.FieldByName('A_CID').AsString;
 
   nStr := 'Select Sum(L_Money) from (' +
-          ' select L_Value * L_Price as L_Money from %s' +
-          ' where (L_OutFact Is Null)'+
-          ' And (L_BDAX=''1'')'+
-          ' And L_CusID = ''%s'') t';
+          '  select L_Value * L_Price as L_Money from %s' +
+          '  where L_OutFact Is not Null And L_CusID = ''%s'') t';
+  nStr := Format(nStr, [sTable_Bill, nCID]);
+
+  with FDM.QuerySQL(nStr) do
+  begin
+    nVal := Float2Float(Fields[0].AsFloat, cPrecision, True);
+    nStr := 'Update %s Set A_OutMoney=%.2f Where A_CID=''%s''';
+    nStr := Format(nStr, [sTable_CusAccount, nVal, nCID]);
+    FDM.ExecuteSQL(nStr);
+  end;
+
+  nStr := 'Select Sum(L_Money) from (' +
+          '  select L_Value * L_Price as L_Money from %s' +
+          '  where L_OutFact Is Null And L_CusID = ''%s'') t';
   nStr := Format(nStr, [sTable_Bill, nCID]);
 
   with FDM.QuerySQL(nStr) do

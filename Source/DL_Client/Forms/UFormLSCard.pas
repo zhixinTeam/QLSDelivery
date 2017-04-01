@@ -179,7 +179,8 @@ begin
 end;
 
 procedure TfFormLSCard.BtnOKClick(Sender: TObject);
-var nStr:string;
+var
+  nStr,nTruck:string;
 begin
   if EditCard.Text = '' then
   begin
@@ -192,7 +193,8 @@ begin
   begin
     if RecordCount>0 then
     begin
-      ShowMsg(EditCard.Text+'正在使用，请清空卡号',sHint);
+      nTruck:=FieldByName('I_Truck').AsString;
+      ShowMsg(nTruck+'正在使用'+EditCard.Text+#13#10+'请注销卡号',sHint);
       Exit;
     end;
   end;

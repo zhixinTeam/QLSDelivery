@@ -185,6 +185,20 @@ begin
       else
         Result:=-1;
     end else
+    if BusinessType='EDS_0011' then
+    begin
+      if GetThInfo(XMLPrimaryKey) then
+        Result:=0
+      else
+        Result:=-1;
+    end else
+    if BusinessType='EPS_0003' then
+    begin
+      if GetPurchInfo(XMLPrimaryKey) then
+        Result:=0
+      else
+        Result:=-1;
+    end else
     begin
       Result:=3;
     end;

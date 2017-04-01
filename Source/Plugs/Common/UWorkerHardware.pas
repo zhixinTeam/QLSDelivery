@@ -84,7 +84,7 @@ type
 implementation
 
 uses
-  UMgrHardHelper, UMgrCodePrinter, UMgrQueue, UMultiJS, UTaskMonitor,
+  UMgrHardHelper, UMgrCodePrinter, UMgrQueue, UMultiJS_Reply, UTaskMonitor,
   UMgrTruckProbe, UMgrRFID102;
 
 //Date: 2012-3-13
@@ -100,7 +100,7 @@ begin
     FDBConn := gDBConnManager.GetConnection(FDB.FID, FErrNum);
     if not Assigned(FDBConn) then
     begin
-      nData := '连接数据库失败(DBConn Is Null).';
+      nData := '连接H数据库失败(DBConn Is Null).';
       Exit;
     end;
 
@@ -227,29 +227,35 @@ begin
     FErrCode := 'S.00';
     FErrDesc := '业务执行成功.';
   end;
+  try
+    case FIn.FCommand of
+     cBC_ChangeDispatchMode   : Result := ChangeDispatchMode(nData);
+     cBC_GetPoundCard         : Result := PoundCardNo(nData);
+     cBC_GetQueueData         : Result := LoadQueue(nData);
+     cBC_SaveCountData        : Result := SaveDaiNum(nData);
+     cBC_RemoteExecSQL        : Result := ExecuteSQL(nData);
+     cBC_PrintCode            : Result := PrintCode(nData);
+     cBC_PrintFixCode         : Result := PrintFixCode(nData);
+     cBC_PrinterEnable        : Result := PrinterEnable(nData);
 
-  case FIn.FCommand of
-   cBC_ChangeDispatchMode   : Result := ChangeDispatchMode(nData);
-   cBC_GetPoundCard         : Result := PoundCardNo(nData);
-   cBC_GetQueueData         : Result := LoadQueue(nData);
-   cBC_SaveCountData        : Result := SaveDaiNum(nData);
-   cBC_RemoteExecSQL        : Result := ExecuteSQL(nData);
-   cBC_PrintCode            : Result := PrintCode(nData);
-   cBC_PrintFixCode         : Result := PrintFixCode(nData);
-   cBC_PrinterEnable        : Result := PrinterEnable(nData);
+     cBC_JSStart              : Result := StartJS(nData);
+     cBC_JSStop               : Result := StopJS(nData);
+     cBC_JSPause              : Result := PauseJS(nData);
+     cBC_JSGetStatus          : Result := JSStatus(nData);
 
-   cBC_JSStart              : Result := StartJS(nData);
-   cBC_JSStop               : Result := StopJS(nData);
-   cBC_JSPause              : Result := PauseJS(nData);
-   cBC_JSGetStatus          : Result := JSStatus(nData);
-
-   cBC_IsTunnelOK           : Result := TruckProbe_IsTunnelOK(nData);
-   cBC_TunnelOC             : Result := TruckProbe_TunnelOC(nData);
-   cBC_OPenPoundDoor        : Result := OpenPoundDoor(nData);
-   else
+     cBC_IsTunnelOK           : Result := TruckProbe_IsTunnelOK(nData);
+     cBC_TunnelOC             : Result := TruckProbe_TunnelOC(nData);
+     cBC_OPenPoundDoor        : Result := OpenPoundDoor(nData);
+    else
+      begin
+        Result := False;
+        nData := '无效的业务代码(Invalid Command).';
+      end;
+    end;
+  except
+    on e:Exception do
     begin
-      Result := False;
-      nData := '无效的业务代码(Invalid Command).';
+      WriteLog(IntToStr(FIn.FCommand));
     end;
   end;
 end;
@@ -428,7 +434,7 @@ begin
     //固定喷码
   end else
   begin
-    nStr := 'Select L_ID,L_Seal From %s Where L_ID=''%s''';
+    nStr := 'Select L_ID,L_Seal,L_HYDan,L_Area,L_KHSBM From %s Where L_ID=''%s''';
     nStr := Format(nStr, [sTable_Bill, FIn.FData]);
 
     with gDBConnManager.WorkerQuery(FDBConn, nStr) do
@@ -439,15 +445,9 @@ begin
         nData := Format('交货单[ %s ]已无效.', [FIn.FData]); Exit;
       end;
 
-      {$IFDEF XAZL}
-      nCode := StringReplace(Fields[0].AsString, 'TH', '', [rfIgnoreCase]);
-      nCode := Fields[1].AsString + ' ' + nCode;
-      {$ENDIF}
-
-      {$IFDEF RDHX}
-      nCode := Trim(Fields[1].AsString);
-      nCode := nCode + Date2Str(Now, False);;
-      {$ENDIF}
+      nCode := Fields[0].AsString;
+      nCode := Copy(nCode,3,Length(nCode)-2);
+      nCode := gCompanyAct+nCode+Fields[2].AsString+Fields[3].AsString;
     end;
   end;
 

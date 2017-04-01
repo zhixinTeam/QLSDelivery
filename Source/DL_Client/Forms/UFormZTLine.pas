@@ -166,7 +166,7 @@ begin
     end;
   end;
 
-  nStr := 'Select D_Value,D_ParamB,D_Desc From %s Where D_Name=''%s''';
+  nStr := 'Select D_Value,D_ParamB+D_Memo as D_ParamB,D_Desc From %s Where D_Name=''%s''';
   nStr := Format(nStr, [sTable_SysDict, sFlag_StockItem]);
 
   EditStockID.Properties.Items.Clear;
@@ -356,12 +356,12 @@ begin
     nHint:= '请选择生产线';
   end else
 
-  if Sender= cbxLocationID then
+  {if Sender= cbxLocationID then
   begin
     cbxLocationID.Text:=Trim(cbxLocationID.Text);
     Result:=cbxLocationID.Text<>'';
     nHint:= '请选择仓库';
-  end else
+  end else}
   if Sender = EditPeer then
   begin
     Result := IsNumber(EditPeer.Text, False) and (StrToInt(EditPeer.Text) > 0);
@@ -390,8 +390,8 @@ begin
         Break;
       end;
     end;
-    nIdx := Integer(cbxLocationID.Properties.Items.Objects[cbxLocationID.ItemIndex]);
-    nList.Add(Format('Z_LocationID=''%s''', [gLocationItem[nIdx].FID]));
+    {nIdx := Integer(cbxLocationID.Properties.Items.Objects[cbxLocationID.ItemIndex]);
+    nList.Add(Format('Z_LocationID=''%s''', [gLocationItem[nIdx].FID])); }
 
     //ext fields
 

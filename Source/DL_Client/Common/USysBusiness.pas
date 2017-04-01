@@ -10,7 +10,7 @@ uses
   Windows, DB, Classes, Controls, SysUtils, UBusinessPacker, UBusinessWorker,
   UBusinessConst, ULibFun, UAdjustForm, UFormCtrl, UDataModule, UDataReport,
   UFormBase, cxMCListBox, cxDropDownEdit, UMgrPoundTunnels, USysConst,
-  USysDB, USysLoger, HKVNetSDK, DateUtils;
+  USysDB, USysLoger, HKVNetSDK, DateUtils, StdCtrls;
 
 type
   TLadingStockItem = record
@@ -126,8 +126,8 @@ function SaveBillCard(const nBill, nCard: string): Boolean;
 //保存交货单磁卡
 function LogoutBillCard(const nCard: string): Boolean;
 //注销指定磁卡
-function SetTruckRFIDCard(nTruck: string; var nRFIDCard: string;
-  var nIsUse: string; nOldCard: string=''): Boolean;
+function SetTruckRFIDCard(nTruck: string; var nRFIDCard, nRFIDCard2: string;
+  var nIsUse: string; nOldCard: string=''; nOldCard2: string=''): Boolean;
 
 function GetLadingBills(const nCard,nPost: string;
  var nBills: TLadingBillItems): Boolean;
@@ -224,6 +224,10 @@ function PrintShouJuReport(const nSID: string; const nAsk: Boolean): Boolean;
 //打印收据
 function PrintBillReport(nBill: string; const nAsk: Boolean): Boolean;
 //打印提货单
+function PrintBill4(nBill: string; const nAsk: Boolean): Boolean;
+//分车打印提货单4
+function PrintBill6(nBill: string; const nAsk: Boolean): Boolean;
+//分车打印提货单6
 function PrintOrderReport(const nOrder: string;  const nAsk: Boolean): Boolean;
 //打印采购单
 function PrintPoundReport(const nPound: string; nAsk: Boolean): Boolean;
@@ -231,10 +235,6 @@ function PrintPoundReport(const nPound: string; nAsk: Boolean): Boolean;
 function PrintHuaYanReport(const nHID: string; const nAsk: Boolean): Boolean;
 function PrintHeGeReport(const nHID: string; const nAsk: Boolean): Boolean;
 //化验单,合格证
-function GetCustomerInfo(const nPhoneData: string): string;
-//获取微信公众号客户信息  by lih 2016-05-26
-function GetBindUser(const nPhoneData: string): string;
-//工厂绑定用户 by lih 2016-05-30
 function SyncTPRESTIGEMANAGE(nCusID:string=''; nDataArea :string=''): Boolean;
 //同步AX信用额度（客户）到DL系统 by lih 2016-07-19
 function SyncTPRESTIGEMBYCONT(nCusID:string=''; nDataArea :string=''): Boolean;
@@ -261,8 +261,6 @@ function PrintHYReport(const nBill: string; const nAsk: Boolean): Boolean;
 //打印随车化验单
 function PrintDaiBill(nBill: string; const nAsk: Boolean): Boolean;
 //打印袋装换票单
-function LoadZk(const nZID: string; var nHint: string): TDataset;
-//获取订单中是否三角贸易
 function GetAXSalesOrder(nSaleID:string=''; nDataArea :string=''): Boolean;
 //获取销售订单
 function GetAXSalesOrdLine(nSaleID:string=''; nDataArea :string=''): Boolean;
@@ -319,6 +317,22 @@ function GetZhikaYL(nRECID:string):Double;
 //获取纸卡余量
 function GetNeiDao(const nStockNo:string):Boolean;
 //获取内倒物料
+procedure GetCustomerExt(const nCusID:string; const nCbx:TComboBox);
+//获取客户扩展信息
+procedure SaveCustomerExt(const nCusID,nCusExtName:string);
+//保存客户扩展信息
+function getCustomerInfo(const nXmlStr: string): string;
+//获取客户注册信息
+function get_Bindfunc(const nXmlStr: string): string;
+//客户与微信账号绑定
+function send_event_msg(const nXmlStr: string): string;
+//发送消息
+function edit_shopclients(const nXmlStr: string): string;
+//新增商城用户
+function edit_shopgoods(const nXmlStr: string): string;
+//添加商品
+function get_shoporders(const nXmlStr: string): string;
+//获取订单信息
 function GetDaoChe(const nStockNo:string):Boolean;
 //获取倒车下磅物料
 function GetPurchRestValue(const nRecID:string):Double;
@@ -507,66 +521,6 @@ begin
     //自动称重时不提示
     
     nWorker := gBusinessWorkerManager.LockWorker(sCLI_HardwareCommand);
-    //get worker
-    Result := nWorker.WorkActive(@nIn, nOut);
-
-    if not Result then
-      WriteLog(nOut.FBase.FErrDesc);
-    //xxxxx
-  finally
-    gBusinessWorkerManager.RelaseWorker(nWorker);
-  end;
-end;
-
-//Date: 2016-05-26
-//Parm: 命令;数据;参数;输出
-//Desc: 调用中间件上的微信注册对象
-function CallBusinessRegWeiXin(const nCmd: Integer; const nData,nExt: string;
-  const nOut: PWorkerBusinessCommand; const nWarn: Boolean = True): Boolean;
-var nIn: TWorkerBusinessCommand;
-    nWorker: TBusinessWorkerBase;
-begin
-  nWorker := nil;
-  try
-    nIn.FCommand := nCmd;
-    nIn.FData := nData;
-    nIn.FExtParam := nExt;
-
-    if nWarn then
-         nIn.FBase.FParam := ''
-    else nIn.FBase.FParam := sParam_NoHintOnError;
-
-    nWorker := gBusinessWorkerManager.LockWorker(sCLI_BusinessRegWeiXin);
-    //get worker
-    Result := nWorker.WorkActive(@nIn, nOut);
-
-    if not Result then
-      WriteLog(nOut.FBase.FErrDesc);
-    //xxxxx
-  finally
-    gBusinessWorkerManager.RelaseWorker(nWorker);
-  end;
-end;
-
-//Date: 2016-05-30
-//Parm: 命令;数据;参数;输出
-//Desc: 调用中间件上的工厂绑定用户（微信）对象
-function CallBusinessBindUserWeiXin(const nCmd: Integer; const nData,nExt: string;
-  const nOut: PWorkerBusinessCommand; const nWarn: Boolean = True): Boolean;
-var nIn: TWorkerBusinessCommand;
-    nWorker: TBusinessWorkerBase;
-begin
-  nWorker := nil;
-  try
-    nIn.FCommand := nCmd;
-    nIn.FData := nData;
-    nIn.FExtParam := nExt;
-
-    if nWarn then
-         nIn.FBase.FParam := ''
-    else nIn.FBase.FParam := sParam_NoHintOnError;
-
-    nWorker := gBusinessWorkerManager.LockWorker(sCLI_BusinessBindUserWeiXin);
     //get worker
     Result := nWorker.WorkActive(@nIn, nOut);
 
@@ -1467,15 +1421,14 @@ function LoadZhiKaInfo(const nZID: string; const nList: TcxMCListBox;
  var nHint: string): TDataset;
 var nStr: string;
 begin
-
-  nStr := 'Select zk.*,con.C_ContQuota,cus.C_Name From $ZK zk ' +
+  nStr := 'Select zk.*,con.C_ContQuota,cus.C_ID,cus.C_Name From $ZK zk ' +
           ' Left Join $Con con On con.C_ID=zk.Z_CID ' +
           ' Left Join $Cus cus On cus.C_ID=zk.Z_Customer ' +
           'Where Z_ID=''$ID''';
   //xxxxx
 
   nStr := MacroValue(nStr, [MI('$ZK', sTable_ZhiKa),
-             MI('$Con', sTable_SaleContract), //MI('$SM', sTable_Salesman),
+             MI('$Con', sTable_SaleContract),
              MI('$Cus', sTable_Customer), MI('$ID', nZID)]);
   //xxxxx
 
@@ -1486,7 +1439,6 @@ begin
   with nList.Items,Result do
   begin
     Add('纸卡编号:' + nList.Delimiter + FieldByName('Z_ID').AsString);
-    //Add('业务人员:' + nList.Delimiter + FieldByName('S_Name').AsString+ ' ');
     if FieldByName('Z_TriangleTrade').AsString = '1' then
       Add('客户名称:' + nList.Delimiter + FieldByName('Z_OrgAccountName').AsString + ' ')
     else
@@ -1499,28 +1451,6 @@ begin
   begin
     Result := nil;
     nHint := '纸卡已无效';
-  end;
-end;
-
-//Desc: 获取nZID的信息到,并返回查询数据集
-function LoadZk(const nZID: string; var nHint: string): TDataset;
-var nStr: string;
-begin
-  nStr := 'Select * From $ZK zk Where Z_ID=''$ID''';
-  //xxxxx
-
-  nStr := MacroValue(nStr, [MI('$ZK', sTable_ZhiKa), MI('$ID', nZID)]);
-  //xxxxx
-
-  Result := FDM.QueryTemp(nStr);
-
-  if Result.RecordCount = 1 then
-  begin
-
-  end else
-  begin
-    Result := nil;
-    nHint := '订单已无效';
   end;
 end;
 
@@ -2209,7 +2139,7 @@ begin
 
   nBill := AdjustListStrFormat(nBill, '''', True, ',', False);
   //添加引号
-  
+
   nStr := 'Select * From %s b Where L_ID In(%s)';
   nStr := Format(nStr, [sTable_Bill, nBill]);
   //xxxxx
@@ -2222,6 +2152,112 @@ begin
   end;
 
   nStr := gPath + sReportDir + 'LadingBill.fr3';
+  if not FDR.LoadReportFile(nStr) then
+  begin
+    nStr := '无法正确加载报表文件';
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  nParam.FName := 'UserName';
+  nParam.FValue := gSysParam.FUserID;
+  FDR.AddParamItem(nParam);
+
+  nParam.FName := 'Company';
+  nParam.FValue := gSysParam.FHintText;
+  FDR.AddParamItem(nParam);
+
+  FDR.Dataset1.DataSet := FDM.SqlTemp;
+  FDR.ShowReport;
+  Result := FDR.PrintSuccess;
+  if Result then
+  begin
+    nStr := 'update %s set L_BDPrint=L_BDPrint+1 Where L_ID=%s';
+    nStr := Format(nStr, [sTable_Bill, nBill]);
+    FDM.ExecuteSQL(nStr);
+  end;
+end;
+
+//lih 2016-10-28 分车打印提货单4
+function PrintBill4(nBill: string; const nAsk: Boolean): Boolean;
+var nStr: string;
+    nParam: TReportParamItem;
+begin
+  Result := False;
+
+  if nAsk then
+  begin
+    nStr := '是否要打印提货单?';
+    if not QueryDlg(nStr, sAsk) then Exit;
+  end;
+
+  nBill := AdjustListStrFormat(nBill, '''', True, ',', False);
+  //添加引号
+
+  nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID From %s b Where L_ID In(%s)';
+  nStr := Format(nStr, [sTable_Bill, nBill]);
+  //xxxxx
+
+  if FDM.QueryTemp(nStr).RecordCount < 1 then
+  begin
+    nStr := '编号为[ %s ] 的记录已无效!!';
+    nStr := Format(nStr, [nBill]);
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  nStr := gPath + sReportDir + 'LadingBill4.fr3';
+  if not FDR.LoadReportFile(nStr) then
+  begin
+    nStr := '无法正确加载报表文件';
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  nParam.FName := 'UserName';
+  nParam.FValue := gSysParam.FUserID;
+  FDR.AddParamItem(nParam);
+
+  nParam.FName := 'Company';
+  nParam.FValue := gSysParam.FHintText;
+  FDR.AddParamItem(nParam);
+
+  FDR.Dataset1.DataSet := FDM.SqlTemp;
+  FDR.ShowReport;
+  Result := FDR.PrintSuccess;
+  if Result then
+  begin
+    nStr := 'update %s set L_BDPrint=L_BDPrint+1 Where L_ID=%s';
+    nStr := Format(nStr, [sTable_Bill, nBill]);
+    FDM.ExecuteSQL(nStr);
+  end;
+end;
+
+//lih 2016-10-28 分车打印提货单6
+function PrintBill6(nBill: string; const nAsk: Boolean): Boolean;
+var nStr: string;
+    nParam: TReportParamItem;
+begin
+  Result := False;
+
+  if nAsk then
+  begin
+    nStr := '是否要打印提货单?';
+    if not QueryDlg(nStr, sAsk) then Exit;
+  end;
+
+  nBill := AdjustListStrFormat(nBill, '''', True, ',', False);
+  //添加引号
+
+  nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID From %s b Where L_ID In(%s)';
+  nStr := Format(nStr, [sTable_Bill, nBill]);
+  //xxxxx
+
+  if FDM.QueryTemp(nStr).RecordCount < 1 then
+  begin
+    nStr := '编号为[ %s ] 的记录已无效!!';
+    nStr := Format(nStr, [nBill]);
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  nStr := gPath + sReportDir + 'LadingBill6.fr3';
   if not FDR.LoadReportFile(nStr) then
   begin
     nStr := '无法正确加载报表文件';
@@ -2549,49 +2585,36 @@ begin
   Result := FDR.PrintSuccess;
   if Result then
   begin
-    nStr := 'update %s set L_HYPrint=L_HYPrint+1 Where L_ID=%s';
+    nStr := 'update %s set L_HYPrint=L_HYPrint+1 Where L_ID=''%s''';
     nStr := Format(nStr, [sTable_Bill, nBill]);
-    FDM.ExecuteSQL(nStr);
+    with FDM.SQLTemp do
+    begin
+      Close;
+      SQL.Text:=nStr;
+      ExecSQL;
+    end;
   end;
 end;
 
 //Date: 2015/1/18
 //Parm: 车牌号；电子标签；是否启用；旧电子标签
 //Desc: 读标签是否成功；新的电子标签
-function SetTruckRFIDCard(nTruck: string; var nRFIDCard: string;
-  var nIsUse: string; nOldCard: string=''): Boolean;
+function SetTruckRFIDCard(nTruck: string; var nRFIDCard,nRFIDCard2: string;
+  var nIsUse: string; nOldCard: string=''; nOldCard2: string=''): Boolean;
 var nP: TFormCommandParam;
 begin
   nP.FParamA := nTruck;
   nP.FParamB := nOldCard;
   nP.FParamC := nIsUse;
+  nP.FParamD := nOldCard2;
   CreateBaseFormItem(cFI_FormMakeRFIDCard, '', @nP);
 
   nRFIDCard := nP.FParamB;
   nIsUse    := nP.FParamC;
+  nRFIDCard2 := nP.FParamD;
   Result    := (nP.FCommand = cCmd_ModalResult) and (nP.FParamA = mrOK);
 end;
 
-//Date: 2016-05-26
-//Parm: 手机号码数据
-//lih: 提交手机号码,返回客户信息
-function GetCustomerInfo(const nPhoneData: string): string;
-var nOut: TWorkerBusinessCommand;
-begin
-  if CallBusinessRegWeiXin(cBC_RegWeiXin, nPhoneData, '', @nOut) then
-       Result := nOut.FData
-  else Result := '';
-end;
-//Date: 2016-05-30
-//Parm: 手机号码数据
-//lih: 提交手机号码,返回工厂绑定用户信息
-function GetBindUser(const nPhoneData: string): string;
-var nOut: TWorkerBusinessCommand;
-begin
-  if CallBusinessBindUserWeiXin(cBC_BindUserWeiXin, nPhoneData, '', @nOut) then
-       Result := nOut.FData
-  else Result := '';
-end;
 
 //Date:2016-08-04
 //获取试样编号
@@ -2781,17 +2804,18 @@ begin
           'and ((R_CenterID=''%s'') or (R_CenterID='''') or (R_CenterID is null)) and R_BatValid=''%s'' ';
   nSQL := Format(nSQL,[sTable_StockRecord, sTable_StockParam, nStockName, nType, nCenterID, sFlag_Yes]);
   with FDM.QueryTemp(nSQL) do
+  if RecordCount > 0 then
   begin
-    if RecordCount > 0 then
+    First;
+    while not Eof do
     begin
-      First;
-      while not Eof do
-      begin
-        nCbx.Properties.Items.Add(Fields[0].AsString);
-        Next;
-      end;
-      //nCbx.ItemIndex:=0;
+      nCbx.Properties.Items.Add(Fields[0].AsString);
+      Next;
     end;
+    //nCbx.ItemIndex:=0;
+  end else
+  begin
+    ShowMsg('试样编号使用完毕！',sHint);
   end;
 end;
 
@@ -2895,6 +2919,43 @@ begin
   nSQL := 'update %s set Z_OrgXSQYMC=''%s'' where Z_ID = ''%s'' ';
   nSQL := Format(nSQL,[sTable_ZhiKa, nXSQYMC, nSaleID]);
   FDM.ExecuteSQL(nSQL);
+end;
+
+//获取客户扩展信息
+procedure GetCustomerExt(const nCusID:string; const nCbx:TComboBox);
+var nSQL:string;
+    nIdx:Integer;
+begin
+  nCbx.Items.Clear;
+  nSQL := 'select E_CustExtName from %s a where E_CusID = ''%s'' order by R_ID DESC ';
+  nSQL := Format(nSQL,[sTable_CustomerExt, nCusID]);
+  with FDM.QueryTemp(nSQL) do
+  begin
+    if RecordCount > 0 then
+    begin
+      First;
+      while not Eof do
+      begin
+        nCbx.Items.Add(Fields[0].AsString);
+        Next;
+      end;
+    end;
+  end;
+end;
+
+//保存客户扩展信息
+procedure SaveCustomerExt(const nCusID,nCusExtName:string);
+var
+  nSQL:string;
+begin
+  nSQL := 'select * from %s where E_CusID = ''%s'' and E_CustExtName=''%s'' ';
+  nSQL := Format(nSQL,[sTable_CustomerExt, nCusID, nCusExtName]);
+  if FDM.QueryTemp(nSQL).RecordCount < 1 then
+  begin
+    nSQL := 'Insert into %s (E_CusID, E_CustExtName) values (''%s'', ''%s'') ';
+    nSQL := Format(nSQL,[sTable_CustomerExt, nCusID, nCusExtName]);
+    FDM.ExecuteSQL(nSQL);
+  end;
 end;
 
 //打印nID对应的短倒单据
@@ -3051,15 +3112,6 @@ begin
     Result := StrToFloat(nOut.FData);
   end else Result := 0;
 
-  {Result:= 0.0;
-  nSQL := 'Select D_Value From %s Where D_ZID=''%s'' and D_RECID=''%s'' ';
-  nSQL := Format(nSQL, [sTable_ZhiKaDtl, nZID, nRECID]);
-
-  with FDM.QueryTemp(nSQL) do
-  if RecordCount > 0 then
-  begin
-    Result:=FieldByName('D_Value').AsFloat;
-  end; }
 end;
 
 //获取采购订单余量
@@ -3076,6 +3128,60 @@ begin
   begin
     Result:=FieldByName('B_RestValue').AsFloat;
   end;
+end;
+
+//获取客户注册信息
+function getCustomerInfo(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_getCustomerInfo, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//客户与微信账号绑定
+function get_Bindfunc(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_get_Bindfunc, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//发送消息
+function send_event_msg(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_send_event_msg, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//新增商城用户
+function edit_shopclients(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_edit_shopclients, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//添加商品
+function edit_shopgoods(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_edit_shopgoods, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//获取订单信息
+function get_shoporders(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_get_shoporders, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
 end;
 
 

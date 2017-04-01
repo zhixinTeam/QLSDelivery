@@ -138,16 +138,16 @@ end;
 procedure TfFrameLSCard.N1Click(Sender: TObject);
 var
   nID:Integer;
-  nStr:string;
+  nStr,nCard:string;
 begin
   if cxView1.DataController.GetSelectedCount > 0 then
   begin
     nID := SQLQuery.FieldByName('R_ID').AsInteger;
-
-    nStr := 'Update %s Set I_Card='''' Where R_ID=%d ';
-    nStr := Format(nStr, [sTable_Bill, nID]);
+    nCard:=SQLQuery.FieldByName('I_Card').AsString;
+    nStr := 'Update %s Set I_Card=''注''+I_Card Where I_Card=''%s'' ';
+    nStr := Format(nStr, [sTable_InOutFatory, nCard]);
     FDM.ExecuteSQL(nStr);
-    ShowMsg('清除卡号成功', sHint);
+    ShowMsg('注销卡号成功', sHint);
   end;
 end;
 

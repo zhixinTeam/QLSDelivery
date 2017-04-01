@@ -4,7 +4,7 @@
 // WSDL     : http://192.168.252.50/BPMToERP/BPM2ERPService.asmx?wsdl
 // Encoding : utf-8
 // Version  : 1.0
-// (2016-07-13 11:25:18 - 1.33.2.5)
+// (2016-07-13 12:10:12 - 1.33.2.5)
 // ************************************************************************ //
 
 unit BPM2ERPService;
@@ -34,7 +34,7 @@ type
   // binding   : BPM2ERPServiceSoap
   // service   : BPM2ERPService
   // port      : BPM2ERPServiceSoap
-  // URL       : http://192.168.252.50/BPMToERP/BPM2ERPService.asmx
+  // URL       : http://192.168.0.51/QLSWEB/BPM2ERPService.asmx
   // ************************************************************************ //
   BPM2ERPServiceSoap = interface(IInvokable)
   ['{C98A3AEE-E399-3AF2-7C7B-1E48BBB664CF}']
@@ -42,6 +42,7 @@ type
     function  EPS2ERPInfo(const BusinessType: WideString; const XMlPrimaryKey: WideString; const XmlInfo: WideString): Integer; stdcall;
     function  test: WideString; stdcall;
     function  WRZS2ERPInfo(const BusinessType: WideString; const XMlPrimaryKey: WideString; const XmlInfo: WideString): Integer; stdcall;
+    function  WRZS2ERPInfoTEST(const BusinessType: WideString; const XMlPrimaryKey: WideString; const XmlInfo: WideString): WideString; stdcall;
   end;
 
 function GetBPM2ERPServiceSoap(UseWSDL: Boolean=System.False; Addr: string=''; HTTPRIO: THTTPRIO = nil): BPM2ERPServiceSoap;
@@ -51,8 +52,8 @@ implementation
 
 function GetBPM2ERPServiceSoap(UseWSDL: Boolean; Addr: string; HTTPRIO: THTTPRIO): BPM2ERPServiceSoap;
 const
-  defWSDL = 'http://192.168.252.50/BPMToERP/BPM2ERPService.asmx?wsdl';
-  defURL  = 'http://192.168.252.50/BPMToERP/BPM2ERPService.asmx';
+  defWSDL = 'http://192.168.0.51/QLSWEB/BPM2ERPService.asmx?wsdl';
+  defURL  = 'http://192.168.0.51/QLSWEB/BPM2ERPService.asmx';
   defSvc  = 'BPM2ERPService';
   defPrt  = 'BPM2ERPServiceSoap';
 var
@@ -70,6 +71,7 @@ begin
     RIO := THTTPRIO.Create(nil)
   else
     RIO := HTTPRIO;
+  RIO.HTTPWebNode.UseUTF8InHeader:=True;
   try
     Result := (RIO as BPM2ERPServiceSoap);
     if UseWSDL then
@@ -89,5 +91,5 @@ end;
 initialization
   InvRegistry.RegisterInterface(TypeInfo(BPM2ERPServiceSoap), 'http://tempuri.org/', 'utf-8');
   InvRegistry.RegisterDefaultSOAPAction(TypeInfo(BPM2ERPServiceSoap), 'http://tempuri.org/%operationName%');
-
+  InvRegistry.RegisterInvokeOptions(TypeInfo(BPM2ERPServiceSoap), ioDocument);
 end. 

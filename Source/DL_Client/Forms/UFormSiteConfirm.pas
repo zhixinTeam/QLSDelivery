@@ -599,7 +599,7 @@ begin
       if (nPos>0) and (nPos<Length(cbxKw.Text)) then
       begin
         FKw:= Copy(cbxKw.Text,1,nPos-1);
-        FLocationID:= Copy(cbxKw.Text,nPos+1,Length(cbxKw.Text)-nPos);
+        FCenterID:= Copy(cbxKw.Text,nPos+1,Length(cbxKw.Text)-nPos);
       end else
       begin
         ShowMsg('库位格式非法', sHint); Exit;

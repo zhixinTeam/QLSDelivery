@@ -9,9 +9,8 @@ interface
 
 uses
   Windows, Classes, Controls, DB, SysUtils, UBusinessWorker, UBusinessPacker,
-  {$IFDEF MicroMsg}UMgrRemoteWXMsg,{$ENDIF}
   UBusinessConst, UMgrDBConn, UMgrParam, ZnMD5, ULibFun, UFormCtrl, USysLoger,
-  USysDB, UMITConst, NativeXml, revicewstest, BPM2ERPService1, HTTPApp;
+  USysDB, UMITConst, NativeXml, revicewstest, BPM2ERPService, HTTPApp;
 
 type
   TBusWorkerQueryField = class(TBusinessWorkerBase)
@@ -49,12 +48,19 @@ type
     //记录日志
   end;
 
+  THuaYan = record
+    FReriNo:string;
+    FValue:Double;
+    FZLVal:Double;
+  end;
+
   TWorkerBusinessCommander = class(TMITDBWorker)
   private
     FListA,FListB,FListC,FListD,FListE: TStrings;
     //list
     FIn: TWorkerBusinessCommand;
     FOut: TWorkerBusinessCommand;
+    FHuaYan: array of THuaYan;
   protected
     procedure GetInOutData(var nIn,nOut: PBWDataBase); override;
     function DoDBWork(var nData: string): Boolean; override;
@@ -84,19 +90,6 @@ type
     function GetTruckPoundData(var nData: string): Boolean;
     function SaveTruckPoundData(var nData: string): Boolean;
     //存取车辆称重数据
-    {$IFDEF XAZL}
-    function SyncRemoteSaleMan(var nData: string): Boolean;
-    function SyncRemoteCustomer(var nData: string): Boolean;
-    function SyncRemoteProviders(var nData: string): Boolean;
-    function SyncRemoteMaterails(var nData: string): Boolean;
-    //同步新安中联K3系统数据
-    function SyncRemoteStockBill(var nData: string): Boolean;
-    //同步交货单到K3系统
-    function SyncRemoteStockOrder(var nData: string): Boolean;
-    //同步交货单到K3系统
-    function IsStockValid(var nData: string): Boolean;
-    //验证物料是否允许发货
-    {$ENDIF}
     {$IFDEF QLS}
     function SyncAXCustomer(var nData: string): Boolean;//同步AX客户信息到DL
     function SyncAXProviders(var nData: string): Boolean;//同步AX供应商信息到DL
@@ -139,6 +132,36 @@ type
     function GetAXCompanyArea(var nData: string): Boolean;//在线获取三角贸易订单的销售区域
     function GetInVentSum(var nData: string): Boolean;//在线获取生产线余量
     function GetSalesOrdValue(var nData: string): Boolean;//获取订单行余量
+    function ReadZhikaInfo(var nData: string): Boolean;
+    //读取销售订单信息
+    function ReadStockPrice(var nData: string): Boolean;
+    //读取订单物料价格
+    function CheckSecurityCodeValid(var nData: string): Boolean;
+    //防伪码校验
+    function GetWaitingForloading(var nData: string):Boolean;
+    //工厂待装查询
+    function GetBillSurplusTonnage(var nData:string):boolean;
+    //网上订单可下单数量查询
+    function GetOrderInfo(var nData:string):Boolean;
+    //获取订单信息，用于网上下单
+    function GetOrderList(var nData:string):Boolean;
+    //获取订单信息，用于网上下单
+    function getCustomerInfo(var nData:string):Boolean;
+    //获取客户注册信息
+    function get_Bindfunc(var nData:string):Boolean;
+    //客户与微信账号绑定
+    function send_event_msg(var nData:string):Boolean;
+    //发送消息
+    function edit_shopclients(var nData:string):Boolean;
+    //新增商城用户
+    function edit_shopgoods(var nData:string):Boolean;
+    //添加商品
+    function get_shoporders(var nData:string):Boolean;
+    //获取订单信息
+    function get_shoporderbyno(var nData:string):Boolean;
+    //根据订单号获取订单信息
+    function complete_shoporders(var nData:string):Boolean;
+    //修改订单状态
     {$ENDIF}
   public
     constructor Create; override;
@@ -274,30 +297,9 @@ type
     //local call
   end;
 
-  TWorkerBusinessRegWeiXin = class(TMITDBWorker)   //by lih 2016-05-26
-  private
-    FListA,FListB,FListC: TStrings;
-    //list
-    FIn: TWorkerBusinessCommand;
-    FOut: TWorkerBusinessCommand;
-  protected
-    procedure GetInOutData(var nIn,nOut: PBWDataBase); override;
-    function DoDBWork(var nData: string): Boolean; override;
-    //base funciton
-    function GetCustomerInfo(var nData: string): Boolean;
-    //获取微信公众号客户信息
-    function GetBindfunc(var nData: string):Boolean;
-    //去工厂绑定用户
-  public
-    constructor Create; override;
-    destructor destroy; override;
-    //new free
-    function GetFlagStr(const nFlag: Integer): string; override;
-    class function FunctionName: string; override;
-    //base function
-  end;
-
 implementation
+uses
+  uFormCallWechatWebService,UMgrQueue,UDataModule,UHardBusiness;
 
 class function TBusWorkerQueryField.FunctionName: string;
 begin
@@ -524,17 +526,6 @@ begin
    cBC_SaveTruckPoundData  : Result := SaveTruckPoundData(nData);
    cBC_UserLogin           : Result := Login(nData);
    cBC_UserLogOut          : Result := LogOut(nData);
-
-   {$IFDEF XAZL}
-   cBC_SyncCustomer        : Result := SyncRemoteCustomer(nData);
-   cBC_SyncSaleMan         : Result := SyncRemoteSaleMan(nData);
-   cBC_SyncProvider        : Result := SyncRemoteProviders(nData);
-   cBC_SyncMaterails       : Result := SyncRemoteMaterails(nData);
-   cBC_SyncStockBill       : Result := SyncRemoteStockBill(nData);
-   cBC_CheckStockValid     : Result := IsStockValid(nData);
-
-   cBC_SyncStockOrder      : Result := SyncRemoteStockOrder(nData);
-   {$ENDIF}
    {$IFDEF QLS}
    cBC_SyncCustomer        : Result := SyncAXCustomer(nData);
    cBC_SyncProvider        : Result := SyncAXProviders(nData);
@@ -574,6 +565,22 @@ begin
    cBC_GetAXInVentSum      : Result := GetInVentSum(nData);
    cBC_SyncAXwmsLocation   : Result := SyncAXwmsLocation(nData);
    cBC_GetSalesOrdValue    : Result := GetSalesOrdValue(nData);
+   cBC_ReadZhiKaInfo       : Result := ReadZhikaInfo(nData);//读取销售订单信息
+   cBC_ReadStockPrice      : Result := ReadStockPrice(nData);//读取订单物料价格
+   cBC_VerifPrintCode      : Result := CheckSecurityCodeValid(nData); //验证码查询
+   cBC_WaitingForloading   : Result := GetWaitingForloading(nData); //待装车辆查询
+   cBC_BillSurplusTonnage  : Result := GetBillSurplusTonnage(nData); //查询商城订单可用量
+   cBC_GetOrderInfo        : Result := GetOrderInfo(nData); //查询订单信息
+   cBC_GetOrderList        : Result := GetOrderList(nData); //查询订单列表
+   
+   cBC_WeChat_getCustomerInfo : Result := getCustomerInfo(nData);   //微信平台接口：获取客户注册信息
+   cBC_WeChat_get_Bindfunc    : Result := get_Bindfunc(nData);   //微信平台接口：客户与微信账号绑定
+   cBC_WeChat_send_event_msg  : Result := send_event_msg(nData);   //微信平台接口：发送消息
+   cBC_WeChat_edit_shopclients : Result := edit_shopclients(nData);   //微信平台接口：新增商城用户
+   cBC_WeChat_edit_shopgoods  : Result := edit_shopgoods(nData);   //微信平台接口：添加商品
+   cBC_WeChat_get_shoporders  : Result := get_shoporders(nData);   //微信平台接口：获取订单信息
+   cBC_WeChat_complete_shoporders  : Result := complete_shoporders(nData);   //微信平台接口：修改订单状态
+   cBC_WeChat_get_shoporderbyno : Result := get_shoporderbyno(nData);   //微信平台接口：根据订单号获取订单信息
    {$ENDIF}
    else
     begin
@@ -842,7 +849,7 @@ var nStr: string;
     nAXMoney: Double;
     nContQuota: string;//1 专款专用
     nCusID:string;
-    nFailureDate:TDateTime;
+    nFailureDate: TDateTime;
 begin
   nStr := 'Select zk.Z_Customer,sc.C_ID,sc.C_ContQuota From $ZK zk,$SC sc ' +
           'Where zk.Z_ID=''$CID'' and zk.Z_CID=sc.C_ID';
@@ -879,8 +886,7 @@ begin
       nFailureDate := FieldByName('C_FailureDate').AsDateTime;
       if (FieldByName('C_FailureDate').IsNull) or
         (FieldByName('C_FailureDate').AsString='') or
-        (formatdatetime('yyyy-mm-dd',nFailureDate)='1900-01-01') or
-        (formatdatetime('yyyy-mm-dd',nFailureDate)='1899-01-01') then
+        (formatdatetime('yyyy-mm-dd',nFailureDate)='1900-01-01') then
       begin
         nAXMoney:= FieldByName('C_CashBalance').AsFloat+
                      FieldByName('C_BillBalance3M').AsFloat+
@@ -923,7 +929,7 @@ begin
     end;
     if nContQuota ='1' then
     begin
-      nVal := nAXMoney-FieldByName('A_ConFreezeMoney').AsFloat;
+      nVal := nAXMoney-FieldByName('A_ConFreezeMoney').AsFloat
     end else
     begin
       nVal := nAXMoney-FieldByName('A_FreezeMoney').AsFloat;
@@ -1238,226 +1244,6 @@ end;
 
 {$IFDEF XAZL}
 //Date: 2014-10-14
-//Desc: 同步新安中联客户数据到DL系统
-function TWorkerBusinessCommander.SyncRemoteCustomer(var nData: string): Boolean;
-var nStr: string;
-    nIdx: Integer;
-    nDBWorker: PDBWorker;
-begin
-  FListA.Clear;
-  Result := True;
-
-  nDBWorker := nil;
-  try
-    nStr := 'Select S_Table,S_Action,S_Record,S_Param1,S_Param2,FItemID,' +
-            'FName,FNumber,FEmployee From %s' +
-            '  Left Join %s On FItemID=S_Record';
-    nStr := Format(nStr, [sTable_K3_SyncItem, sTable_K3_Customer]);
-    //xxxxx
-
-    with gDBConnManager.SQLQuery(nStr, nDBWorker, sFlag_DB_K3) do
-    if RecordCount > 0 then
-    begin
-      First;
-
-      while not Eof do
-      try
-        nStr := FieldByName('S_Action').AsString;
-        //action
-
-        if nStr = 'A' then //Add
-        begin
-          if FieldByName('FItemID').AsString = '' then Continue;
-          //invalid
-
-          nStr := MakeSQLByStr([SF('C_ID', FieldByName('FItemID').AsString),
-                  SF('C_Name', FieldByName('FName').AsString),
-                  SF('C_PY', GetPinYinOfStr(FieldByName('FName').AsString)),
-                  SF('C_SaleMan', FieldByName('FEmployee').AsString),
-                  SF('C_Memo', FieldByName('FNumber').AsString),
-                  SF('C_Param', FieldByName('FNumber').AsString),
-                  SF('C_XuNi', sFlag_No)
-                  ], sTable_Customer, '', True);
-          FListA.Add(nStr);
-
-          nStr := MakeSQLByStr([SF('A_CID', FieldByName('FItemID').AsString),
-                  SF('A_Date', sField_SQLServer_Now, sfVal)
-                  ], sTable_CusAccount, '', True);
-          FListA.Add(nStr);
-        end else
-
-        if nStr = 'E' then //edit
-        begin
-          if FieldByName('FItemID').AsString = '' then Continue;
-          //invalid
-
-          nStr := SF('C_ID', FieldByName('FItemID').AsString);
-          nStr := MakeSQLByStr([
-                  SF('C_Name', FieldByName('FName').AsString),
-                  SF('C_PY', GetPinYinOfStr(FieldByName('FName').AsString)),
-                  SF('C_SaleMan', FieldByName('FEmployee').AsString),
-                  SF('C_Memo', FieldByName('FNumber').AsString)
-                  ], sTable_Customer, nStr, False);
-          FListA.Add(nStr);
-        end else
-
-        if nStr = 'D' then //delete
-        begin
-          nStr := 'Delete From %s Where C_ID=''%s''';
-          nStr := Format(nStr, [sTable_Customer, FieldByName('S_Record').AsString]);
-          FListA.Add(nStr);
-        end;
-      finally
-        Next;
-      end;
-    end;
-
-    if FListA.Count > 0 then
-    try
-      FDBConn.FConn.BeginTrans;
-      //开启事务
-    
-      for nIdx:=0 to FListA.Count - 1 do
-        gDBConnManager.WorkerExec(FDBConn, FListA[nIdx]);
-      FDBConn.FConn.CommitTrans;
-
-      nStr := 'Delete From ' + sTable_K3_SyncItem;
-      gDBConnManager.WorkerExec(nDBWorker, nStr);
-    except
-      if FDBConn.FConn.InTransaction then
-        FDBConn.FConn.RollbackTrans;
-      raise;
-    end;
-  finally
-    gDBConnManager.ReleaseConnection(nDBWorker);
-  end;
-end;
-
-//Date: 2014-10-14
-//Desc: 同步新安中联业务员数据到DL系统
-function TWorkerBusinessCommander.SyncRemoteSaleMan(var nData: string): Boolean;
-var nStr,nDept: string;
-    nIdx: Integer;
-    nDBWorker: PDBWorker;
-begin
-  FListA.Clear;
-  Result := True;
-
-  nDBWorker := nil;
-  try
-    nDept := '1356';
-    nStr := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
-    nStr := Format(nStr, [sTable_SysDict, sFlag_SysParam, sFlag_SaleManDept]);
-
-    with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-    if RecordCount > 0 then
-    begin
-      nDept := Fields[0].AsString;
-      //销售部门编号
-    end;
-
-    nStr := 'Select FItemID,FName,FDepartmentID From t_EMP';
-    //FDepartmentID='1356'为销售部门
-
-    with gDBConnManager.SQLQuery(nStr, nDBWorker, sFlag_DB_K3) do
-    if RecordCount > 0 then
-    begin
-      First;
-
-      while not Eof do
-      begin
-        if Fields[2].AsString = nDept then
-             nStr := sFlag_No
-        else nStr := sFlag_Yes;
-        
-        nStr := MakeSQLByStr([SF('S_ID', Fields[0].AsString),
-                SF('S_Name', Fields[1].AsString),
-                SF('S_InValid', nStr)
-                ], sTable_Salesman, '', True);
-        //xxxxx
-        
-        FListA.Add(nStr);
-        Next;
-      end;
-    end;
-  finally
-    gDBConnManager.ReleaseConnection(nDBWorker);
-  end;
-
-  if FListA.Count > 0 then
-  try
-    FDBConn.FConn.BeginTrans;
-    nStr := 'Delete From ' + sTable_Salesman;
-    gDBConnManager.WorkerExec(FDBConn, nStr);
-
-    for nIdx:=0 to FListA.Count - 1 do
-      gDBConnManager.WorkerExec(FDBConn, FListA[nIdx]);
-    FDBConn.FConn.CommitTrans;
-  except
-    if FDBConn.FConn.InTransaction then
-      FDBConn.FConn.RollbackTrans;
-    raise;
-  end;
-end;
-
-//Date: 2014-10-14
-//Desc: 同步新安中联供应商数据到DL系统
-function TWorkerBusinessCommander.SyncRemoteProviders(var nData: string): Boolean;
-var nStr,nSaler: string;
-    nIdx: Integer;
-    nDBWorker: PDBWorker;
-begin
-  FListA.Clear;
-  Result := True;
-
-  nDBWorker := nil;
-  try
-    nSaler := '待分配业务员';
-    nStr := 'Select FItemID,FName,FNumber From t_Supplier Where FDeleted=0';
-    //未删除供应商
-
-    with gDBConnManager.SQLQuery(nStr, nDBWorker, sFlag_DB_K3) do
-    if RecordCount > 0 then
-    begin
-      First;
-
-      while not Eof do
-      begin
-        nStr := MakeSQLByStr([SF('P_ID', Fields[0].AsString),
-                SF('P_Name', Fields[1].AsString),
-                SF('P_PY', GetPinYinOfStr(Fields[1].AsString)),
-                SF('P_Memo', Fields[2].AsString),
-                SF('P_Saler', nSaler)
-                ], sTable_Provider, '', True);
-        //xxxxx
-
-        FListA.Add(nStr);
-        Next;
-      end;
-    end;
-
-    if FListA.Count > 0 then
-    try
-      FDBConn.FConn.BeginTrans;
-      //开启事务
-
-      nStr := 'Delete From ' + sTable_Provider;
-      gDBConnManager.WorkerExec(FDBConn, nStr);
-
-      for nIdx:=0 to FListA.Count - 1 do
-        gDBConnManager.WorkerExec(FDBConn, FListA[nIdx]);
-      FDBConn.FConn.CommitTrans;
-    except
-      if FDBConn.FConn.InTransaction then
-        FDBConn.FConn.RollbackTrans;
-      raise;
-    end;
-  finally
-    gDBConnManager.ReleaseConnection(nDBWorker);
-  end;
-end;
-
-//Date: 2014-10-14
 //Desc: 同步新安中联原材料数据到DL系统
 function TWorkerBusinessCommander.SyncRemoteMaterails(var nData: string): Boolean;
 var nStr: string;
@@ -1511,627 +1297,6 @@ begin
     raise;
   end;
 end;
-
-
-//Date: 2014-10-14
-//Desc: 获取指定客户的可用金额
-function TWorkerBusinessCommander.GetCustomerValidMoney(var nData: string): Boolean;
-var nStr,nCusID: string;
-    nVal,nCredit: Double;
-    nDBWorker: PDBWorker;
-begin
-  Result := False; 
-  nStr := 'Select A_FreezeMoney,A_CreditLimit,C_Param From %s,%s ' +
-          'Where A_CID=''%s'' And A_CID=C_ID';
-  nStr := Format(nStr, [sTable_Customer, sTable_CusAccount, FIn.FData]);
-
-  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-  begin
-    if RecordCount < 1 then
-    begin
-      nData := '编号为[ %s ]的客户账户不存在.';
-      nData := Format(nData, [FIn.FData]);
-      Exit;
-    end;
-
-    nCusID := FieldByName('C_Param').AsString;
-    nVal := FieldByName('A_FreezeMoney').AsFloat;
-    nCredit := FieldByName('A_CreditLimit').AsFloat;
-    FOut.FData := FloatToStr(nVal);
-    FOut.FExtParam := FloatToStr(nCredit);
-    Result := True;
-  end;
-
-  {nDBWorker := nil;
-  try
-    nStr := 'DECLARE @return_value int, @Credit decimal(28, 10),' +
-            '@Balance decimal(28, 10)' +
-            'Execute GetCredit ''%s'' , @Credit output , @Balance output ' +
-            'select @Credit as Credit , @Balance as Balance , ' +
-            '''Return Value'' = @return_value';
-    nStr := Format(nStr, [nCusID]);
-    
-    with gDBConnManager.SQLQuery(nStr, nDBWorker, sFlag_DB_K3) do
-    begin
-      if RecordCount < 1 then
-      begin
-        nData := 'K3数据库上编号为[ %s ]的客户账户不存在.';
-        nData := Format(nData, [FIn.FData]);
-        Exit;
-      end;
-
-      nVal := -(FieldByName('Balance').AsFloat) - nVal;
-      nCredit := FieldByName('Credit').AsFloat + nCredit;
-      nCredit := Float2PInt(nCredit, cPrecision, False) / cPrecision;
-
-      if FIn.FExtParam = sFlag_Yes then
-        nVal := nVal + nCredit;
-      nVal := Float2PInt(nVal, cPrecision, False) / cPrecision;
-
-      FOut.FData := FloatToStr(nVal);
-      FOut.FExtParam := FloatToStr(nCredit);
-      Result := True;
-    end;
-  finally
-    gDBConnManager.ReleaseConnection(nDBWorker);
-  end;}
-end;
-
-//Date: 2014-10-14
-//Desc: 获取指定纸卡的可用金额
-function TWorkerBusinessCommander.GetZhiKaValidMoney(var nData: string): Boolean;
-var nStr: string;
-    nVal,nMoney: Double;
-    nOut: TWorkerBusinessCommand;
-begin
-  Result := False;
-  nStr := 'Select Z_Customer,Z_OnlyMoney,Z_FixedMoney From $ZK ' +
-          'Where Z_ID=''$ZID''';
-  nStr := MacroValue(nStr, [MI('$ZK', sTable_ZhiKa), MI('$ZID', FIn.FData)]);
-
-  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-  begin
-    if RecordCount < 1 then
-    begin
-      nData := '编号为[ %s ]的纸卡不存在.';
-      nData := Format(nData, [FIn.FData]);
-      Exit;
-    end;
-
-    nStr := FieldByName('Z_Customer').AsString;
-    if not TWorkerBusinessCommander.CallMe(cBC_GetCustomerMoney, nStr,
-       sFlag_Yes, @nOut) then
-    begin
-      nData := nOut.FData;
-      Exit;
-    end;
-
-    nVal := StrToFloat(nOut.FData);
-    FOut.FExtParam := FieldByName('Z_OnlyMoney').AsString;
-    nMoney := FieldByName('Z_FixedMoney').AsFloat;
-                                
-    if FOut.FExtParam = sFlag_Yes then
-    begin
-      if nMoney > nVal then
-        nMoney := nVal;
-      //enough money
-    end else nMoney := nVal;
-
-    FOut.FData := FloatToStr(nMoney);
-    Result := True;
-  end;
-end;
-
-//Date: 2014-10-15
-//Parm: 交货单列表[FIn.FData]
-//Desc: 同步交货单数据到K3系统
-function TWorkerBusinessCommander.SyncRemoteStockBill(var nData: string): Boolean;
-var nID,nIdx: Integer;
-    nVal,nMoney: Double;
-    nK3Worker: PDBWorker;
-    nStr,nSQL,nBill,nStockID: string;
-begin
-  Result := False;
-  nK3Worker := nil;
-  nStr := AdjustListStrFormat(FIn.FData , '''' , True , ',' , True);
-
-  nSQL := 'select L_ID,L_Truck,L_SaleID,L_CusID,L_StockNo,L_Value,' +
-          'L_Price,L_OutFact From $BL ' +
-          'where L_ID In ($IN)';
-  nSQL := MacroValue(nSQL, [MI('$BL', sTable_Bill) , MI('$IN', nStr)]);
-
-  with gDBConnManager.WorkerQuery(FDBConn, nSQL)  do
-  try
-    if RecordCount < 1 then
-    begin
-      nData := '编号为[ %s ]的交货单不存在.';
-      nData := Format(nData, [FIn.FData]);
-      Exit;
-    end;
-
-    nK3Worker := gDBConnManager.GetConnection(sFlag_DB_K3, FErrNum);
-    if not Assigned(nK3Worker) then
-    begin
-      nData := '连接数据库失败(DBConn Is Null).';
-      Exit;
-    end;
-
-    if not nK3Worker.FConn.Connected then
-      nK3Worker.FConn.Connected := True;
-    //conn db
-
-    FListA.Clear;
-    First;
-    
-    while not Eof do
-    begin
-      nSQL :='DECLARE @ret1 int, @FInterID int, @BillNo varchar(200) '+
-            'Exec @ret1=GetICMaxNum @TableName=''%s'',@FInterID=@FInterID output '+
-            'EXEC p_BM_GetBillNo @ClassType =21,@BillNo=@BillNo OUTPUT ' +
-            'select @FInterID as FInterID , @BillNo as BillNo , ' +
-            '''RetGetICMaxNum'' = @ret1';
-      nSQL := Format(nSQL, ['ICStockBill']);
-      //get FInterID, BillNo
-
-      with gDBConnManager.WorkerQuery(nK3Worker, nSQL) do
-      begin
-        nBill := FieldByName('BillNo').AsString;
-        nID := FieldByName('FInterID').AsInteger;
-      end;
-
-      {$IFDEF JYZL}
-        nSQL := MakeSQLByStr([
-          SF('Frob', 1, sfVal),
-          SF('Fbrno', 0, sfVal),
-          SF('Fbrid', 0, sfVal),
-
-          SF('Fpoordbillno', ''),
-          SF('Fstatus', 0, sfVal),
-          SF('Fdate', Date2Str(Now)),
-
-          SF('Ftrantype', 21, sfVal),
-          SF('Fdeptid', 177, sfVal),
-          SF('Fconsignee', 0, sfVal),
-
-          SF('Frelatebrid', 0, sfVal),
-          SF('Fmanagetype', 0, sfVal),
-          SF('Fvchinterid', 0, sfVal),
-
-          SF('Fsalestyle', 101, sfVal),
-          SF('Fseltrantype', 0, sfVal),
-          SF('Fsettledate', Date2Str(Now)),
-
-          SF('Fbillerid', 16442, sfVal),
-          SF('Ffmanagerid', 293, sfVal),
-          SF('Fsmanagerid', 261, sfVal),
-
-          SF('Fupstockwhensave', 0, sfVal),
-          SF('Fmarketingstyle', 12530, sfVal),
-
-          SF('Fbillno', nBill),
-          SF('Finterid', nID, sfVal),
-
-          SF('Fempid', FieldByName('L_SaleID').AsString, sfVal),
-          SF('Fsupplyid', FieldByName('L_CusID').AsString, sfVal)
-          ], 'ICStockBill', '', True);
-        FListA.Add(nSQL);
-      {$ELSE}
-        nSQL := MakeSQLByStr([
-          SF('Frob', 1, sfVal),
-          SF('Fbrno', 0, sfVal),
-          SF('Fbrid', 0, sfVal),
-
-          SF('Fpoordbillno', ''),
-          SF('Fstatus', 0, sfVal),
-          SF('Fdate', Date2Str(Now)),
-
-          SF('Ftrantype', 21, sfVal),
-          SF('Fdeptid', 1356, sfVal),
-          SF('Fconsignee', 0, sfVal),
-
-          SF('Frelatebrid', 0, sfVal),
-          SF('Fmanagetype', 0, sfVal),
-          SF('Fvchinterid', 0, sfVal),
-
-          SF('Fsalestyle', 101, sfVal),
-          SF('Fseltrantype', 83, sfVal),
-          SF('Fsettledate', Date2Str(Now)),
-
-          SF('Fbillerid', 16394, sfVal),
-          SF('Ffmanagerid', 1278, sfVal),
-          SF('Fsmanagerid', 1279, sfVal),
-
-          SF('Fupstockwhensave', 0, sfVal),
-          SF('Fmarketingstyle', 12530, sfVal),
-
-          SF('Fbillno', nBill),
-          SF('Finterid', nID, sfVal),
-
-          SF('Fempid', FieldByName('L_SaleID').AsString, sfVal),
-          SF('Fsupplyid', FieldByName('L_CusID').AsString, sfVal)
-          ], 'ICStockBill', '', True);
-        FListA.Add(nSQL);
-      {$ENDIF}
-
-      //------------------------------------------------------------------------
-      nVal := FieldByName('L_Value').AsFloat;
-      nMoney := nVal * FieldByName('L_Price').AsFloat;
-      nMoney := Float2Float(nMoney, cPrecision, True);
-
-      {$IFDEF JYZL}
-        nStr := FieldByName('L_StockNo').AsString;
-        if nStr = '6053' then  //熟料
-             nStockID := '322'
-        else nStockID := '326';
-
-        nSQL := MakeSQLByStr([
-          SF('Fbrno', 0, sfVal),
-          SF('Finterid', nID),
-          SF('Fitemid', FieldByName('L_StockNo').AsString),
-                                              
-          SF('Fentryid', 1, sfVal),
-          SF('Funitid', 132, sfVal),
-          SF('Fplanmode', 14036, sfVal),
-
-          SF('Fsourceentryid', 1, sfVal),
-          SF('Fchkpassitem', 1058, sfVal),
-
-          SF('Fseoutbillno', FieldByName('L_ID').AsString),
-          SF('Fseoutinterid', '0', sfVal),
-          SF('Fseoutentryid', '0', sfVal),
-
-          SF('Fsourcebillno', '0'),
-          SF('Fsourcetrantype', 83, sfVal),
-          SF('Fsourceinterid', '0', sfVal),
-
-          SF('Fqty',  nVal, sfVal),
-          SF('Fauxqty', nVal, sfVal),
-          SF('Fqtymust', nVal, sfVal),
-          SF('Fauxqtymust', nVal, sfVal),
-
-          SF('Fconsignprice', FieldByName('L_Price').AsFloat , sfVal),
-          SF('Fconsignamount', nMoney, sfVal),
-          SF('fdcstockid', nStockID, sfVal)
-          ], 'ICStockBillEntry', '', True);
-        FListA.Add(nSQL);
-      {$ELSE}
-        nStr := FieldByName('L_StockNo').AsString;
-        if (nStr = '444') or (nStr = '1388') then  //熟料
-             nStockID := '1731'
-        else nStockID := '1730';
-
-        nSQL := MakeSQLByStr([
-          SF('Fbrno', 0, sfVal),
-          SF('Finterid', nID),
-          SF('Fitemid', FieldByName('L_StockNo').AsString),
-                                              
-          SF('Fentryid', 1, sfVal),
-          SF('Funitid', 136, sfVal),
-          SF('Fplanmode', 14036, sfVal),
-
-          SF('Fsourceentryid', 1, sfVal),
-          SF('Fchkpassitem', 1058, sfVal),
-
-          SF('Fseoutbillno', '0'),
-          SF('Fseoutinterid', '0', sfVal),
-          SF('Fseoutentryid', '0', sfVal),
-
-          SF('Fsourcebillno', '0'),
-          SF('Fsourcetrantype', 83, sfVal),
-          SF('Fsourceinterid', '0', sfVal),
-
-          SF('Fentryselfb0166', FieldByName('L_ID').AsString),
-          SF('Fentryselfb0167', FieldByName('L_Truck').AsString),
-          SF('Fentryselfb0168', DateTime2Str(Now)),
-
-          SF('Fqty',  nVal, sfVal),
-          SF('Fauxqty', nVal, sfVal),
-          SF('Fqtymust', nVal, sfVal),
-          SF('Fauxqtymust', nVal, sfVal),
-
-          SF('Fconsignprice', FieldByName('L_Price').AsFloat , sfVal),
-          SF('Fconsignamount', nMoney, sfVal),
-          SF('fdcstockid', nStockID, sfVal)
-          ], 'ICStockBillEntry', '', True);
-        FListA.Add(nSQL);
-      {$ENDIF}
-
-      Next;
-      //xxxxx
-    end;
-
-    //----------------------------------------------------------------------------
-    nK3Worker.FConn.BeginTrans;
-    try
-      for nIdx:=0 to FListA.Count - 1 do
-        gDBConnManager.WorkerExec(nK3Worker, FListA[nIdx]);
-      //xxxxx
-
-      nK3Worker.FConn.CommitTrans;
-      Result := True;
-    except
-      nK3Worker.FConn.RollbackTrans;
-      nStr := '同步交货单数据到K3系统失败.';
-      raise Exception.Create(nStr);
-    end;
-  finally
-    gDBConnManager.ReleaseConnection(nK3Worker);
-  end;
-end;
-
-//Date: 2014-10-15
-//Parm: 采购单列表[FIn.FData]
-//Desc: 同步采购单数据到K3系统
-function TWorkerBusinessCommander.SyncRemoteStockOrder(var nData: string): Boolean;
-var nID,nIdx: Integer;
-    nVal: Double;
-    nK3Worker: PDBWorker;
-    nStr,nSQL,nBill,nStockID: string;
-begin
-  Result := False;
-  nK3Worker := nil;
-
-  nSQL := 'select O_ID,O_Truck,O_SaleID,O_ProID,O_StockNo,' +
-          'D_ID, (D_MValue-D_PValue-D_KZValue) as D_Value,D_OutFact, ' +
-          'D_PValue, D_MValue, D_YSResult, D_KZValue ' +
-          'From $OD od left join $OO oo on od.D_OID=oo.O_ID ' +
-          'where D_ID=''$IN''';
-  nSQL := MacroValue(nSQL, [MI('$OD', sTable_OrderDtl) ,
-                            MI('$OO', sTable_Order),
-                            MI('$IN', FIn.FData)]);
-  //xxxxx
-
-  with gDBConnManager.WorkerQuery(FDBConn, nSQL)  do
-  try
-    if RecordCount < 1 then
-    begin
-      nData := '编号为[ %s ]的采购单不存在.';
-      nData := Format(nData, [FIn.FData]);
-      Exit;
-    end;
-
-    if FieldByName('D_YSResult').AsString=sFlag_No then
-    begin          //拒收
-      Result := True;
-      Exit;
-    end;  
-
-    nK3Worker := gDBConnManager.GetConnection(sFlag_DB_K3, FErrNum);
-    if not Assigned(nK3Worker) then
-    begin
-      nData := '连接数据库失败(DBConn Is Null).';
-      Exit;
-    end;
-
-    if not nK3Worker.FConn.Connected then
-      nK3Worker.FConn.Connected := True;
-    //conn db
-
-    FListA.Clear;
-    First;
-
-    while not Eof do
-    begin
-      nSQL :='DECLARE @ret1 int, @FInterID int, @BillNo varchar(200) '+
-            'Exec @ret1=GetICMaxNum @TableName=''%s'',@FInterID=@FInterID output '+
-            'EXEC p_BM_GetBillNo @ClassType =1,@BillNo=@BillNo OUTPUT ' +
-            'select @FInterID as FInterID , @BillNo as BillNo , ' +
-            '''RetGetICMaxNum'' = @ret1';
-      nSQL := Format(nSQL, ['ICStockBill']);
-      //get FInterID, BillNo
-
-      with gDBConnManager.WorkerQuery(nK3Worker, nSQL) do
-      begin
-        nBill := FieldByName('BillNo').AsString;
-        nID := FieldByName('FInterID').AsInteger;
-      end;
-
-      {$IFDEF JYZL}
-        nSQL := MakeSQLByStr([
-          SF('Frob', 1, sfVal),
-          SF('Fbrno', 0, sfVal),
-          SF('Fbrid', 0, sfVal),
-
-          SF('Ftrantype', 1, sfVal),
-          SF('Fdate', Date2Str(Now)),
-
-          SF('Fbillno', nBill),
-          SF('Finterid', nID, sfVal),
-
-          SF('Fdeptid', 0, sfVal),
-          SF('FEmpid', 0, sfVal),
-          SF('Fsupplyid', FieldByName('O_ProID').AsString, sfVal),
-          //SF('FPosterid', FieldByName('O_SaleID').AsString, sfVal),
-          //SF('FCheckerid', FieldByName('O_SaleID').AsString, sfVal),
-
-
-          SF('Fbillerid', 16394, sfVal),
-          SF('Ffmanagerid', 1789, sfVal),
-          SF('Fsmanagerid', 1789, sfVal),
-
-          SF('Fstatus', 0, sfVal),
-          SF('Fvchinterid', 9662, sfVal),
-
-          SF('Fconsignee', 0, sfVal),
-
-          SF('Frelatebrid', 0, sfVal),
-          SF('Fseltrantype', 0, sfVal),
-
-          SF('Fupstockwhensave', 0, sfVal),
-          SF('Fmarketingstyle', 12530, sfVal)
-          ], 'ICStockBill', '', True);
-        FListA.Add(nSQL);
-      {$ELSE}
-        nSQL := MakeSQLByStr([
-          SF('Frob', 1, sfVal),
-          SF('Fbrno', 0, sfVal),
-          SF('Fbrid', 0, sfVal),
-
-          SF('Ftrantype', 1, sfVal),
-          SF('Fdate', Date2Str(Now)),
-
-          SF('Fbillno', nBill),
-          SF('Finterid', nID, sfVal),
-
-          SF('Fdeptid', 0, sfVal),
-          SF('FEmpid', 0, sfVal),
-          SF('Fsupplyid', FieldByName('O_ProID').AsString, sfVal),
-          //SF('FPosterid', FieldByName('O_SaleID').AsString, sfVal),
-          //SF('FCheckerid', FieldByName('O_SaleID').AsString, sfVal),
-
-
-          SF('Fbillerid', 16394, sfVal),
-          SF('Ffmanagerid', 1789, sfVal),
-          SF('Fsmanagerid', 1789, sfVal),
-
-          SF('Fstatus', 0, sfVal),
-          SF('Fvchinterid', 9662, sfVal),
-
-          SF('Fconsignee', 0, sfVal),
-
-          SF('Frelatebrid', 0, sfVal),
-          SF('Fseltrantype', 0, sfVal),
-
-          SF('Fupstockwhensave', 0, sfVal),
-          SF('Fmarketingstyle', 12530, sfVal)
-          ], 'ICStockBill', '', True);
-        FListA.Add(nSQL);
-      {$ENDIF}
-
-      //------------------------------------------------------------------------
-      nVal := FieldByName('D_Value').AsFloat;
-
-      {$IFDEF JYZL}
-        nStockID := FieldByName('O_StockNo').AsString;
-
-        nSQL := MakeSQLByStr([
-          SF('Fbrno', 0, sfVal),
-          SF('Finterid', nID),
-          SF('Fitemid', nStockID),
-
-          SF('Fqty',  nVal, sfVal),
-          SF('Fauxqty', nVal, sfVal),
-          SF('Fqtymust', 0, sfVal),
-          SF('Fauxqtymust', 0, sfVal),
-
-          SF('Fentryid', 1, sfVal),
-          SF('Funitid', 136, sfVal),
-          SF('Fplanmode', 14036, sfVal),
-
-          SF('Fsourceentryid', 0, sfVal),
-          SF('Fchkpassitem', 1058, sfVal),
-
-          SF('Fsourcetrantype', 0, sfVal),
-          SF('Fsourceinterid', '0', sfVal),
-
-          SF('finstockid', '0', sfVal),
-          SF('fdcstockid', '2071', sfVal),
-
-          SF('FEntrySelfA0158', FieldByName('D_MValue').AsFloat, sfVal),
-          SF('FEntrySelfA0159', FieldByName('D_PValue').AsFloat, sfVal),
-          SF('FEntrySelfA0160', FieldByName('D_KZValue').AsFloat, sfVal),
-          SF('FEntrySelfA0161', FieldByName('O_Truck').AsString),
-          SF('FEntrySelfA0162', FieldByName('D_ID').AsString)
-          ], 'ICStockBillEntry', '', True);
-        FListA.Add(nSQL);
-      {$ELSE}
-        nStockID := FieldByName('O_StockNo').AsString;
-
-        nSQL := MakeSQLByStr([
-          SF('Fbrno', 0, sfVal),
-          SF('Finterid', nID),
-          SF('Fitemid', nStockID),
-
-          SF('Fqty',  nVal, sfVal),
-          SF('Fauxqty', nVal, sfVal),
-          SF('Fqtymust', 0, sfVal),
-          SF('Fauxqtymust', 0, sfVal),
-
-          SF('Fentryid', 1, sfVal),
-          SF('Funitid', 136, sfVal),
-          SF('Fplanmode', 14036, sfVal),
-
-          SF('Fsourceentryid', 0, sfVal),
-          SF('Fchkpassitem', 1058, sfVal),
-
-          SF('Fsourcetrantype', 0, sfVal),
-          SF('Fsourceinterid', '0', sfVal),
-
-          SF('finstockid', '0', sfVal),
-          SF('fdcstockid', '2071', sfVal),
-
-          SF('FEntrySelfA0158', FieldByName('D_MValue').AsFloat, sfVal),
-          SF('FEntrySelfA0159', FieldByName('D_PValue').AsFloat, sfVal),
-          SF('FEntrySelfA0160', FieldByName('D_KZValue').AsFloat, sfVal),
-          SF('FEntrySelfA0161', FieldByName('O_Truck').AsString),
-          SF('FEntrySelfA0162', FieldByName('D_ID').AsString)
-          ], 'ICStockBillEntry', '', True);
-        FListA.Add(nSQL);
-      {$ENDIF}
-
-      Next;
-      //xxxxx
-    end;
-
-    //----------------------------------------------------------------------------
-    nK3Worker.FConn.BeginTrans;
-    try
-      for nIdx:=0 to FListA.Count - 1 do
-        gDBConnManager.WorkerExec(nK3Worker, FListA[nIdx]);
-      //xxxxx
-
-      nK3Worker.FConn.CommitTrans;
-      Result := True;
-    except
-      nK3Worker.FConn.RollbackTrans;
-      nStr := '同步采购单数据到K3系统失败.';
-      raise Exception.Create(nStr);
-    end;
-  finally
-    gDBConnManager.ReleaseConnection(nK3Worker);
-  end;
-end;
-
-//Date: 2014-10-16
-//Parm: 物料列表[FIn.FData]
-//Desc: 验证物料是否允许发货.
-function TWorkerBusinessCommander.IsStockValid(var nData: string): Boolean;
-var nStr: string;
-    nK3Worker: PDBWorker;
-begin
-  Result := True;
-  nK3Worker := nil;
-  try
-    nStr := 'Select FItemID,FName from T_ICItem Where FDeleted=1';
-    //sql
-    
-    with gDBConnManager.SQLQuery(nStr, nK3Worker, sFlag_DB_K3) do
-    begin
-      if RecordCount < 1 then Exit;
-      //not forbid
-
-      SplitStr(FIn.FData, FListA, 0, ',');
-      First;
-
-      while not Eof do
-      begin
-        nStr := Fields[0].AsString;
-        if FListA.IndexOf(nStr) >= 0 then
-        begin
-          nData := '品种[ %s.%s ]已禁用,不能发货.';
-          nData := Format(nData, [nStr, Fields[1].AsString]);
-
-          Result := False;
-          Exit;
-        end;
-
-        Next;
-      end;
-    end;
-  finally
-    gDBConnManager.ReleaseConnection(nK3Worker);
-  end;
-end;   
 {$ENDIF}
 {$IFDEF QLS}
 //Date:2016-06-26
@@ -2211,52 +1376,52 @@ begin
     begin
       Result:=False;
     end;
-
-    if (FListD.Count > 0) then
-    try
-      FDBConn.FConn.BeginTrans;
-      //开启事务
-      for nIdx:=0 to FListD.Count - 1 do
-      begin
-        with gDBConnManager.WorkerQuery(FDBConn,FListD[nIdx]) do
-        begin
-          if RecordCount>0 then
-          begin
-            gDBConnManager.WorkerExec(FDBConn,FListC[nIdx]);
-          end else
-          begin
-            gDBConnManager.WorkerExec(FDBConn,FListA[nIdx]);
-          end;
-        end;
-      end;
-      FDBConn.FConn.CommitTrans;
-    except
-      if FDBConn.FConn.InTransaction then
-        FDBConn.FConn.RollbackTrans;
-      raise;
-    end;
-    if (FListE.Count > 0) then
-    try
-      FDBConn.FConn.BeginTrans;
-      //开启事务
-      for nIdx:=0 to FListE.Count - 1 do
-      begin
-        with gDBConnManager.WorkerQuery(FDBConn,FListE[nIdx]) do
-        begin
-          if RecordCount<1 then
-          begin
-            gDBConnManager.WorkerExec(FDBConn,FListB[nIdx]);
-          end;
-        end;
-      end;
-      FDBConn.FConn.CommitTrans;
-    except
-      if FDBConn.FConn.InTransaction then
-        FDBConn.FConn.RollbackTrans;
-      raise;
-    end;
   finally
     gDBConnManager.ReleaseConnection(nDBWorker);
+  end;
+
+  if (FListD.Count > 0) then
+  try
+    FDBConn.FConn.BeginTrans;
+    //开启事务
+    for nIdx:=0 to FListD.Count - 1 do
+    begin
+      with gDBConnManager.WorkerQuery(FDBConn,FListD[nIdx]) do
+      begin
+        if RecordCount>0 then
+        begin
+          gDBConnManager.WorkerExec(FDBConn,FListC[nIdx]);
+        end else
+        begin
+          gDBConnManager.WorkerExec(FDBConn,FListA[nIdx]);
+        end;
+      end;
+    end;
+    FDBConn.FConn.CommitTrans;
+  except
+    if FDBConn.FConn.InTransaction then
+      FDBConn.FConn.RollbackTrans;
+    raise;
+  end;
+  if (FListE.Count > 0) then
+  try
+    FDBConn.FConn.BeginTrans;
+    //开启事务
+    for nIdx:=0 to FListE.Count - 1 do
+    begin
+      with gDBConnManager.WorkerQuery(FDBConn,FListE[nIdx]) do
+      begin
+        if RecordCount<1 then
+        begin
+          gDBConnManager.WorkerExec(FDBConn,FListB[nIdx]);
+        end;
+      end;
+    end;
+    FDBConn.FConn.CommitTrans;
+  except
+    if FDBConn.FConn.InTransaction then
+      FDBConn.FConn.RollbackTrans;
+    raise;
   end;
 end;
 
@@ -2295,25 +1460,25 @@ begin
         Next;
       end;
     end;
-
-    if FListA.Count > 0 then
-    try
-      FDBConn.FConn.BeginTrans;
-      //开启事务
-
-      nStr := 'truncate table ' + sTable_Provider;
-      gDBConnManager.WorkerExec(FDBConn, nStr);
-
-      for nIdx:=0 to FListA.Count - 1 do
-        gDBConnManager.WorkerExec(FDBConn, FListA[nIdx]);
-      FDBConn.FConn.CommitTrans;
-    except
-      if FDBConn.FConn.InTransaction then
-        FDBConn.FConn.RollbackTrans;
-      raise;
-    end;
   finally
     gDBConnManager.ReleaseConnection(nDBWorker);
+  end;
+
+  if FListA.Count > 0 then
+  try
+    FDBConn.FConn.BeginTrans;
+    //开启事务
+
+    nStr := 'truncate table ' + sTable_Provider;
+    gDBConnManager.WorkerExec(FDBConn, nStr);
+
+    for nIdx:=0 to FListA.Count - 1 do
+      gDBConnManager.WorkerExec(FDBConn, FListA[nIdx]);
+    FDBConn.FConn.CommitTrans;
+  except
+    if FDBConn.FConn.InTransaction then
+      FDBConn.FConn.RollbackTrans;
+    raise;
   end;
 end;
 
@@ -2340,6 +1505,7 @@ begin
     if RecordCount > 0 then
     begin
       First;
+
       while not Eof do
       begin
         nStr := MakeSQLByStr([SF('M_ID', Fields[0].AsString),
@@ -3126,7 +2292,7 @@ begin
 
   nStr := 'select IsNull(SUM(L_Value),''0'') as SendValue from %s where L_LineRecID=''%s'' ';
   nStr := Format(nStr,[sTable_Bill, Fin.FData]);
-  WriteLog(nStr);
+
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
   if RecordCount > 0 then
   begin
@@ -3135,7 +2301,7 @@ begin
 
   nStr := 'select D_TotalValue from %s Where D_RECID=''%s''';
   nStr := Format(nStr, [sTable_ZhiKaDtl, Fin.FData]);
-  WriteLog(nStr);
+  
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
   if RecordCount > 0 then
   begin
@@ -3453,6 +2619,7 @@ begin
   finally
     gDBConnManager.ReleaseConnection(nDBWorker);
   end;
+  
   if FListA.Count > 0 then
   try
     FDBConn.FConn.BeginTrans;
@@ -3516,6 +2683,7 @@ begin
   finally
     gDBConnManager.ReleaseConnection(nDBWorker);
   end;
+  
   if FListA.Count > 0 then
   try
     FDBConn.FConn.BeginTrans;
@@ -3581,6 +2749,7 @@ begin
   finally
     gDBConnManager.ReleaseConnection(nDBWorker);
   end;
+  
   if FListA.Count > 0 then
   try
     FDBConn.FConn.BeginTrans;
@@ -3641,6 +2810,7 @@ begin
   finally
     gDBConnManager.ReleaseConnection(nDBWorker);
   end;
+  
   if FListA.Count > 0 then
   try
     FDBConn.FConn.BeginTrans;
@@ -3698,6 +2868,7 @@ begin
   finally
     gDBConnManager.ReleaseConnection(nDBWorker);
   end;
+  
   if FListA.Count > 0 then
   try
     FDBConn.FConn.BeginTrans;
@@ -3892,6 +3063,7 @@ begin
                     SF('M_TriangleTrade', FieldByName('CMT_TriangleTrade').AsString),
                     SF('M_IntComOriSalesId', FieldByName('InterCompanyOriginalSalesId').AsString),
                     SF('M_PurchType', FieldByName('PurchaseType').AsString),
+                    SF('M_DState', FieldByName('DocumentState').AsString),
                     SF('M_Date', FormatDateTime('yyyy-mm-dd hh:mm:ss',Now)),
                     SF('DataAreaID', gCompanyAct)
                     ], sTable_OrderBaseMain, '', True);
@@ -4000,7 +3172,6 @@ var nID,nIdx: Integer;
     nService: BPM2ERPServiceSoap;
     nMsg:Integer;
     nFYPlanStatus,nCenterId,nLocationId:string;
-    s:string;
 begin
   Result := False;
 
@@ -4009,7 +3180,7 @@ begin
           ' From %s a where L_ID = ''%s'' ';
   nSQL := Format(nSQL,[sTable_Bill,FIn.FData]);
   with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
-  try
+  begin
     if RecordCount < 1 then
     begin
       nData := '编号为[ %s ]的提货单不存在.';
@@ -4023,7 +3194,7 @@ begin
       nData := Format(nData, [FIn.FData]);
       WriteLog(nData);
       Exit;
-    end;   
+    end;
     nLocationId := FieldByName('L_InvLocationId').AsString;
     if nLocationId = '' then nLocationId := 'A';
     nStr:='<PRIMARY>'+
@@ -4047,10 +3218,6 @@ begin
     //----------------------------------------------------------------------------
     try
       nService:=GetBPM2ERPServiceSoap(True,gURLAddr,nil);
-      //s:=nService.test;
-      //WriteLog('测试返回值：'+s);
-      //s:=nService.WRZS2ERPInfoTEST('WRZS_001',nStr,'000');
-      //WriteLog('返回值：'+s);
       nMsg:=nService.WRZS2ERPInfo('WRZS_001',nStr,'000');
       if nMsg=1 then
       begin
@@ -4073,8 +3240,6 @@ begin
         WriteLog('AX接口异常：'+nStr+#13#10+e.Message);
       end;
     end;
-  finally
-
   end;
 end;
 
@@ -4094,7 +3259,7 @@ begin
           ' From %s a where L_ID = ''%s'' and L_FYAX=''1'' ';
   nSQL := Format(nSQL,[sTable_BillBak,FIn.FData]);
   with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
-  try
+  begin
     if RecordCount < 1 then
     begin
       nData := '编号为[ %s ]的提货单不存在.';
@@ -4126,14 +3291,12 @@ begin
              '<InventLocationId>'+nLocationId+'</InventLocationId>'+
              '<xtDInventCenterId>'+FieldByName('L_InvCenterId').AsString+'</xtDInventCenterId>'+
            '</PRIMARY>';
-    //WriteLog('发送值：'+nStr);
+    {$IFDEF DEBUG}
+    WriteLog('发送值：'+nStr);
+    {$ENDIF}
     //----------------------------------------------------------------------------
     try
       nService:=GetBPM2ERPServiceSoap(True,gURLAddr,nil);
-      //s:=nService.test;
-      //WriteLog('测试返回值：'+s);
-      //s:=nService.WRZS2ERPInfoTEST('WRZS_001',nStr,'000');
-      //WriteLog('返回值：'+s);
       nMsg:=nService.WRZS2ERPInfo('WRZS_001',nStr,'000');
       if nMsg=1 then
       begin
@@ -4156,8 +3319,6 @@ begin
         WriteLog('AX接口异常：'+nStr+#13#10+e.Message);
       end;
     end;
-  finally
-
   end;
 end;
 
@@ -4177,7 +3338,7 @@ begin
           ' From %s a where L_ID = ''%s'' ';
   nSQL := Format(nSQL,[sTable_Bill,FIn.FData]);
   with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
-  try
+  begin
     if RecordCount < 1 then
     begin
       nData := '编号为[ %s ]的提货单不存在.';
@@ -4209,7 +3370,9 @@ begin
              '<InventLocationId>'+nLocationId+'</InventLocationId>'+
              '<xtDInventCenterId>'+FieldByName('L_InvCenterId').AsString+'</xtDInventCenterId>'+
            '</PRIMARY>';
-    //WriteLog('发送值：'+nStr);
+    {$IFDEF DEBUG}
+    WriteLog('发送值：'+nStr);
+    {$ENDIF}
     //----------------------------------------------------------------------------
     try
       nService:=GetBPM2ERPServiceSoap(True,gURLAddr,nil);
@@ -4235,8 +3398,6 @@ begin
         WriteLog('AX接口异常：'+nStr+#13#10+e.Message);
       end;
     end;
-  finally
-
   end;
 end;
 
@@ -4256,12 +3417,12 @@ begin
   nSQL := 'select a.L_ID,a.L_StockNo,a.L_Truck,a.L_PValue,a.L_MValue,a.L_Value,'+
           'a.L_InvCenterId,a.L_InvLocationId,a.L_CW,a.L_PlanQty,a.L_HYDan,a.L_Type,'+
           'a.L_MMan,a.L_MDate,b.P_ID,a.L_ZhiKa,a.L_LineRecID,a.L_StockName,'+
-          'L_Value*L_Price as L_TotalMoney,L_CusID,L_ContQuota'+
+          'IsNull(L_Value*L_Price,''0'') as L_TotalMoney,L_CusID,L_ContQuota'+
           ' From %s a,%s b '+
           ' where a.L_ID = ''%s'' and a.L_ID=b.P_Bill ';
   nSQL := Format(nSQL,[sTable_Bill,sTable_PoundLog,FIn.FData]);
   with gDBConnManager.WorkerQuery(FDBConn, nSQL)  do
-  try
+  begin
     if RecordCount < 1 then
     begin
       nData := '交货单号为[ %s ]的磅单不存在.';
@@ -4278,6 +3439,7 @@ begin
     nHYDan:=FieldByName('L_HYDan').AsString;
     if nHYDan='' then
     begin
+      //WriteLog(FieldByName('L_StockName').AsString);
       if (Pos('熟料',FieldByName('L_StockName').AsString)>0) then
       begin
         nHYDan:='I';
@@ -4328,6 +3490,8 @@ begin
     {$ENDIF}
     try
       nService:=GetBPM2ERPServiceSoap(True,gURLAddr,nil);
+      //s:=nService.test;
+      //WriteLog('测试返回值：'+s);
       nMsg:=nService.WRZS2ERPInfo('WRZS_002',nStr,'000');
       if (nMsg=1) or (nMsg=2) then
       begin
@@ -4351,6 +3515,7 @@ begin
             nSQL:='Update %s Set A_FreezeMoney=A_FreezeMoney-(%s) Where A_CID=''%s''';
             nSQL:= Format(nSQL, [sTable_CusAccount, FormatFloat('0.00',nYKMouney), nCustAcc]);
           end;
+          
           gDBConnManager.WorkerExec(FDBConn,nSQL);
           WriteLog('['+FIn.FData+']Release YKMoney: '+nSQL);
         end;
@@ -4369,8 +3534,6 @@ begin
         WriteLog('AX接口异常：'+#13#10+e.Message);
       end;
     end;
-  finally
-
   end;
 end;
 
@@ -4386,7 +3549,7 @@ begin
   nSQL := 'select * From %s a, %s b, %s c where a.D_OID=b.O_ID and a.D_ID=c.P_Order and a.D_ID = ''%s'' ';
   nSQL := Format(nSQL,[sTable_OrderDtl,sTable_Order,sTable_PoundLog,FIn.FData]);
   with gDBConnManager.WorkerQuery(FDBConn, nSQL)  do
-  try
+  begin
     if RecordCount < 1 then
     begin
       nData := '采购单号为[ %s ]的采购磅单不存在.';
@@ -4447,11 +3610,8 @@ begin
         WriteLog('AX接口异常：'+#13#10+e.Message);
       end;
     end;
-  finally
-
   end;
 end;
-
 
 function TWorkerBusinessCommander.SyncVehicleNoAX(var nData: string):Boolean;//同步车号到AX
 var nID,nIdx: Integer;
@@ -4504,45 +3664,798 @@ begin
       Next;
       //xxxxx
     end;
-
-    //----------------------------------------------------------------------------
-    nK3Worker.FConn.BeginTrans;
-    try
-      for nIdx:=0 to FListA.Count - 1 do
-        gDBConnManager.WorkerExec(nK3Worker, FListA[nIdx]);
-      //xxxxx
-
-      nK3Worker.FConn.CommitTrans;
-      Result := True;
-    except
-      nK3Worker.FConn.RollbackTrans;
-      nStr := '同步车号数据到AX系统失败.';
-      raise Exception.Create(nStr);
-    end;
   finally
     gDBConnManager.ReleaseConnection(nK3Worker);
+  end;
+  //----------------------------------------------------------------------------
+  nK3Worker.FConn.BeginTrans;
+  try
+    for nIdx:=0 to FListA.Count - 1 do
+      gDBConnManager.WorkerExec(nK3Worker, FListA[nIdx]);
+    //xxxxx
+
+    nK3Worker.FConn.CommitTrans;
+    Result := True;
+  except
+    nK3Worker.FConn.RollbackTrans;
+    nStr := '同步车号数据到AX系统失败.';
+    raise Exception.Create(nStr);
+  end;
+end;
+
+//读取销售订单信息 lih  2017-01-21
+function TWorkerBusinessCommander.ReadZhikaInfo(var nData: string): Boolean;
+var nStr, nRECID, nZID: string;
+    nPos:Integer;
+begin
+  nStr := 'select D_RECID,' +                     //行ID
+          '  D_ZID,' +                            //销售卡片编号
+          '  D_Type,' +                           //类型(袋,散)
+          '  D_StockNo,' +                        //水泥编号
+          '  D_StockName,' +                      //水泥名称
+          '  D_Price,' +                          //单价
+          '  D_TotalValue,' +                     //订单总量
+          '  D_Value,' +                          //订单剩余量
+          '  D_SalesStatus,' +                    //行状态
+          '  D_Blocked,' +                        //是否停止
+          '  D_Memo,' +                           //备注信息
+          '  Z_Man,' +                            //创建人
+          '  Z_Date,' +                           //创建日期
+          '  Z_Customer,' +                       //客户编号
+          '  Z_Name,' +                           //客户名称
+          '  Z_Lading,' +                         //提货方式
+          '  Z_CID,' +                            //合同编号
+          '  Z_SalesStatus,' +                    //订单状态
+          '  Z_SalesType,' +                      //订单类型
+          '  Z_TriangleTrade,' +                  //三角贸易
+          '  Z_CompanyId,' +                      //公司ID    用来确认三角贸易的客户账套
+          '  Z_XSQYBM,' +                         //销售区域编码
+          '  Z_KHSBM,' +                          //客户识别码
+          '  Z_OrgAccountNum,' +                  //最终客户ID
+          '  Z_OrgAccountName,' +                 //最终客户名称
+          '  Z_OrgXSQYBM ' +                      //最终销售区域编码
+          'from S_ZhiKa a join S_ZhiKaDtl b on a.Z_ID = b.D_ZID ' +
+          'where ((Z_SalesType=''0'') or (Z_SalesType=''3'')) '+
+          'and Z_SalesStatus=''1'' and D_Blocked=''0'' ';
+
+  if FIn.FData <> '' then
+  begin
+    nPos := Pos(';',FIn.FData);
+    if nPos > 0 then
+    begin
+      nZID := Copy(FIn.FData,1,nPos-1);
+      nRECID :=Copy(FIn.FData,nPos+1,Length(FIn.FData)-nPos);
+      nStr := nStr + Format(' and D_ZID=''%s'' and D_RECID=''%s'' ', [nZID,nRECID]);
+    end else
+      nStr := nStr + Format(' and D_ZID=''%s'' ', [FIn.FData]);
+  end;
+  //按单号查询
+
+  if FIn.FExtParam <> '' then
+    nStr := nStr + Format(' and (%s)', [FIn.FExtParam]);
+  //附加查询条件
+
+  Result := False;
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      if FIn.FData = '' then
+           nData := '系统中未找到符合条件的数据.'
+      else nData := Format('单据:[ %s ]无效,或者已经丢失.', [FIn.FData]);
+
+      Exit;
+    end;
+
+    FListA.Clear;
+    FListB.Clear;
+
+    FListB.Values['XCB_ID']         := FieldByName('D_RECID').AsString;
+    FListB.Values['XCB_CardId']     := FieldByName('D_ZID').AsString;
+    FListB.Values['XCB_Origin']     := '';
+    FListB.Values['XCB_BillID']     := FieldByName('Z_CID').AsString;
+    FListB.Values['XCB_SetDate']    := Date2Str(FieldByName('Z_Date').AsDateTime,True);
+    FListB.Values['XCB_CardType']   := FieldByName('Z_SalesType').AsString;
+    FListB.Values['XCB_SourceType'] := '';
+    FListB.Values['XCB_Option']     := '';
+    if FieldByName('Z_TriangleTrade').AsString ='1' then
+    begin
+      FListB.Values['XCB_Client']     := FieldByName('Z_OrgAccountNum').AsString;
+      FListB.Values['XCB_ClientName'] := FieldByName('Z_OrgAccountName').AsString;
+      FListB.Values['XCB_Area']       := FieldByName('Z_OrgXSQYBM').AsString;
+    end else
+    begin
+      FListB.Values['XCB_Client']     := FieldByName('Z_Customer').AsString;
+      FListB.Values['XCB_ClientName'] := FieldByName('Z_Name').AsString;
+      FListB.Values['XCB_Area']       := FieldByName('Z_XSQYBM').AsString;
+    end;
+    FListB.Values['XCB_WorkAddr']   := '';
+    FListB.Values['XCB_Alias']      := '';
+    FListB.Values['XCB_OperMan']    := '';
+
+    FListB.Values['XCB_CementType'] := UpperCase(FieldByName('D_Type').AsString);
+    FListB.Values['XCB_Cement']     := FieldByName('D_StockNo').AsString+UpperCase(FieldByName('D_Type').AsString);
+    if UpperCase(FieldByName('D_Type').AsString) = 'D' then
+      FListB.Values['XCB_CementName'] := FieldByName('D_StockName').AsString+'袋装'
+    else
+      FListB.Values['XCB_CementName'] := FieldByName('D_StockName').AsString+'散装';
+    FListB.Values['XCB_LadeType']   := FieldByName('Z_Lading').AsString;
+    FListB.Values['XCB_Number']     := FloatToStr(FieldByName('D_TotalValue').AsFloat);
+    FListB.Values['XCB_FactNum']    := '0';
+    FListB.Values['XCB_PreNum']     := '0';
+    FListB.Values['XCB_ReturnNum']  := '0';
+    FListB.Values['XCB_OutNum']     := '0';
+    FListB.Values['XCB_RemainNum']  := FloatToStr(FieldByName('D_Value').AsFloat);
+    FListB.Values['XCB_AuditState'] := FieldByName('D_SalesStatus').AsString;
+    FListB.Values['XCB_Status']     := FieldByName('D_Blocked').AsString;
+    FListB.Values['XCB_IsOnly']     := '';
+    FListB.Values['XCB_Del']        := '0';
+    FListB.Values['XCB_Creator']    := FieldByName('Z_Man').AsString;
+    FListB.Values['XCB_CreatorNM']  := FieldByName('Z_Man').AsString;
+    FListB.Values['XCB_CDate']      := DateTime2Str(FieldByName('Z_Date').AsDateTime);
+    FListB.Values['XCB_Firm']       := '';
+    FListB.Values['XCB_FirmName']   := '';
+    FListB.Values['pcb_id']         := '';
+    FListB.Values['pcb_name']       := '';
+    FListB.Values['XCB_TransID']    := '';
+    FListB.Values['XCB_TransName']  := '';
+
+    FListA.Add(PackerEncodeStr(FListB.Text));
+    FOut.FData := PackerEncodeStr(FListA.Text);
+    Result := True;
+  end;
+end;
+
+//读取订单物料价格 lih  2017-02-07
+function TWorkerBusinessCommander.ReadStockPrice(var nData: string): Boolean;
+var nStr,nRecID: string;
+    nWorker: PDBWorker;
+    nPos: Integer;
+begin
+  if FIn.FData <> '' then
+  begin
+    nPos := Pos(';',FIn.FData);
+    if nPos > 0 then
+      nRecID := Copy(FIn.FData,nPos+1,Length(FIn.FData)-nPos)
+    else
+      nRecID := FIn.FData;
+  end else
+  begin
+    Exit;
+  end;
+  nStr := 'Select top 1 A_SalesNewAmount From '+sTable_AddTreaty+
+          ' Where RefRecid='''+nRecID+
+          ''' and convert(varchar(10),A_TakeEffectDate,23)+'' ''+'+
+          'CONVERT(varchar(2),A_TakeEffectTime/(60*60*1000))+'':''+'+
+          'CONVERT(varchar(2),(A_TakeEffectTime%(60*60*1000))/(60*1000))+'':''+'+
+          'CONVERT(varchar(2),((A_TakeEffectTime%(60*60*1000))%(60*1000))/1000)+''.''+'+
+          'CONVERT(varchar(3),A_TakeEffectTime%1000)<= convert(varchar(23),GETDATE(),21) order by Recid desc';
+  Result := False;
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount < 1 then
+  begin
+    nStr := 'Select D_Price From %s Where D_Blocked=''0'' and D_RECID=''%s''';
+    nStr := Format(nStr, [sTable_ZhiKaDtl, nRecID]);
+    with gDBConnManager.SQLQuery(nStr, nWorker, '') do
+    if RecordCount < 1 then
+    begin
+      FOut.FData := '0.00';
+      Exit;
+    end else
+    begin
+      FOut.FData := Fields[0].AsString;
+      Result := True;
+    end;
+  end else
+  begin
+    FOut.FData := Fields[0].AsString;
+    Result := True;
+  end;
+end;
+
+
+//Date: 2016-09-20
+//Parm: 防伪码[FIn.FData]
+//Desc: 防伪码校验
+function TWorkerBusinessCommander.CheckSecurityCodeValid(var nData: string): Boolean;
+var
+  nStr,nCode,nBill_id: string;
+  nSprefix:string;
+  nIdx,nIdlen:Integer;
+  nDs:TDataSet;
+  nBills: TLadingBillItems;
+begin
+  nSprefix := '';
+  nidlen := 0;
+  Result := True;
+  nCode := FIn.FData;
+  if nCode='' then
+  begin
+    nData := '';
+    FOut.FData := nData;
+    Exit;
+  end;
+
+  nStr := 'Select B_Prefix, B_IDLen From %s ' +
+          'Where B_Group=''%s'' And B_Object=''%s''';
+  nStr := Format(nStr, [sTable_SerialBase, sFlag_BusGroup, sFlag_BillNo]);
+  nDs :=  gDBConnManager.WorkerQuery(FDBConn, nStr);
+
+  if nDs.RecordCount>0 then
+  begin
+    nSprefix := nDs.FieldByName('B_Prefix').AsString;
+    nIdlen := nDs.FieldByName('B_IDLen').AsInteger;
+    nIdlen := nIdlen-length(nSprefix);
+  end;
+
+  //生成提货单号
+  nBill_id := nSprefix+Copy(nCode,Length(nCode)-nIdlen+1,nIdlen);
+
+  //查询数据库
+  nStr := 'Select L_ID,L_ZhiKa,L_CusID,L_CusName,L_Type,L_StockNo,' +
+      'L_StockName,L_Truck,L_Value,L_Price,L_ZKMoney,L_Status,' +
+      'L_NextStatus,L_Card,L_IsVIP,L_PValue,L_MValue From $Bill b ';
+  nStr := nStr + 'Where L_ID=''$CD''';
+  nStr := MacroValue(nStr, [MI('$Bill', sTable_Bill), MI('$CD', nBill_id)]);
+
+  nDs := gDBConnManager.WorkerQuery(FDBConn, nStr);
+  if nDs.RecordCount<1 then
+  begin
+    SetLength(nBills, 1);
+    ZeroMemory(@nBills[0],0);
+    FOut.FData := CombineBillItmes(nBills);
+    Exit;
+  end;
+
+  SetLength(nBills, nDs.RecordCount);
+  nIdx := 0;
+  nDs.First;
+  while not nDs.eof do
+  begin
+    with  nBills[nIdx] do
+    begin
+      FID         := nDs.FieldByName('L_ID').AsString;
+      FZhiKa      := nDs.FieldByName('L_ZhiKa').AsString;
+      FCusID      := nDs.FieldByName('L_CusID').AsString;
+      FCusName    := nDs.FieldByName('L_CusName').AsString;
+      FTruck      := nDs.FieldByName('L_Truck').AsString;
+
+      FType       := nDs.FieldByName('L_Type').AsString;
+      FStockNo    := nDs.FieldByName('L_StockNo').AsString;
+      FStockName  := nDs.FieldByName('L_StockName').AsString;
+      FValue      := nDs.FieldByName('L_Value').AsFloat;
+      FPrice      := nDs.FieldByName('L_Price').AsFloat;
+
+      FCard       := nDs.FieldByName('L_Card').AsString;
+      FIsVIP      := nDs.FieldByName('L_IsVIP').AsString;
+      FStatus     := nDs.FieldByName('L_Status').AsString;
+      FNextStatus := nDs.FieldByName('L_NextStatus').AsString;
+      FSelected := True;
+      if FIsVIP = sFlag_TypeShip then
+      begin
+        FStatus    := sFlag_TruckZT;
+        FNextStatus := sFlag_TruckOut;
+      end;
+
+      if FStatus = sFlag_BillNew then
+      begin
+        FStatus     := sFlag_TruckNone;
+        FNextStatus := sFlag_TruckNone;
+      end;
+
+      FPData.FValue := nDs.FieldByName('L_PValue').AsFloat;
+      FMData.FValue := nDs.FieldByName('L_MValue').AsFloat;
+    end;
+
+    Inc(nIdx);
+    nDs.Next;
+  end;
+
+  FOut.FData := CombineBillItmes(nBills);
+end;
+
+//Date: 2016-09-20
+//Parm: 
+//Desc: 工厂待装查询
+function TWorkerBusinessCommander.GetWaitingForloading(var nData: string):Boolean;
+var nFind: Boolean;
+    nLine: PLineItem;
+    nIdx,nInt, i: Integer;
+    nQueues: TQueueListItems;
+begin
+  gTruckQueueManager.RefreshTrucks(True);
+  Sleep(320);
+  //刷新数据
+
+  with gTruckQueueManager do
+  try
+    SyncLock.Enter;
+    Result := True;
+
+    FListB.Clear;
+    FListC.Clear;
+
+    i := 0;
+    SetLength(nQueues, 0);
+    //保存查询记录
+
+    for nIdx:=0 to Lines.Count - 1 do
+    begin
+      nLine := Lines[nIdx];
+
+      nFind := False;
+      for nInt:=Low(nQueues) to High(nQueues) do
+      begin
+        with nQueues[nInt] do
+          if FStockNo = nLine.FStockNo then
+          begin
+            Inc(FLineCount);
+            FTruckCount := FTruckCount + nLine.FRealCount;
+
+            nFind := True;
+            Break;
+          end;
+      end;
+
+      if not nFind then
+      begin
+        SetLength(nQueues, i+1);
+        with nQueues[i] do
+        begin
+          FStockNO    := nLine.FStockNo;
+          FStockName  := nLine.FStockName;
+
+          FLineCount  := 1;
+          FTruckCount := nLine.FRealCount;
+        end;
+
+        Inc(i);
+      end;
+    end;
+
+    for nIdx:=Low(nQueues) to High(nQueues) do
+    begin
+      with FListB, nQueues[nIdx] do
+      begin
+        Clear;
+
+        Values['StockName'] := FStockName;
+        Values['LineCount'] := IntToStr(FLineCount);
+        Values['TruckCount']:= IntToStr(FTruckCount);
+      end;
+
+      FListC.Add(PackerEncodeStr(FListB.Text));
+    end;
+
+    FOut.FData := PackerEncodeStr(FListC.Text);
+  finally
+    SyncLock.Leave;
+  end;
+end;
+
+//Date: 2016-09-23
+//Parm:
+//Desc: 网上订单可下单数量查询
+function TWorkerBusinessCommander.GetBillSurplusTonnage(var nData:string):boolean;
+var nStr,nCusID: string;
+    nVal,nCredit,nPrice: Double;
+    nStockNo:string;
+begin
+  nCusID := '';
+  nStockNo := '';
+  nPrice := 1;
+  nCredit := 0;
+  nVal := 0;
+  Result := False;
+  nCusID := Fin.FData;
+  if nCusID='' then Exit;  
+  //未传递客户号
+
+  nStockNo := Fin.FExtParam;
+  if nStockNo='' then Exit;
+  //未传递产品编号
+
+  //产品销售价格表擦查询单价
+  nStr := 'select p_price from %s where P_StockNo=''%s'' order by P_Date desc';
+  //nStr := Format(nStr, [sTable_SPrice, nStockNo]);
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nData := '未设单价，查询失败!';
+      Exit;
+    end;
+    nPrice := FieldByName('p_price').AsFloat;
+    if Float2PInt(nPrice, 100000, False)<=0 then
+    begin
+      nData := '单价设置不正确，查询失败!';
+      Exit;    
+    end;
+  end;
+
+  //调用GetCustomerValidMoney查询可用金额
+  Result := GetCustomerValidMoney(nData);
+  if not Result then Exit;
+  nVal := StrToFloat(FOut.FData);
+  if Float2PInt(nVal, cPrecision, False)<=0 then
+  begin
+    nData := '编号为[ %s ]的客户账户可用金额不足.';
+    nData := Format(nData, [nCusID]);
+    Exit;
+  end;
+  FOut.FData := FormatFloat('0.0000',nVal/nPrice);
+  Result := True;  
+end;
+
+//获取订单信息，用于网上下单
+function TWorkerBusinessCommander.GetOrderInfo(var nData:string):Boolean;
+var nList: TStrings;
+    nOut: TWorkerBusinessCommand;
+    nCard,nParam:string;
+    nLoginAccount,nLoginCusId,nOrderCusId:string;
+    nSql:string;
+    nDataSet:TDataSet;
+    nOrderValid:Boolean;
+begin
+  nCard := fin.FData;
+  nLoginAccount := FIn.FExtParam;
+  nParam := sFlag_LoadExtInfo;
+  Result := CallMe(cBC_ReadZhiKaInfo, nCard, '', @nOut);
+  if not Result then
+  begin
+    nCard := nOut.FBase.FErrDesc;
+    Exit;
+  end;
+  nList := TStringList.Create;
+  try
+    nList.Text := PackerDecodeStr(nOut.FData);
+    nCard := nList[0];
+    //cBC_ReadZhiKaInfo读取指令允许读取多条,取第一条
+  finally
+    nList.Free;
+  end;
+  FOut.FData := nCard;
+
+  //------防伪校验begin-------
+  nList := TStringList.Create;
+  try
+    nList.Text := PackerDecodeStr(nCard);
+    nOrderCusId := nList.Values['XCB_Client'];
+  finally
+    nList.Free;
+  end;
+
+  nSql := 'select i_itemid from %s where i_group=''%s'' and i_item=''%s'' and i_info=''%s''';
+  nSql := Format(nSql,[sTable_ExtInfo,sFlag_CustomerItem,'手机',nLoginAccount]);
+
+  nDataSet := gDBConnManager.WorkerQuery(FDBConn, nSql);
+  //未找到注册的手机号
+  if nDataSet.RecordCount<1 then
+  begin
+    nData := '未找到注册的手机号码';
+    nout.FBase.FErrDesc := nData;  
+    Result := False;
+    Exit;
+  end;
+
+  nOrderValid := False;
+    
+  while not nDataSet.Eof do
+  begin
+    nLoginCusId := nDataSet.FieldByName('i_itemid').AsString;
+    if nLoginCusId=nOrderCusId then
+    begin
+      nOrderValid := True;
+      Break;
+    end;
+    nDataSet.Next;
+  end;
+
+  if not nOrderValid then
+  begin
+    nData := '请勿冒用其他客户的订单号.';
+    nout.FBase.FErrDesc := nData;  
+    Result := False;
+    Exit;  
+  end;
+  //------防伪校验end-------
+end;
+
+//获取订单列表，用于网上下单
+function TWorkerBusinessCommander.GetOrderList(var nData:string):Boolean;
+var
+  nCusId,nStr:string;
+begin
+  Result := False;
+  nCusId := Trim(fin.FData);
+  if nCusId='' then Exit;
+  nStr := 'select D_RECID,' +                   //行ID
+        '  D_ZID,' +                            //销售卡片编号
+        '  D_Type,' +                           //类型(袋,散)
+        '  D_StockNo,' +                        //水泥编号
+        '  D_StockName,' +                      //水泥名称
+        '  D_Price,' +                          //单价
+        '  D_TotalValue,' +                     //订单总量
+        '  D_Value,' +                          //订单剩余量
+        '  D_SalesStatus,' +                    //行状态
+        '  D_Blocked,' +                        //是否停止
+        '  D_Memo,' +                           //备注信息
+        '  Z_Man,' +                            //创建人
+        '  Z_Date,' +                           //创建日期
+        '  Z_Customer,' +                       //客户编号
+        '  Z_Name,' +                           //客户名称
+        '  Z_Lading,' +                         //提货方式
+        '  Z_CID,' +                            //合同编号
+        '  Z_SalesStatus,' +                    //订单状态
+        '  Z_SalesType,' +                      //订单类型
+        '  Z_TriangleTrade,' +                  //三角贸易
+        '  Z_CompanyId,' +                      //公司ID    用来确认三角贸易的客户账套
+        '  Z_XSQYBM,' +                         //销售区域编码
+        '  Z_KHSBM,' +                          //客户识别码
+        '  Z_OrgAccountNum,' +                  //最终客户ID
+        '  Z_OrgAccountName,' +                 //最终客户名称
+        '  Z_OrgXSQYBM ' +                      //最终销售区域编码
+        'from S_ZhiKa a join S_ZhiKaDtl b on a.Z_ID = b.D_ZID ' +
+        'where ((Z_SalesType=''0'') or (Z_SalesType=''3'')) '+
+        'and Z_SalesStatus=''1'' and D_Blocked=''0'' '+
+        'and ((Z_TriangleTrade=''1'' and Z_OrgAccountNum=''%s'') or (Z_TriangleTrade<>''1'' and Z_Customer=''%s''))';
+        //订单剩余量大于0、未结订单、订单行未停止状态
+  nStr := Format(nStr,[nCusId,nCusId]);
+  //WriteLog(nStr);
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nData := Format('未查询到客户编号[ %s ]对应的订单信息.', [nCusId]);
+      Exit;
+    end;
+
+    FListA.Clear;
+    FListB.Clear;
+    First;
+
+    while not Eof do
+    begin
+      FListB.Values['XCB_ID']         := FieldByName('D_RECID').AsString;
+      FListB.Values['XCB_CardId']     := FieldByName('D_ZID').AsString+';'+FieldByName('D_RECID').AsString;
+      FListB.Values['XCB_Origin']     := '';
+      FListB.Values['XCB_BillID']     := FieldByName('Z_CID').AsString;
+      FListB.Values['XCB_SetDate']    := Date2Str(FieldByName('Z_Date').AsDateTime,True);
+      FListB.Values['XCB_CardType']   := FieldByName('Z_SalesType').AsString;
+      FListB.Values['XCB_SourceType'] := '';
+      FListB.Values['XCB_Option']     := '';
+      if FieldByName('Z_TriangleTrade').AsString ='1' then
+      begin
+        FListB.Values['XCB_Client']     := FieldByName('Z_OrgAccountNum').AsString;
+        FListB.Values['XCB_ClientName'] := FieldByName('Z_OrgAccountName').AsString;
+        FListB.Values['XCB_Area']       := FieldByName('Z_OrgXSQYBM').AsString;
+      end else
+      begin
+        FListB.Values['XCB_Client']     := FieldByName('Z_Customer').AsString;
+        FListB.Values['XCB_ClientName'] := FieldByName('Z_Name').AsString;
+        FListB.Values['XCB_Area']       := FieldByName('Z_XSQYBM').AsString;
+      end;
+      FListB.Values['XCB_WorkAddr']   := '';
+      FListB.Values['XCB_Alias']      := '';
+      FListB.Values['XCB_OperMan']    := '';
+
+      FListB.Values['XCB_Cement']     := FieldByName('D_StockNo').AsString+UpperCase(FieldByName('D_Type').AsString);
+      if UpperCase(FieldByName('D_Type').AsString) = 'D' then
+        FListB.Values['XCB_CementName'] := FieldByName('D_StockName').AsString+'袋装'
+      else
+        FListB.Values['XCB_CementName'] := FieldByName('D_StockName').AsString+'散装';
+      FListB.Values['XCB_LadeType']   := FieldByName('Z_Lading').AsString;
+      FListB.Values['XCB_Number']     := FloatToStr(FieldByName('D_TotalValue').AsFloat);
+      FListB.Values['XCB_FactNum']    := '0';
+      FListB.Values['XCB_PreNum']     := '0';
+      FListB.Values['XCB_ReturnNum']  := '0';
+      FListB.Values['XCB_OutNum']     := '0';
+      FListB.Values['XCB_RemainNum']  := FloatToStr(FieldByName('D_Value').AsFloat);
+      FListB.Values['XCB_AuditState'] := FieldByName('D_SalesStatus').AsString;
+      FListB.Values['XCB_Status']     := FieldByName('D_Blocked').AsString;
+      FListB.Values['XCB_IsOnly']     := '';
+      FListB.Values['XCB_Del']        := '0';
+      FListB.Values['XCB_Creator']    := FieldByName('Z_Man').AsString;
+      FListB.Values['XCB_CreatorNM']  := FieldByName('Z_Man').AsString;
+      FListB.Values['XCB_CDate']      := DateTime2Str(FieldByName('Z_Date').AsDateTime);
+      FListB.Values['XCB_Firm']       := '';
+      FListB.Values['XCB_FirmName']   := '';
+      FListB.Values['pcb_id']         := '';
+      FListB.Values['pcb_name']       := '';
+      FListB.Values['XCB_TransID']    := '';
+      FListB.Values['XCB_TransName']  := '';
+
+      FListA.Add(PackerEncodeStr(FListB.Text));
+      Next;
+    end;
+
+    FOut.FData := PackerEncodeStr(FListA.Text);
+    Result := True;
+  end;
+end;
+
+//获取客户注册信息
+function TWorkerBusinessCommander.getCustomerInfo(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_getCustomerInfo,fin.FData);
+    nData := fin.FData;
+    FOut.FData := fin.FData;
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//客户与微信账号绑定
+function TWorkerBusinessCommander.get_Bindfunc(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_get_Bindfunc,fin.FData);
+    FOut.FData := 'Y';
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//发送消息
+function TWorkerBusinessCommander.send_event_msg(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_send_event_msg,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_send_event_msg,fin.FData);
+    FOut.FData := 'Y';
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//新增商城用户
+function TWorkerBusinessCommander.edit_shopclients(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_edit_shopclients,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_edit_shopclients,fin.FData);
+    FOut.FData := 'Y';
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//添加商品
+function TWorkerBusinessCommander.edit_shopgoods(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_edit_shopgoods,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_edit_shopgoods,fin.FData);
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//获取订单信息
+function TWorkerBusinessCommander.get_shoporders(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_get_shoporders,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_get_shoporders,fin.FData);
+    nData := fin.FData;
+    FOut.FData := fin.FData;
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//根据订单号获取订单信息
+function TWorkerBusinessCommander.get_shoporderbyno(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_get_shoporderbyNO,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_get_shoporders,fin.FData);
+    nData := fin.FData;
+    FOut.FData := fin.FData;
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//修改订单状态
+function TWorkerBusinessCommander.complete_shoporders(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_complete_shoporders,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_get_shoporders,fin.FData);
+    FOut.FData := 'Y';
+  finally
+    frmCall.Free;
   end;
 end;
 
 function TWorkerBusinessCommander.GetSampleID(var nData: string):Boolean;//获取试样编号
 var
   nStr:string;
+  nIdx:Integer;
 begin
   result:=False;
-  nStr := 'select top 1 IsNull(R_SerialNo,'''') as R_SerialNo,R_Date from %s a,%s b '+
-          'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' order by R_ID desc';
-  nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData]);
+  SetLength(FHuaYan, 0);
+  FOut.FData := '试样编号使用完毕.';
+  {$IFDEF QHSN}
+  nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
+          '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL from %s a,%s b '+
+          'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_CenterID=''%s'' '+
+          'and R_BatValid=''%s''';
+  nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, FIn.FExtParam, sFlag_Yes]);
+  {$ELSE}
+  nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
+          '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL from %s a,%s b '+
+          'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_BatValid=''%s''';
+  nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, sFlag_Yes]);
+  {$ENDIF}
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
   begin
-    if (RecordCount > 0) then
+    SetLength(FHuaYan, RecordCount);
+    nIdx:=0;
+    First;
+
+    while not eof do
     begin
-      FOut.FData:=Fields[0].AsString;
-      FOut.FExtParam:=FormatDateTime('yyyy-mm-dd hh:mm:ss',Fields[1].AsDateTime);
-      Result:=True;
+      FHuaYan[nIdx].FReriNo:= Fields[0].AsString;
+      FHuaYan[nIdx].FValue:= Fields[1].AsFloat;
+      FHuaYan[nIdx].FZLVal:= Fields[2].AsFloat;
+      Inc(nIdx);
+      Next;
+    end;
+
+    for nIdx := Low(FHuaYan) to High(FHuaYan) do
+    begin
+      if FHuaYan[nIdx].FValue <= FHuaYan[nIdx].FZLVal then
+      begin
+        nStr := 'update %s set R_BatValid=''%s'' where R_SerialNo=''%s'' ';
+        nStr := Format(nStr,[sTable_StockRecord, sFlag_Yes, FHuaYan[nIdx].FReriNo]);
+        gDBConnManager.WorkerExec(FDBConn,nStr);
+      end else
+      begin
+        FOut.FData:=FHuaYan[nIdx].FReriNo;
+        Result:=True;
+        Exit;
+      end;
     end;
   end;
 end;
+
 function TWorkerBusinessCommander.GetCenterID(var nData: string):Boolean;//获取生产线ID
 var
   nStr:string;
@@ -4812,7 +4725,7 @@ begin
       end else
 
       if (FieldByName('T_Type').AsString = sFlag_Dai) and
-         (FieldByName('T_InFact').AsString <> '') and
+        // (FieldByName('T_InFact').AsString <> '') and
          (FieldByName('L_Status').AsString <> sFlag_TruckOut) then
       begin
         nStr := '车辆[ %s ]在未完成[ %s ]交货单之前禁止开单.';
@@ -4910,8 +4823,12 @@ begin
     Values['ContractID'] := FieldByName('Z_CID').AsString;
     Values['Area'] := FieldByName('Z_XSQYBM').AsString;
     Values['KHSBM'] := FieldByName('Z_KHSBM').AsString;
-    
+
     Values['OrgXSQYMC'] := FieldByName('Z_OrgXSQYMC').AsString;
+    if (Pos('湟中祁连山商砼',FieldByName('Z_Name').AsString)>0) then
+      Values['IfNeiDao'] := 'Y'
+    else
+      Values['IfNeiDao'] := 'N';
   end;
 
   Result := True;
@@ -5153,7 +5070,7 @@ var nStr,nSQL,nFixMoney: string;
     nVal,nMoney: Double;
     nOut: TWorkerBusinessCommand;
     nBxz: Boolean;
-    nAxMoney, nSendValue: Double;
+    nAxMoney,nSendValue: Double;
     nAxMsg,nOnLineModel: string;
 begin
   Result := False;
@@ -5339,10 +5256,13 @@ begin
               SF('L_InvLocationId', FListA.Values['LocationID']),
               SF('L_Area', FListA.Values['Area']),
               SF('L_KHSBM', FListA.Values['KHSBM']),
-              SF('L_JXSTHD', FListA.Values['JXSTHD']),
 
+              SF('L_JXSTHD', FListA.Values['JXSTHD']),
               SF('L_OrgXSQYMC', FListA.Values['OrgXSQYMC']),
               SF('L_CW', FListA.Values['KuWei']),
+
+              SF('L_IfFenChe', FListA.Values['IfFenChe']),
+              SF('L_IfNeiDao', FListA.Values['IfNeiDao']),
               SF('L_TriaTrade', FListA.Values['TriaTrade']),
 
               SF('L_ContQuota', FListA.Values['ContQuota'])
@@ -5389,7 +5309,7 @@ begin
         begin
           nSQL := MakeSQLByStr([
             SF('T_Truck'   , FListA.Values['Truck']),
-            SF('T_StockNo' , FListC.Values['StockNO']),
+            SF('T_StockNo' , FListC.Values['StockNO']+FListC.Values['Type']),
             SF('T_Stock'   , FListC.Values['StockName']),
             SF('T_Type'    , FListC.Values['Type']),
             SF('T_InTime'  , sField_SQLServer_Now, sfVal),
@@ -5446,7 +5366,6 @@ begin
     if Copy(FOut.FData, nIdx, 1) = ',' then
       System.Delete(FOut.FData, nIdx, 1);
     //xxxxx
-    FDBConn.FConn.CommitTrans;
 
     nStr := 'select IsNull(SUM(L_Value),''0'') as SendValue from %s where L_LineRecID=''%s'' ';
     nStr := Format(nStr,[sTable_Bill, FListC.Values['RECID']]);
@@ -5460,12 +5379,21 @@ begin
     nStr := Format(nStr, [sTable_ZhiKaDtl, nSendValue, FListC.Values['RECID']]);
     gDBConnManager.WorkerExec(FDBConn, nStr);
 
+    FDBConn.FConn.CommitTrans;
     Result := True;
   except
     FDBConn.FConn.RollbackTrans;
     raise;
   end;
-  //if SaveBillSendMsgWx(FOut.FData) then nData:=FOut.FData+'开单发送微信消息成功！';
+  //发送微信消息
+  FDBConn.FConn.BeginTrans;
+  try
+    SendMsgToWebMall(nOut.FData,cSendWeChatMsgType_AddBill);
+    FDBConn.FConn.CommitTrans;
+  except
+     FDBConn.FConn.RollbackTrans;
+    raise;
+  end;
 end;
 
 //------------------------------------------------------------------------------
@@ -6041,7 +5969,7 @@ end;
 //Parm: 交货单[FIn.FData];磁卡号[FIn.FExtParam]
 //Desc: 为交货单绑定磁卡
 function TWorkerBusinessBills.SaveBillCard(var nData: string): Boolean;
-var nStr,nSQL,nTruck,nType: string;
+var nStr,nSQL,nTruck,nType,nLid: string;
 begin  
   nType := '';
   nTruck := '';
@@ -6051,6 +5979,7 @@ begin
   //磁卡列表
   nStr := AdjustListStrFormat(FIn.FData, '''', True, ',', False);
   //交货单列表
+  nLid := nStr;
 
   nSQL := 'Select L_ID,L_Card,L_Type,L_Truck,L_OutFact From %s ' +
           'Where L_ID In (%s)';
@@ -6246,6 +6175,9 @@ begin
     FDBConn.FConn.RollbackTrans;
     raise;
   end;
+  //更新微信订单状态
+  nLid := Copy(nLid,2,Length(nLid)-2);
+  ModifyWebOrderStatus(nLid,'0');
 end;
 
 //Date: 2014-09-17
@@ -6330,7 +6262,7 @@ begin
           'L_StockName,L_Truck,L_Value,L_Price,L_ZKMoney,L_Status,' +
           'L_NextStatus,L_Card,L_IsVIP,L_PValue,L_MValue,L_SalesType,'+
           'L_EmptyOut,L_LineRecID,L_InvLocationId,L_InvCenterId,'+
-          'L_TriaTrade From $Bill b ';
+          'L_IfNeiDao,L_TriaTrade From $Bill b ';
   //xxxxx
 
   if nIsBill then
@@ -6395,9 +6327,11 @@ begin
       FYSValid      := FieldByName('L_EmptyOut').AsString;
       FRecID        := FieldByName('L_LineRecID').AsString;
       FLocationID   := FieldByName('L_InvLocationId').AsString;
-      
+
       FCenterID     := FieldByName('L_InvCenterId').AsString;
+      FNeiDao       := FieldByName('L_IfNeiDao').AsString;
       FTriaTrade    := FieldByName('L_TriaTrade').AsString;
+      
       FSelected := True;
 
       Inc(nIdx);
@@ -6516,7 +6450,7 @@ var nStr,nSQL,nTmp: string;
     nAxMoney: Double;
     nAxMsg,nOnLineModel: string;
     nDBZhiKa:TDataSet;
-    nHint: string;
+    nHint,nReiNo: string;
     nTriaTrade: string;
     nTriCusID, nCompanyId: string;
 begin
@@ -6701,30 +6635,42 @@ begin
       if nInt >= 0 then //已称皮
            FNextStatus := sFlag_TruckBFM
       else FNextStatus := sFlag_TruckOut;
-      {$IFDEF ZXKP}
+
+      nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
+              'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
+      nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
+      with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+      if RecordCount > 0 then
+      begin
+        FCenterID:= FieldByName('Z_CenterID').AsString;
+        FKw:= FieldByName('Z_Name').AsString;
+      end;
+      
+      {$IFDEF QHSN}
+      if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
+        FStockName, FCenterID, @nOut) then
+      begin
+        WriteLog(nOut.FData);
+        raise Exception.Create(nOut.FData);
+      end;
+
+      nReiNo:=nOut.FData;  //获取式样编号
+      WriteLog('['+FID+']GetSampleID: '+nReiNo);
+
       nSQL := MakeSQLByStr([SF('L_Status', FStatus),
               SF('L_NextStatus', FNextStatus),
               SF('L_LadeTime', sField_SQLServer_Now, sfVal),
               SF('L_LadeMan', FIn.FBase.FFrom.FUser),
-              SF('L_HYDan', FSampleID),
               SF('L_EmptyOut', FYSValid),
               SF('L_WorkOrder', FWorkOrder),
+              SF('L_InvCenterId', FCenterID),
+              SF('L_HYDan', nReiNo),
               SF('L_CW', FKw)
               ], sTable_Bill, SF('L_ID', FID), False);
       {$ELSE}
-      nSQL := MakeSQLByStr([SF('L_Status', FStatus),
-              SF('L_NextStatus', FNextStatus),
-              SF('L_LadeTime', sField_SQLServer_Now, sfVal),
-              SF('L_LadeMan', FIn.FBase.FFrom.FUser),
-              SF('L_HYDan', FSampleID),
-              SF('L_EmptyOut', FYSValid),
-              SF('L_WorkOrder', FWorkOrder),
-              //SF('L_InvLocationId', FLocationID),
-              SF('L_CW', FKw)
-              ], sTable_Bill, SF('L_ID', FID), False);
-      {$ENDIF}
+      nSQL := MakeSQLByStr([SF('L_Status', FStatus),              SF('L_NextStatus', FNextStatus),              SF('L_LadeTime', sField_SQLServer_Now, sfVal),              SF('L_LadeMan', FIn.FBase.FFrom.FUser),              SF('L_HYDan', FSampleID),              SF('L_EmptyOut', FYSValid),              SF('L_WorkOrder', FWorkOrder),              SF('L_CW', FKw)              ], sTable_Bill, SF('L_ID', FID), False);      {$ENDIF}
       FListA.Add(nSQL);
-
+      
       nSQL := 'Update %s Set T_InLade=%s Where T_HKBills Like ''%%%s%%''';
       nSQL := Format(nSQL, [sTable_ZTTrucks, sField_SQLServer_Now, FID]);
       FListA.Add(nSQL);
@@ -6737,28 +6683,39 @@ begin
     for nIdx:=Low(nBills) to High(nBills) do
     with nBills[nIdx] do
     begin
-      {$IFDEF ZXKP}
+      nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
+              'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
+      nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
+      with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+      if RecordCount > 0 then
+      begin
+        FCenterID:= FieldByName('Z_CenterID').AsString;
+        FKw:= FieldByName('Z_Name').AsString;
+      end;
+
+      {$IFDEF QHSN}
+      if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
+        FStockName, FCenterID, @nOut) then
+      begin
+        WriteLog(nOut.FData);
+        raise Exception.Create(nOut.FData);
+      end;
+
+      nReiNo:=nOut.FData; //获取式样编号
+      WriteLog('['+FID+']GetSampleID: '+nReiNo);
+      
       nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckFH),
               SF('L_NextStatus', sFlag_TruckBFM),
               SF('L_LadeTime', sField_SQLServer_Now, sfVal),
               SF('L_LadeMan', FIn.FBase.FFrom.FUser),
-              SF('L_HYDan', FSampleID),
               SF('L_EmptyOut', FYSValid),
               SF('L_WorkOrder', FWorkOrder),
+              SF('L_InvCenterId', FCenterID),
+              SF('L_HYDan', nReiNo),
               SF('L_CW', FKw)
               ], sTable_Bill, SF('L_ID', FID), False);
       {$ELSE}
-      nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckFH),
-              SF('L_NextStatus', sFlag_TruckBFM),
-              SF('L_LadeTime', sField_SQLServer_Now, sfVal),
-              SF('L_LadeMan', FIn.FBase.FFrom.FUser),
-              SF('L_HYDan', FSampleID),
-              SF('L_EmptyOut', FYSValid),
-              SF('L_WorkOrder', FWorkOrder),
-              //SF('L_InvLocationId', FLocationID),
-              SF('L_CW', FKw)
-              ], sTable_Bill, SF('L_ID', FID), False);
-      {$ENDIF}
+      nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckFH),              SF('L_NextStatus', sFlag_TruckBFM),              SF('L_LadeTime', sField_SQLServer_Now, sfVal),              SF('L_LadeMan', FIn.FBase.FFrom.FUser),              SF('L_HYDan', FSampleID),              SF('L_EmptyOut', FYSValid),              SF('L_WorkOrder', FWorkOrder),              SF('L_CW', FKw)              ], sTable_Bill, SF('L_ID', FID), False);      {$ENDIF}
       FListA.Add(nSQL);
 
       nSQL := 'Update %s Set T_InLade=%s Where T_HKBills Like ''%%%s%%''';
@@ -6795,19 +6752,19 @@ begin
       if FYSValid <> sFlag_Yes then   //判断是否空车出厂
       begin
         nOnLineModel:=GetOnLineModel; //获取是否在线模式
-        if FSalesType='0' then
+        if nBills[0].FSalesType='0' then
         begin
           nBxz:=False;
         end else
         begin
-          if not TWorkerBusinessCommander.CallMe(cBC_GetTriangleTrade,    //获取是否三角贸易
+          {if not TWorkerBusinessCommander.CallMe(cBC_GetTriangleTrade,    //获取是否三角贸易
                 nBills[0].FZhiKa, '', @nOut) then
           begin
             nData := nOut.FData;
             Exit;
           end;
           nTriaTrade:=nOut.FData;
-          if nTriaTrade = sFlag_Yes then FTriaTrade := '1';   // 三角贸易
+          if nTriaTrade = sFlag_Yes then }   // 三角贸易
           WriteLog('贸易类型：'+FTriaTrade);
           if FTriaTrade = '1' then    // 三角贸易
           begin
@@ -6844,7 +6801,6 @@ begin
             end else
             begin
               nData:='离线模式，获取三角贸易客户信息失败';
-              FOut.FData:=nData;
               Result:=True;
               Exit;
             end;
@@ -7011,7 +6967,7 @@ begin
                 nSQL := Format(nSQL, [sTable_CusAccount, m, FCusID]);
               end;
               FListA.Add(nSQL); //更新账户
-              WriteLog('['+FID+']Update YKMoney: '+nStr);
+              WriteLog('['+FID+']Update YKMoney: '+nSQL);
             end;
           end;
           
@@ -7194,6 +7150,27 @@ begin
               SF('L_OutMan', FIn.FBase.FFrom.FUser)
               ], sTable_Bill, SF('L_ID', FID), False);
       FListA.Add(nSQL); //更新交货单
+
+      nVal := Float2Float(FPrice * FValue, cPrecision, True);
+      //提货金额
+      if (FYSValid = sFlag_Yes) and (FTriaTrade <> '1') then   //判断是否空车出厂
+      begin
+        nDBZhiKa:=LoadZhiKaInfo(nBills[nIdx].FZhiKa,nHint);
+        with nDBZhiKa do
+        begin
+          if FieldByName('C_ContQuota').AsString='1' then
+          begin
+            nSQL := 'Update %s Set A_ConFreezeMoney=A_ConFreezeMoney-(%.2f) Where A_CID=''%s''';
+            nSQL := Format(nSQL, [sTable_CusAccount, nVal, FCusID]);
+          end else
+          begin
+            nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney-(%.2f) Where A_CID=''%s''';
+            nSQL := Format(nSQL, [sTable_CusAccount, nVal, FCusID]);
+          end;
+          FListA.Add(nSQL); //更新客户资金(可能不同客户)
+          WriteLog('['+FID+']Relese YKMoney: '+nSQL);
+        end;
+      end;
     end;
 
     nSQL := 'Update %s Set C_Status=''%s'' Where C_Card=''%s''';
@@ -7326,75 +7303,26 @@ begin
 
   if FIn.FExtParam = sFlag_TruckBFM then //称量毛重
   begin
-    {$IFDEF ZXKP}
-
-    {$ELSE}
-    if Assigned(gHardShareData) then
-      gHardShareData('TruckOut:' + nBills[0].FCard);
-    //磅房处理自动出厂
-    {$ENDIF}
-  end;
-
-  {$IFDEF MicroMsg}
-  nStr := '';
-  for nIdx:=Low(nBills) to High(nBills) do
-    nStr := nStr + nBills[nIdx].FID + ',';
-  //xxxxx
-
-  if FIn.FExtParam = sFlag_TruckOut then
-  begin
-    with FListA do
-    begin
-      Clear;
-      Values['bill'] := nStr;
-      Values['company'] := gSysParam.FHintText;
-    end;
-
-    gWXPlatFormHelper.WXSendMsg(cWXBus_OutFact, FListA.Text);
-  end;
-  {$ENDIF}
-  {$IFDEF QLS}
-  {if (FIn.FExtParam = sFlag_TruckOut) and
-    (GetOnLineModel=sFlag_Yes) then
-  begin
+    {$IFDEF QHSN}
     for nIdx:=Low(nBills) to High(nBills) do
     with nBills[nIdx] do
     begin
-      if FYSValid <> sFlag_Yes then   //判断是否空车出厂
+      if FNeiDao='Y' then
       begin
-        try
-          if not TWorkerBusinessCommander.CallMe(cBC_SyncStockBill,FID,'',@nOut) then
-          begin
-            WriteLog(FID+'销售磅单上传失败');
-          end;
-        except
-          on e:Exception do
-          begin
-            WriteLog(FID+'销售磅单上传失败'+e.Message);
-          end;
-        end;
-      end else
-      begin
-        nSQL := 'Select L_FYAX From %s Where L_ID = ''%s'' ';
-        nSQL := Format(nSQL, [sTable_Bill, FID]);
-        with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
-        begin
-          if FieldByName('L_FYAX').AsString='1' then
-          begin
-            try
-              if not TWorkerBusinessCommander.CallMe(cBC_SyncEmpOutBillAX,FID,'',@nOut) then
-              begin
-                WriteLog(FID+'空车出厂提货单上传失败');
-              end;
-            except
-
-            end;
-          end;
-        end;
+        if Assigned(gHardShareData) then
+          gHardShareData('TruckOut:' + nBills[0].FCard);
+        //磅房处理自动出厂
       end;
     end;
-  end;}
-  {$ENDIF}
+    {$ELSE}
+       {$IFNDEF ZXKP}
+       if Assigned(gHardShareData) then
+          gHardShareData('TruckOut:' + nBills[0].FCard);
+        //磅房处理自动出厂
+       {$ENDIF}
+    {$ENDIF}
+  end;
+
   {if FIn.FExtParam = sFlag_TruckOut then
   begin
     if TruckOutSendMsgWx(FListB) then nData:='出厂发送微信成功！';
@@ -8065,7 +7993,7 @@ begin
       Values['O_Value']      := FloatToStr(FieldByName('O_Value').AsFloat);
       Values['O_BRecID']     := FieldByName('O_BRecID').AsString;
 
-      Values['NeiDao']       := FieldByName('O_IfNeiDao').AsString;
+      Values['NeiDao']         := FieldByName('O_IfNeiDao').AsString;
     end;
   end;
 
@@ -8106,7 +8034,7 @@ begin
 
         FRecID      := Values['O_BRecID'];
         FNeiDao     := Values['NeiDao'];
-        FSelected   := True;
+        FSelected := True;
       end;  
     end else
     begin
@@ -8550,8 +8478,8 @@ begin
     begin
       {$IFDEF GGJC}
       gHardShareData('TruckOut:' + nPound[0].FCard);
-        //磅房处理自动出厂
-        WriteLog('磅房处理自动出厂');
+      //磅房处理自动出厂
+      WriteLog('磅房处理自动出厂');
       {$ELSE}
       nSQL := 'Select D_Value From %s Where D_Name=''AutoOutStock'' and D_Value=''%s''';
       nSQL := Format(nSQL, [sTable_SysDict, nPound[0].FStockNo]);
@@ -8588,7 +8516,7 @@ begin
     nPacker := gBusinessPackerManager.LockPacker(sBus_BusinessCommand);
     nPacker.InitData(@nIn, True, False);
     //init
-    
+
     nStr := nPacker.PackIn(@nIn);
     nWorker := gBusinessWorkerManager.LockWorker(FunctionName);
     //get worker
@@ -8603,238 +8531,9 @@ begin
   end;
 end;
 
-//------------------------------------------------------------------------------
-//by lih 2016-05-26
-class function TWorkerBusinessRegWeiXin.FunctionName: string;
-begin
-  Result := sBus_BusinessRegWeiXin;
-end;
-
-constructor TWorkerBusinessRegWeiXin.Create;
-begin
-  FListA := TStringList.Create;
-  FListB := TStringList.Create;
-  FListC := TStringList.Create;
-  inherited;
-end;
-
-destructor TWorkerBusinessRegWeiXin.destroy;
-begin
-  FreeAndNil(FListA);
-  FreeAndNil(FListB);
-  FreeAndNil(FListC);
-  inherited;
-end;
-
-function TWorkerBusinessRegWeiXin.GetFlagStr(const nFlag: Integer): string;
-begin
-  Result := inherited GetFlagStr(nFlag);
-
-  case nFlag of
-   cWorker_GetPackerName : Result := sBus_BusinessCommand;
-  end;
-end;
-
-procedure TWorkerBusinessRegWeiXin.GetInOutData(var nIn, nOut: PBWDataBase);
-begin
-  nIn := @FIn;
-  nOut := @FOut;
-  FDataOutNeedUnPack := False;
-end;
-
-//Date: 2016-05-26
-//Parm: 输入数据
-//lih: 执行nData业务指令
-function TWorkerBusinessRegWeiXin.DoDBWork(var nData: string): Boolean;
-begin
-  with FOut.FBase do
-  begin
-    FResult := True;
-    FErrCode := 'S.00';
-    FErrDesc := '业务执行成功.';
-  end;
-
-  case FIn.FCommand of
-    cBC_RegWeiXin: Result := GetCustomerInfo(nData);
-    cBC_BindUserWeiXin: Result := GetBindfunc(nData);
-  else
-    begin
-      Result := False;
-      nData := '无效的业务代码(Invalid Command).';
-    end;
-  end;
-end;
-
-//Date: 2016-05-26
-//Parm:
-//lih: 获取微信公众号客户信息并保存到DB
-function TWorkerBusinessRegWeiXin.GetCustomerInfo(var nData: string): Boolean;
-var
-  sSQL,nStr:string;
-  nTime:Int64;
-  wxservice:ReviceWS;
-  nMsg:WideString;
-  nhead,nItems,nItem:TXmlNode;
-  errcode,errmsg:string;
-  Factory,phone,Appid,Bindcustomerid,Namepinyin,Email,Openid,Binddate:string;
-begin
-  Result:=False;
-  nTime:=GetTickCount;
-  sSQL:='select D_Value from Sys_Dict where D_Name=''FactoryID''';
-  with gDBConnManager.WorkerQuery(FDBConn,sSQL) do
-  begin
-    if RecordCount<1 then
-    begin
-      nData:=PackerDecodeStr(FIn.FData)+#13#10+'[缺少工厂序列号]'+#13#10+'获取微信公众号客户信息失败！';
-      Exit;
-    end;
-    nStr:='<?xml version="1.0" encoding="UTF-8"?>'+
-          '<DATA>'+
-          '<head>'+
-          '<Factory>'+Fields[0].AsString+'</Factory>'+
-          '<Phone>'+PackerDecodeStr(FIn.FData)+'</Phone>'+
-          '</head></DATA>';
-    {$IFDEF DEBUG}
-    WriteLog(nStr);
-    {$ENDIF}
-  end;
-  wxservice:=GetReviceWS(true,'',nil);
-  nMsg:=wxservice.mainfuncs('getCustomerInfo',nStr);
-  {$IFDEF DEBUG}
-  WriteLog(nMsg);
-  {$ENDIF}
-  FPacker.XMLBuilder.ReadFromString(nMsg);
-  with FPacker.XMLBuilder do
-  begin
-    nhead:=Root.FindNode('head');
-    nItems:=Root.FindNode('Items');
-    if not Assigned(nhead) then
-    begin
-      nData:=PackerDecodeStr(FIn.FData)+'获取微信公众号客户信息失败！';
-      Exit;
-    end;
-
-    errcode:=nhead.NodebyName('errcode').ValueAsString;
-    errmsg:=nhead.NodebyName('errmsg').ValueAsString;
-
-    nItem:=nItems.FindNode('Item');
-    Factory:=nItem.NodebyName('Factory').ValueAsString;
-    phone:=nItem.NodebyName('phone').ValueAsString;
-    Appid:=nItem.NodebyName('Appid').ValueAsString;
-    Bindcustomerid:=nItem.NodebyName('Bindcustomerid').ValueAsString;
-    Namepinyin:=nItem.NodebyName('Namepinyin').ValueAsString;
-    Email:=nItem.NodebyName('Email').ValueAsString;
-    Openid:=nItem.NodebyName('Openid').ValueAsString;
-    Binddate:=nItem.NodebyName('Binddate').ValueAsString;
-  end;
-  sSQL:='select * from W_CustomerInfo '+
-        'where ErrCode=''0'' and Factory='''+Factory+
-        ''' and Phone='''+phone+
-        ''' and BindCustomerId='''+Bindcustomerid+
-        ''' and BindDate='''+Binddate+'''';
-  {$IFDEF DEBUG}
-  WriteLog(sSQL);
-  {$ENDIF}
-  with gDBConnManager.WorkerQuery(FDBConn,sSQL) do
-  begin
-    if RecordCount>1 then
-    begin
-      FOut.FData:=PackerDecodeStr(FIn.FData)+#13#10+'['+Binddate+']'+#13#10+'已获取微信公众号客户信息！';
-      nData:=FOut.FData;
-      Result:=True;
-      Exit;
-    end;
-  end;
-  sSQL:='insert into W_CustomerInfo '+
-        '(ErrCode,ErrMsg,Factory,Phone,AppId,BindCustomerId,NamePinYin,Email,OpenId,BindDate) '+
-        'values ('''+
-        errcode+''','''+errmsg+''','''+Factory+''','''+phone+''','''+Appid+''','''+Bindcustomerid+''','''+
-        Namepinyin+''','''+Email+''','''+Openid+''','''+Binddate+''')';
-  gDBConnManager.WorkerExec(FDBConn,sSQL);
-  FOut.FData:=PackerDecodeStr(FIn.FData)+#13#10+'获取微信公众号客户信息成功！';
-  nData:=FOut.FData;
-  Result:=True;
-end;
-
-//Date: 2016-05-30
-//Parm:
-//lih: 去工厂绑定用户并保存到DB
-function TWorkerBusinessRegWeiXin.GetBindfunc(var nData: string):Boolean;
-var
-  sSQL,nStr:string;
-  nTime:Int64;
-  wxservice:ReviceWS;
-  nMsg:WideString;
-  nhead:TXmlNode;
-  Phone,Factory,ToUser,IsBind,errcode,errmsg:string;
-  nBindStatus:string;
-begin
-  Result:=False;
-  nTime:=GetTickCount;
-  FListA.Text:=PackerDecodeStr(FIn.FData);
-  Phone:=FListA.Values['Phone'];
-  IsBind:=FListA.Values['IsBind'];
-  if IsBind='0' then nBindStatus:='解绑' else nBindStatus:='绑定';
-  sSQL:='select top 1 Factory,BindCustomerId from W_CustomerInfo a,Sys_Dict b '+
-        'where a.Factory=b.D_Value and b.D_Name=''FactoryID'' and a.Phone='''+Phone+
-        ''' order by ID desc';
-  with gDBConnManager.WorkerQuery(FDBConn,sSQL) do
-  begin
-    if RecordCount<1 then
-    begin
-      nData:=Phone+#13#10+'[缺少工厂序列号或绑定用户ID]'+#13#10+'用户'+nBindStatus+'失败！';
-      Exit;
-    end;
-    Factory:=Fields[0].AsString;
-    ToUser:=Fields[1].AsString;
-    nStr:='<?xml version="1.0" encoding="UTF-8"?>'+
-          '<DATA>'+
-          '<head>'+
-          '<Factory>'+Factory+'</Factory>'+
-          '<ToUser>'+ToUser+'</ToUser>'+
-          '<IsBind>'+IsBind+'</IsBind>'+
-          '</head>'+
-          '</DATA>';
-    {$IFDEF DEBUG}
-    WriteLog(nStr);
-    {$ENDIF}
-  end;
-  wxservice:=GetReviceWS(true,'',nil);
-  nMsg:=wxservice.mainfuncs('get_Bindfunc',nStr);
-  {$IFDEF DEBUG}
-  WriteLog(nMsg);
-  {$ENDIF}
-  FPacker.XMLBuilder.ReadFromString(nMsg);
-  with FPacker.XMLBuilder do
-  begin
-    nhead:=Root.FindNode('head');
-    if not Assigned(nhead) then
-    begin
-      nData:=Phone+'用户'+nBindStatus+'失败！';
-      Exit;
-    end;
-
-    errcode:=nhead.NodebyName('errcode').ValueAsString;
-    errmsg:=nhead.NodebyName('errmsg').ValueAsString;
-  end;
-
-  sSQL:='update S_Customer set C_Factory='''+Factory+''',C_ToUser='''+ToUser+
-        ''',C_IsBind='''+IsBind+''' where C_Phone='''+Phone+'''';
-  gDBConnManager.WorkerExec(FDBConn,sSQL);
-  sSQL:='insert into W_BindInfo (Phone,Factory,ToUser,IsBind,ErrCode,ErrMsg,BindDate) '+
-        'values ('''+Phone+''','''+Factory+''','''+ToUser+''','''+IsBind+''','''
-        +errcode+''','''+errmsg+''','''+formatdatetime('yyyy-mm-dd hh:mm:ss',Now)+''')';
-  gDBConnManager.WorkerExec(FDBConn,sSQL);
-  FOut.FData:=Phone+#13#10+'用户'+nBindStatus+'成功！';
-  nData:=FOut.FData;
-  Result:=True;
-end;
-
-
 initialization
   gBusinessWorkerManager.RegisteWorker(TBusWorkerQueryField, sPlug_ModuleBus);
   gBusinessWorkerManager.RegisteWorker(TWorkerBusinessCommander, sPlug_ModuleBus);
   gBusinessWorkerManager.RegisteWorker(TWorkerBusinessBills, sPlug_ModuleBus);
   gBusinessWorkerManager.RegisteWorker(TWorkerBusinessOrders, sPlug_ModuleBus);
-  gBusinessWorkerManager.RegisteWorker(TWorkerBusinessRegWeiXin, sPlug_ModuleBus);  //by lih 2016-05-26
 end.

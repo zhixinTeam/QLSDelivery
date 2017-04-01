@@ -201,7 +201,7 @@ procedure TfFormCard.BtnOKClick(Sender: TObject);
 var nRet: Boolean;
     nStr, nHint: string;
     nIdx: Integer;
-    nStockNo:string;
+    nStockNo,nNeiDao:string;
 begin
   EditCard.Text := Trim(EditCard.Text);
   if EditCard.Text = '' then
@@ -296,6 +296,54 @@ begin
         if GetAutoInFactory(nStockNo) then
         begin
           if SavePurchaseOrders(sFlag_TruckIn, gBills) then
+          begin
+            ShowMsg('车辆进厂成功', sHint);
+          end else
+          begin
+            ShowMsg('车辆进厂失败', sHint);
+            Exit;
+          end;
+        end;
+      end else
+      begin
+        ShowMsg('该车辆不能进厂，详情：'+#13#10#13#10+'获取岗位数据失败', sHint);
+        Exit;
+      end;
+    end else
+    begin
+      if GetLadingBills(EditCard.Text, sFlag_TruckIn, gBills) then
+      begin
+        nHint := '';
+        for nIdx:=Low(gBills) to High(gBills) do
+        begin
+          if gBills[nIdx].FStatus <> sFlag_TruckNone then
+          begin
+            nStr := '※.单号:[ %s ] 状态:[ %-6s -> %-6s ]   ';
+            if nIdx < High(gBills) then nStr := nStr + #13#10;
+
+            nStr := Format(nStr, [gBills[nIdx].FID,
+                    TruckStatusToStr(gBills[nIdx].FStatus),
+                    TruckStatusToStr(gBills[nIdx].FNextStatus)]);
+            nHint := nHint + nStr;
+            if gBills[nIdx].FStatus = sFlag_TruckIn then
+            begin
+              ModalResult := mrOk;
+              Exit;
+            end;
+          end;
+          nStockNo:=gBills[nIdx].FStockNo;
+          nNeiDao:= gBills[nIdx].FNeiDao;
+        end;
+
+        if nHint <> '' then
+        begin
+          nHint := '该车辆当前不能进厂,详情如下: ' + #13#10#13#10 + nHint;
+          ShowDlg(nHint, sHint);
+          Exit;
+        end;
+        if nNeiDao='Y' then
+        begin
+          if SaveLadingBills(nStr,sFlag_TruckIn, gBills) then
           begin
             ShowMsg('车辆进厂成功', sHint);
           end else

@@ -10,12 +10,11 @@ interface
 uses
   Windows, Classes, Controls, SysUtils, UMgrDBConn, UMgrParam, DB,
   UBusinessWorker, UBusinessConst, UBusinessPacker, UMgrQueue,
-  UMgrHardHelper, U02NReader, UMgrERelay, UMultiJS, UMgrRemotePrint,
-  UMgrLEDDisp, UMgrRFID102, UBlueReader;
+  UMgrHardHelper, U02NReader, UMgrERelay, UMgrRemotePrint,
+  UMultiJS_Reply, UMgrLEDDisp, UMgrRFID102;
 
 procedure WhenReaderCardArrived(const nReader: THHReaderItem);
 procedure WhenHYReaderCardArrived(const nReader: PHYReaderItem);
-procedure WhenBlueReaderCardArrived(nHost: TBlueReaderHost; nCard: TBlueReaderCard);
 //有新卡号到达读头
 procedure WhenReaderCardIn(const nCard: string; const nHost: PReaderHost);
 //现场读头有新卡号
@@ -26,10 +25,19 @@ procedure WhenBusinessMITSharedDataIn(const nData: string);
 procedure WhenSaveJS(const nTunnel: PMultiJSTunnel);
 //保存计数结果
 
+procedure SendMsgToWebMall(const nLid:string;const MsgType:Integer);
+//推送消息到微信平台
+function Do_send_event_msg(const nXmlStr: string): string;
+//发送消息
+procedure ModifyWebOrderStatus(const nLId, nStatus:string);
+//修改网上订单状态  nStatus 0:已开卡；1:已出厂
+function Do_ModifyWebOrderStatus(const nXmlStr: string): string;
+//修改网上订单状态
+
 implementation
 
 uses
-  ULibFun, USysDB, USysLoger, UTaskMonitor;
+  ULibFun, USysDB, USysLoger, UTaskMonitor, UMITConst;
 
 const
   sPost_In   = 'in';
@@ -243,23 +251,164 @@ begin
   gSysLoger.AddLog(THardwareHelper, '硬件守护辅助', nEvent);
 end;
 
-procedure BlueOpenDoor(const nReader: string);
+{procedure BlueOpenDoor(const nReader: string);
 begin
   if gHardwareHelper.ConnHelper then
        gHardwareHelper.OpenDoor(nReader)
   else gBlueReader.OpenDoor(nReader);
+end;}
+
+
+procedure SendMsgToWebMall(const nLid:string;const MsgType:Integer);
+var
+  nSql:string;
+  nDs:TDataSet;
+
+  nBills: TLadingBillItems;
+  nXmlStr,nData:string;
+  i,nIdx:Integer;
+  nItem:TLadingBillItem;
+  nMobileNo,nCustomerid:string;
+  nDBConn: PDBWorker;
+begin
+  //加载提货单信息
+  if not GetLadingBills(nLid, sFlag_BillDone, nBills) then
+  begin
+    Exit;
+  end;
+  //调用web接口发送消息
+  for i := Low(nBills) to High(nBills) do
+  begin
+    nItem := nBills[i];
+
+    nXmlStr := '<?xml version="1.0" encoding="UTF-8"?>'
+        +'<DATA>'
+        +'<head>'
+        +'<Factory>%s</Factory>'
+        +'<ToUser>%s</ToUser>'
+        +'<MsgType>%d</MsgType>'
+        +'</head>'
+        +'<Items>'
+        +'	  <Item>'
+        +'	      <BillID>%s</BillID>'
+        +'	      <Card>%s</Card>'
+        +'	      <Truck>%s</Truck>'
+        +'	      <StockNo>%s</StockNo>'
+        +'	      <StockName>%s</StockName>'
+        +'	      <CusID>%s</CusID>'
+        +'	      <CusName>%s</CusName>'
+        +'	      <CusAccount>0</CusAccount>'
+        +'	      <MakeDate></MakeDate>'
+        +'	      <MakeMan></MakeMan>'
+        +'	      <TransID></TransID>'
+        +'	      <TransName></TransName>'
+        +'	      <Searial></Searial>'
+        +'	      <OutFact></OutFact>'
+        +'	      <OutMan></OutMan>'
+        +'	  </Item>	'
+        +'</Items>'
+        +'   <remark/>'
+        +'</DATA>';
+    nXmlStr := Format(nXmlStr,[gSysParam.FFactory, nItem.FCusID, MsgType,//cSendWeChatMsgType_DelBill,
+          nItem.FID,nItem.FCard,nitem.FTruck,
+          nItem.FStockNo,nItem.FStockName,nItem.FCusID,
+          nItem.FCusName]);
+    nXmlStr := PackerEncodeStr(nXmlStr);
+    nData := Do_send_event_msg(nXmlStr);
+    gSysLoger.AddLog(nData);
+
+    if ndata<>'' then
+    begin
+      WriteHardHelperLog(nData, sPost_Out);
+    end;
+  end;
+end;
+
+//发送消息
+function Do_send_event_msg(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_send_event_msg, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//修改网上订单状态
+procedure ModifyWebOrderStatus(const nLId, nStatus:string);
+var
+  nXmlStr,nData,nSql:string;
+  nDBConn: PDBWorker;
+  nWebOrderId:string;
+  nIdx:Integer;
+begin
+  nWebOrderId := '';
+  nDBConn := nil;
+
+  with gParamManager.ActiveParam^ do
+  try
+    nDBConn := gDBConnManager.GetConnection(FDB.FID, nIdx);
+    if not Assigned(nDBConn) then
+    begin
+      //WriteNearReaderLog('连接HM数据库失败(DBConn Is Null).');
+      Exit;
+    end;
+    if not nDBConn.FConn.Connected then
+    nDBConn.FConn.Connected := True;
+
+    //查询网上商城订单
+    nSql := 'select WOM_WebOrderID from %s where WOM_LID=''%s''';
+    nSql := Format(nSql,[sTable_WebOrderMatch,nLId]);
+    //gSysLoger.AddLog(nSql);
+    with gDBConnManager.WorkerQuery(nDBConn, nSql) do
+    if recordcount>0 then
+    begin
+      nWebOrderId := FieldByName('WOM_WebOrderID').asstring;
+    end;
+  finally
+    gDBConnManager.ReleaseConnection(nDBConn);
+  end;
+
+  if nWebOrderId='' then Exit;
+  
+  nXmlStr := '<?xml version="1.0" encoding="UTF-8"?>'
+            +'<DATA>'
+            +'<head><ordernumber>%s</ordernumber>'
+            +'<status>'+nStatus+'</status>'
+            +'</head>'
+            +'</DATA>';
+  nXmlStr := Format(nXmlStr,[nWebOrderId]);
+  nXmlStr := PackerEncodeStr(nXmlStr);
+
+  nData := Do_ModifyWebOrderStatus(nXmlStr);
+  gSysLoger.AddLog(nData);
+
+  if ndata<>'' then
+  begin
+    WriteHardHelperLog(nData, sPost_Out);
+  end;
+end;
+
+//修改网上订单状态
+function Do_ModifyWebOrderStatus(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_complete_shoporders, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
 end;
 
 //Date: 2012-4-22
 //Parm: 卡号
 //Desc: 对nCard放行进厂
-procedure MakeTruckIn(const nCard,nReader: string; const nDB: PDBWorker);
+procedure MakeTruckIn(const nCard,nReader: string);
 var nStr,nTruck,nCardType: string;
     nIdx,nInt: Integer;
     nPLine: PLineItem;
     nPTruck: PTruckItem;
     nTrucks: TLadingBillItems;
     nRet: Boolean;
+    nErrNum: Integer;
+    nDB: PDBWorker;
 begin
   if gTruckQueueManager.IsTruckAutoIn and (GetTickCount -
      gHardwareHelper.GetCardLastDone(nCard, nReader) < 2 * 60 * 1000) then
@@ -270,48 +419,102 @@ begin
 
   nCardType := '';
   if not GetCardUsed(nCard, nCardType) then Exit;
-
-  if nCardType = sFlag_Other then
+  WriteHardHelperLog('MakeTruckIn CardType: '+nCardType);
+  
+  if nCardType = sFlag_Other then   //临时卡进厂
   begin
-    nStr := 'select I_InDate from %s Where I_Card=''%s'' ';
-    nStr := Format(nStr, [sTable_InOutFatory, nCard]);
-    with gDBConnManager.WorkerQuery(nDB,nStr) do
-    begin
-      if RecordCount < 1 then
+    nDB := nil;
+    with gParamManager.ActiveParam^ do
+    Try
+      nDB := gDBConnManager.GetConnection(FDB.FID, nErrNum);
+      if not Assigned(nDB) then
       begin
-        nStr := '读取磁卡[ %s ]订单信息失败.';
-        nStr := Format(nStr, [nCard]);
-
-        WriteHardHelperLog(nStr, sPost_In);
+        WriteHardHelperLog('连接HM数据库失败(DBConn Is Null).');
         Exit;
       end;
-      if FieldByName('I_InDate').IsNull then
+
+      nStr := 'select * from %s Where I_Card=''%s'' ';
+      nStr := Format(nStr, [sTable_InOutFatory, nCard]);
+      with gDBConnManager.WorkerQuery(nDB,nStr) do
       begin
-        gHYReaderManager.OpenDoor(nReader);//抬杆
-        nStr := '临时卡[ %s ]进厂.';
-        nStr := Format(nStr, [nCard]);
+        if RecordCount < 1 then
+        begin
+          nStr := '读取磁卡[ %s ]订单信息失败.';
+          nStr := Format(nStr, [nCard]);
 
-        WriteHardHelperLog(nStr, sPost_In);
-        nStr := 'Update %s Set I_InDate=getdate() Where I_Card=''%s''';
+          WriteHardHelperLog(nStr, sPost_In);
+          Exit;
+        end;
+        if FieldByName('I_InDate').IsNull then
+        begin
+          gHYReaderManager.OpenDoor(nReader);//抬杆
+          nStr := '临时卡[ %s ]进厂.';
+          nStr := Format(nStr, [nCard]);
+
+          WriteHardHelperLog(nStr, sPost_In);
+          nStr := 'Update %s Set I_InDate=getdate() Where I_Card=''%s''';
+          nStr := Format(nStr, [sTable_InOutFatory, nCard]);
+          //xxxxx
+
+          gDBConnManager.WorkerExec(nDB, nStr);
+        end;
+      end;
+      nStr := 'select * from %s Where (I_Card=''%s'') and '+
+              '(I_InDate is not null) and (I_OutDate is not null) ';
+      nStr := Format(nStr, [sTable_InOutFatory, nCard]);
+      with gDBConnManager.WorkerQuery(nDB,nStr) do
+      if RecordCount > 0 then
+      begin
+        nStr := 'Update %s Set C_Status=''%s'' Where C_Card=''%s''';
+        nStr := Format(nStr, [sTable_Card, sFlag_CardIdle, nCard]);
+        gDBConnManager.WorkerExec(nDB, nStr);
+
+        nStr := 'Update %s Set I_Card=''注''+I_Card Where I_Card=''%s''';
         nStr := Format(nStr, [sTable_InOutFatory, nCard]);
-        //xxxxx
-
         gDBConnManager.WorkerExec(nDB, nStr);
       end;
+    finally
+      gDBConnManager.ReleaseConnection(nDB);
     end;
-    nStr := 'select * from %s Where (I_Card=''%s'') and '+
-            '(I_InDate is not null) and (I_OutDate is not null) ';
-    nStr := Format(nStr, [sTable_InOutFatory, nCard]);
-    with gDBConnManager.WorkerQuery(nDB,nStr) do
-    if RecordCount > 0 then
-    begin
-      nStr := 'Update %s Set C_Status=''%s'' Where C_Card=''%s''';
-      nStr := Format(nStr, [sTable_Card, sFlag_CardIdle, nCard]);
-      gDBConnManager.WorkerExec(nDB, nStr);
+    Exit;
+  end;
 
-      nStr := 'Update %s Set I_Card='''' Where I_Card=''%s''';
-      nStr := Format(nStr, [sTable_InOutFatory, nCard]);
-      gDBConnManager.WorkerExec(nDB, nStr);
+  if nCardType = sFlag_ST then    //商砼卡进厂
+  begin
+    nDB := nil;
+    with gParamManager.ActiveParam^ do
+    Try
+      nDB := gDBConnManager.GetConnection(FDB.FID, nErrNum);
+      if not Assigned(nDB) then
+      begin
+        WriteHardHelperLog('连接HM数据库失败(DBConn Is Null).');
+        Exit;
+      end;
+      nStr := 'select * from %s Where I_Card=''%s'' ';
+      nStr := Format(nStr, [sTable_STInOutFact, nCard]);
+      with gDBConnManager.WorkerQuery(nDB,nStr) do
+      begin
+        if RecordCount < 1 then
+        begin
+          nStr := '读取磁卡[ %s ]订单信息失败.';
+          nStr := Format(nStr, [nCard]);
+
+          WriteHardHelperLog(nStr, sPost_In);
+          Exit;
+        end;
+        nTruck:=FieldByName('I_truck').AsString;
+        gHYReaderManager.OpenDoor(nReader);//抬杆
+        nStr := '%s商砼卡[ %s ]进厂.';
+        nStr := Format(nStr, [nTruck,nCard]);
+
+        WriteHardHelperLog(nStr, sPost_In);
+        nStr := 'Insert into %s (I_Card,I_truck,I_Date,I_InDate) Values (''%s'',''%s'',getdate(),getdate()) ';
+        nStr := Format(nStr, [sTable_STInOutFact, nCard,nTruck]);
+        //xxxxx
+        gDBConnManager.WorkerExec(nDB, nStr);
+      end;
+    finally
+      gDBConnManager.ReleaseConnection(nDB);
     end;
     Exit;
   end;
@@ -328,7 +531,7 @@ begin
     WriteHardHelperLog(nStr, sPost_In);
     Exit;
   end;
-
+  WriteHardHelperLog('GetLadingOrders or GetLadingBills Success');
   if Length(nTrucks) < 1 then
   begin
     nStr := '磁卡[ %s ]没有需要进厂车辆.';
@@ -380,7 +583,7 @@ begin
     {$ENDIF}
     Exit;
   end;
-  
+
   if nCardType = sFlag_Provide then
   begin
     if not SaveLadingOrders(sFlag_TruckIn, nTrucks) then
@@ -413,7 +616,8 @@ begin
   end;
   //采购磁卡直接抬杆
 
-  {nPLine := nil;
+  {$IFDEF QHSN}
+  nPLine := nil;
   //nPTruck := nil;
 
   with gTruckQueueManager do
@@ -443,7 +647,8 @@ begin
     end;
   finally
     SyncLock.Leave;
-  end; }
+  end;
+  {$ENDIF}
 
   if not SaveLadingBills(sFlag_TruckIn, nTrucks) then
   begin
@@ -468,38 +673,53 @@ begin
     //抬杆
   end;
   {$ENDIF}
-  {with gTruckQueueManager do
-  if not IsDelayQueue then //厂外模式,进厂时绑定道号(一车多单)
-  try
-    SyncLock.Enter;
-    nTruck := nTrucks[0].FTruck;
 
-    for nIdx:=Lines.Count - 1 downto 0 do
+  {$IFDEF QHSN}
+  nDB := nil;
+  with gParamManager.ActiveParam^ do
+  Try
+    nDB := gDBConnManager.GetConnection(FDB.FID, nErrNum);
+    if not Assigned(nDB) then
     begin
-      nPLine := Lines[nIdx];
-      nInt := TruckInLine(nTruck, PLineItem(Lines[nIdx]).FTrucks);
+      WriteHardHelperLog('连接HM数据库失败(DBConn Is Null).');
+      Exit;
+    end;
+    with gTruckQueueManager do
+    if not IsDelayQueue then //厂外模式,进厂时绑定道号(一车多单)
+    try
+      SyncLock.Enter;
+      nTruck := nTrucks[0].FTruck;
 
-      if nInt < 0 then Continue;
-      nPTruck := nPLine.FTrucks[nInt];
+      for nIdx:=Lines.Count - 1 downto 0 do
+      begin
+        nPLine := Lines[nIdx];
+        nInt := TruckInLine(nTruck, PLineItem(Lines[nIdx]).FTrucks);
 
-      nStr := 'Update %s Set T_Line=''%s'',T_PeerWeight=%d Where T_Bill=''%s''';
-      nStr := Format(nStr, [sTable_ZTTrucks, nPLine.FLineID, nPLine.FPeerWeight,
-              nPTruck.FBill]);
-      //xxxxx
+        if nInt < 0 then Continue;
+        nPTruck := nPLine.FTrucks[nInt];
 
-      gDBConnManager.WorkerExec(nDB, nStr);
-      //绑定通道
+        nStr := 'Update %s Set T_Line=''%s'',T_PeerWeight=%d Where T_Bill=''%s''';
+        nStr := Format(nStr, [sTable_ZTTrucks, nPLine.FLineID, nPLine.FPeerWeight,
+                nPTruck.FBill]);
+        //xxxxx
+
+        gDBConnManager.WorkerExec(nDB, nStr);
+        //绑定通道
+      end;
+    finally
+      SyncLock.Leave;
     end;
   finally
-    SyncLock.Leave;
-  end; }
+    gDBConnManager.ReleaseConnection(nDB);
+  end;
+  {$ENDIF}
 end;
 
 //Date: 2012-4-22
 //Parm: 卡号;读头;打印机
 //Desc: 对nCard放行出厂
 procedure MakeTruckOut(const nCard,nReader,nPrinter,nHyprinter: string);
-var nStr,nCardType: string;
+var nStr,nCardType,nTruck: string;
     nIdx: Integer;
     nRet: Boolean;
     nTrucks: TLadingBillItems;
@@ -525,9 +745,9 @@ begin
       end;
 
       if not nDBConn.FConn.Connected then
-        nDBConn.FConn.Connected := True;
+        nDBConn.FConn.Connected := True;  
       //conn db
-      nStr := 'select I_OutDate from %s Where I_Card=''%s'' ';
+      nStr := 'select * from %s Where I_Card=''%s'' ';
       nStr := Format(nStr, [sTable_InOutFatory, nCard]);
       with gDBConnManager.WorkerQuery(nDBConn,nStr) do
       begin
@@ -539,6 +759,19 @@ begin
           WriteHardHelperLog(nStr, sPost_In);
           Exit;
         end;
+        {$IFDEF QHSN}
+        nTruck:=FieldByName('I_truck').AsString;
+        gHYReaderManager.OpenDoor(nReader);//抬杆
+        nStr := '临时卡[ %s ]进厂.';
+        nStr := Format(nStr, [nCard]);
+
+        WriteHardHelperLog(nStr, sPost_In);
+        nStr := 'Insert into %s (I_Card,I_truck,I_InDate) Values (''%s'',''%s'',getdate()) ';
+        nStr := Format(nStr, [sTable_InOutFatory, nCard,nTruck]);
+        //xxxxx
+
+        gDBConnManager.WorkerExec(nDBConn, nStr);
+        {$ELSE}
         if FieldByName('I_OutDate').IsNull then
         begin
           gHYReaderManager.OpenDoor(nReader);//抬杆
@@ -552,7 +785,11 @@ begin
 
           gDBConnManager.WorkerExec(nDBConn, nStr);
         end;
+        {$ENDIF}
       end;
+      {$IFDEF QHSN}
+
+      {$ELSE}
       nStr := 'select * from %s Where (I_Card=''%s'') and '+
               '(I_InDate is not null) and (I_OutDate is not null) ';
       nStr := Format(nStr, [sTable_InOutFatory, nCard]);
@@ -563,8 +800,53 @@ begin
         nStr := Format(nStr, [sTable_Card, sFlag_CardIdle, nCard]);
         gDBConnManager.WorkerExec(nDBConn, nStr);
 
-        nStr := 'Update %s Set I_Card='''' Where I_Card=''%s''';
+        nStr := 'Update %s Set I_Card=''注''+I_Card Where I_Card=''%s''';
         nStr := Format(nStr, [sTable_InOutFatory, nCard]);
+        gDBConnManager.WorkerExec(nDBConn, nStr);
+      end;
+      {$ENDIF}
+    finally
+      gDBConnManager.ReleaseConnection(nDBConn);
+    end;
+    Exit;
+  end;
+
+  if nCardType = sFlag_ST then
+  begin
+    nDBConn := nil;
+    with gParamManager.ActiveParam^ do
+    Try
+      nDBConn := gDBConnManager.GetConnection(FDB.FID, nErrNum);
+      if not Assigned(nDBConn) then
+      begin
+        WriteHardHelperLog('连接HM数据库失败(DBConn Is Null).');
+        Exit;
+      end;
+
+      if not nDBConn.FConn.Connected then
+        nDBConn.FConn.Connected := True;
+      //conn db
+      nStr := 'select * from %s Where I_Card=''%s'' ';
+      nStr := Format(nStr, [sTable_STInOutFact, nCard]);
+      with gDBConnManager.WorkerQuery(nDBConn,nStr) do
+      begin
+        if RecordCount < 1 then
+        begin
+          nStr := '读取磁卡[ %s ]订单信息失败.';
+          nStr := Format(nStr, [nCard]);
+
+          WriteHardHelperLog(nStr, sPost_In);
+          Exit;
+        end;
+        nTruck:=FieldByName('I_truck').AsString;
+        gHYReaderManager.OpenDoor(nReader);//抬杆
+        nStr := '%s商砼卡[ %s ]出厂.';
+        nStr := Format(nStr, [nTruck,nCard]);
+
+        WriteHardHelperLog(nStr, sPost_In);
+        nStr := 'Insert into %s (I_Card,I_truck,I_Date,I_OutDate) Values (''%s'',''%s'',getdate(),getdate()) ';
+        nStr := Format(nStr, [sTable_STInOutFact, nCard,nTruck]);
+        //xxxxx
         gDBConnManager.WorkerExec(nDBConn, nStr);
       end;
     finally
@@ -624,6 +906,8 @@ begin
 
   for nIdx:=Low(nTrucks) to High(nTrucks) do
   begin
+    //发送微信消息
+    SendMsgToWebMall(nTrucks[nIdx].FID,cSendWeChatMsgType_OutFactory);
     {$IFDEF ZXKP}
     if (nCardType = sFlag_Provide) and (nTrucks[nIdx].FNeiDao = sFlag_Yes) then
     begin
@@ -634,8 +918,18 @@ begin
       Exit;
     end;
     {$ENDIF}
+    {$IFDEF QHSN}
+    if (nCardType = sFlag_Provide) and (nTrucks[nIdx].FNeiDao = sFlag_Yes) then
+    begin
+      nStr := '车辆[ %s ]内倒出厂不打印.';
+      nStr := Format(nStr, [nTrucks[nIdx].FTruck]);
 
-    nStr := #7 + nCardType;
+      WriteHardHelperLog(nStr, sPost_Out);
+      Exit;
+    end;
+    {$ENDIF}
+
+    nStr := nStr + #7 + nCardType;
     //磁卡类型
     
     if (nPrinter = '') and (nHyprinter = '') then
@@ -658,16 +952,20 @@ begin
       gRemotePrinter.PrintBill(nTrucks[nIdx].FID + #9 + nPrinter + nStr);
       WriteHardHelperLog(nTrucks[nIdx].FID + #9 + nPrinter + nStr);
     end;
+    //更新微信订单状态
+    ModifyWebOrderStatus(nTrucks[nIdx].FID,'1');
   end; //打印报表
 end;
 
 //Date: 2012-10-19
 //Parm: 卡号;读头
 //Desc: 检测车辆是否在队列中,决定是否抬杆
-procedure MakeTruckPassGate(const nCard,nReader: string; const nDB: PDBWorker);
+procedure MakeTruckPassGate(const nCard,nReader: string);
 var nStr: string;
     nIdx: Integer;
     nTrucks: TLadingBillItems;
+    nDBConn: PDBWorker;
+    nErrNum: Integer;
 begin
   if not GetLadingBills(nCard, sFlag_TruckOut, nTrucks) then
   begin
@@ -696,16 +994,27 @@ begin
     Exit;
   end;
 
-  BlueOpenDoor(nReader);
+  //BlueOpenDoor(nReader);
   //抬杆
+  nDBConn := nil;
+  with gParamManager.ActiveParam^ do
+  Try
+    nDBConn := gDBConnManager.GetConnection(FDB.FID, nErrNum);
+    if not Assigned(nDBConn) then
+    begin
+      WriteHardHelperLog('连接HM数据库失败(DBConn Is Null).');
+      Exit;
+    end;
+    for nIdx:=Low(nTrucks) to High(nTrucks) do
+    begin
+      nStr := 'Update %s Set T_InLade=%s Where T_Bill=''%s'' And T_InLade Is Null';
+      nStr := Format(nStr, [sTable_ZTTrucks, sField_SQLServer_Now, nTrucks[nIdx].FID]);
 
-  for nIdx:=Low(nTrucks) to High(nTrucks) do
-  begin
-    nStr := 'Update %s Set T_InLade=%s Where T_Bill=''%s'' And T_InLade Is Null';
-    nStr := Format(nStr, [sTable_ZTTrucks, sField_SQLServer_Now, nTrucks[nIdx].FID]);
-
-    gDBConnManager.WorkerExec(nDB, nStr);
-    //更新提货时间,语音程序将不再叫号.
+      gDBConnManager.WorkerExec(nDBConn, nStr);
+      //更新提货时间,语音程序将不再叫号.
+    end;
+  finally
+    gDBConnManager.ReleaseConnection(nDBConn);
   end;
 end;
 
@@ -749,40 +1058,40 @@ begin
       WriteHardHelperLog(nStr);
       Exit;
     end;
-
-    try
-      if nReader.FType = rtIn then
-      begin
-        MakeTruckIn(nStr, nReader.FID, nDBConn);
-      end else
-
-      if nReader.FType = rtOut then
-      begin
-        MakeTruckOut(nStr, nReader.FID, nReader.FPrinter, nReader.FHyprinter);
-      end else
-
-      if nReader.FType = rtGate then
-      begin
-        if nReader.FID <> '' then
-          BlueOpenDoor(nReader.FID);
-        //抬杆
-      end else
-
-      if nReader.FType = rtQueueGate then
-      begin
-        if nReader.FID <> '' then
-          MakeTruckPassGate(nStr, nReader.FID, nDBConn);
-        //抬杆
-      end;
-    except
-      On E:Exception do
-      begin
-        WriteHardHelperLog(E.Message);
-      end;
-    end;
   finally
     gDBConnManager.ReleaseConnection(nDBConn);
   end;
+  
+  try
+    if nReader.FType = rtIn then
+    begin
+      MakeTruckIn(nStr, nReader.FID);
+    end else
+    if nReader.FType = rtOut then
+    begin
+      MakeTruckOut(nStr, nReader.FID, nReader.FPrinter, nReader.FHyprinter);
+    end else
+
+    if nReader.FType = rtGate then
+    begin
+      //if nReader.FID <> '' then
+      //  BlueOpenDoor(nReader.FID);
+      //抬杆
+    end else
+
+    if nReader.FType = rtQueueGate then
+    begin
+      if nReader.FID <> '' then
+        MakeTruckPassGate(nStr, nReader.FID);
+      //抬杆
+    end;
+  except
+    On E:Exception do
+    begin
+      WriteHardHelperLog(E.Message);
+    end;
+  end;
+
 end;
 
 procedure WhenHYReaderCardArrived(const nReader: PHYReaderItem);   //2016-06-24 lih
@@ -797,16 +1106,10 @@ begin
       rt900 :gHardwareHelper.SetReaderCard(nReader.FVReader, 'H' + nReader.FCard, False);
       rt02n :g02NReader.SetReaderCard(nReader.FVReader, 'H' + nReader.FCard);
     end;
-  end else g02NReader.ActiveELabel(nReader.FTunnel, nReader.FCard);
-end;
-
-procedure WhenBlueReaderCardArrived(nHost: TBlueReaderHost; nCard: TBlueReaderCard);
-begin
-  {$IFDEF DEBUG}
-  WriteHardHelperLog(Format('蓝卡读卡器 %s:%s', [nHost.FReaderID, nCard.FCard]));
-  {$ENDIF}
-
-  gHardwareHelper.SetReaderCard(nHost.FReaderID, nCard.FCard, False);
+  end else
+  begin
+    g02NReader.ActiveELabel(nReader.FTunnel, nReader.FCard);
+  end;
 end;
 
 //------------------------------------------------------------------------------
@@ -957,6 +1260,7 @@ begin
       
       gMultiJSManager.AddJS(nTunnel, nTruck, nBill, nPTruck.FDai, True);
       gTaskMonitor.DelTask(nTask);
+      
     end;
   finally
     SyncLock.Leave;
@@ -1142,6 +1446,15 @@ begin
       nField := FindField('T_Card');
       if Assigned(nField) then nTmp := nField.AsString;
 
+      nField := FindField('T_Card2');
+      if (Assigned(nField)) and (Length(nField.AsString)>0) then
+      begin
+        if Length(nTmp)>0 then
+          nTmp := nTmp+';'+nField.AsString
+        else
+          nTmp := nField.AsString;
+      end;
+
       nField := FindField('T_CardUse');
       if Assigned(nField) then nCardUse := nField.AsString;
 
@@ -1253,14 +1566,39 @@ end;
 //Parm: 主机;卡号
 //Desc: 对nHost.nCard新到卡号作出动作
 procedure WhenReaderCardIn(const nCard: string; const nHost: PReaderHost);
-begin 
+//var
+  //nErrNum: Integer;
+  //nDBConn: PDBWorker;
+begin
+  {nDBConn := nil;
+  with gParamManager.ActiveParam^ do
+  Try
+    nDBConn := gDBConnManager.GetConnection(FDB.FID, nErrNum);
+    if not Assigned(nDBConn) then
+    begin
+      WriteHardHelperLog('连接HM数据库失败(DBConn Is Null).');
+      Exit;
+    end;
+  finally
+    gDBConnManager.ReleaseConnection(nDBConn);
+  end;}
+
   if nHost.FType = rtOnce then
   begin
+    if nHost.FFun = rfIn then
+    begin
+      MakeTruckIn(nCard, '');
+    end else
     if nHost.FFun = rfOut then
-         MakeTruckOut(nCard, '', nHost.FPrinter, '')
-    else MakeTruckLadingDai(nCard, nHost.FTunnel);
+    begin
+      if Assigned(nHost.FOptions) then
+        MakeTruckOut(nCard, '', nHost.FPrinter, nHost.FOptions.Values['HYprinter'])
+      else
+        MakeTruckOut(nCard, '', nHost.FPrinter, '');
+    end else
+      MakeTruckLadingDai(nCard, nHost.FTunnel);
   end else
-
+    
   if nHost.FType = rtKeep then
   begin
     MakeTruckLadingSan(nCard, nHost.FTunnel);

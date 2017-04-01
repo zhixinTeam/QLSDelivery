@@ -2,22 +2,22 @@ inherited fFormLSCard: TfFormLSCard
   Left = 369
   Top = 306
   Caption = 'fFormLSCard'
-  ClientHeight = 238
+  ClientHeight = 281
   ClientWidth = 340
   OnClose = FormClose
   PixelsPerInch = 96
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
     Width = 340
-    Height = 238
+    Height = 281
     inherited BtnOK: TButton
       Left = 194
-      Top = 205
+      Top = 248
       TabOrder = 5
     end
     inherited BtnExit: TButton
       Left = 264
-      Top = 205
+      Top = 248
       TabOrder = 6
     end
     object EditTruck: TcxTextEdit [2]

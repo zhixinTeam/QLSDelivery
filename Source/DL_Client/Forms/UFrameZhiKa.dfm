@@ -115,7 +115,7 @@ inherited fFrameZhiKa: TfFrameZhiKa
     inherited dxGroup1: TdxLayoutGroup
       inherited GroupSearch1: TdxLayoutGroup
         object dxLayout1Item1: TdxLayoutItem
-          Caption = #38144#21806#35746#21333':'
+          Caption = #32440#21345#32534#21495':'
           Control = EditID
           ControlOptions.ShowBorder = False
         end
@@ -137,7 +137,7 @@ inherited fFrameZhiKa: TfFrameZhiKa
       end
       inherited GroupDetail1: TdxLayoutGroup
         object dxLayout1Item7: TdxLayoutItem
-          Caption = #38144#21806#35746#21333':'
+          Caption = #32440#21345#32534#21495':'
           Control = cxTextEdit5
           ControlOptions.ShowBorder = False
         end

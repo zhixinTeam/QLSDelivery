@@ -81,6 +81,8 @@ const
 
   cFI_FrameLSCard       = $0113;                     //临时卡办理查询
   cFI_FormLSCard        = $0114;                     //临时卡办理
+  cFI_FrameSTCard       = $0115;                     //商砼卡办理查询
+  cFI_FormSTCard        = $0116;                     //商砼卡办理
 
   cFI_FormMemo          = $1000;                     //备注窗口
   cFI_FormBackup        = $1001;                     //数据备份
@@ -175,6 +177,8 @@ const
   cFI_FramePoundDevia   = $1103;                     //称重误差查询
   cFI_FrameTransferDetailQuery = $1104;              //短倒查询
   cFI_FormTransfer      = $1105;                     //短倒制卡
+  cFI_FrameWXBind       = $1106;                     //微信账号绑定
+  cFI_FormGetWechartAccount    = $1107;                     //客户注册信息
 
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
@@ -193,6 +197,7 @@ type
     FMainTitle  : string;                            //主窗体标题
     FHintText   : string;                            //提示文本
     FCopyRight  : string;                            //主窗体提示内容
+    FFactory    : string;                            //工厂ID
 
     FUserID     : string;                            //用户标识
     FUserName   : string;                            //当前用户
@@ -386,11 +391,11 @@ begin
 
   AddMenuModuleItem('MAIN_W01', cFI_FrameWXAccount);
   AddMenuModuleItem('MAIN_W02', cFI_FrameWXSendLog);
-  AddMenuModuleItem('MAIN_W03', cFI_FormWeixinReg, mtForm);
-  AddMenuModuleItem('MAIN_W04', cFI_FormWeixinBind,mtForm);
+  AddMenuModuleItem('MAIN_W03', cFI_FrameWXBind); 
   AddMenuModuleItem('MAIN_S01', cFI_FormAXBaseLoad,mtForm);
   AddMenuModuleItem('MAIN_S02', cFI_FrameUpInfo);
   AddMenuModuleItem('MAIN_S03', cFI_FrameUpPurchase);
+  AddMenuModuleItem('MAIN_T01', cFI_FrameSTCard);
 
 end;
 

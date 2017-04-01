@@ -1,6 +1,6 @@
 inherited fFormTruckIn: TfFormTruckIn
-  Left = 291
-  Top = 200
+  Left = 296
+  Top = 106
   Width = 486
   Height = 566
   BorderStyle = bsSizeable
@@ -10,17 +10,17 @@ inherited fFormTruckIn: TfFormTruckIn
   PixelsPerInch = 96
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
-    Width = 470
-    Height = 528
+    Width = 478
+    Height = 535
     inherited BtnOK: TButton
-      Left = 324
-      Top = 495
+      Left = 332
+      Top = 502
       Caption = #25918#34892
       TabOrder = 4
     end
     inherited BtnExit: TButton
-      Left = 394
-      Top = 495
+      Left = 402
+      Top = 502
       TabOrder = 5
     end
     object ListInfo: TcxMCListBox [2]
@@ -45,7 +45,7 @@ inherited fFormTruckIn: TfFormTruckIn
     end
     object ListBill: TcxListView [3]
       Left = 23
-      Top = 341
+      Top = 346
       Width = 350
       Height = 115
       Columns = <

@@ -35,8 +35,9 @@ implementation
 uses
   SysUtils, USysLoger, UHardBusiness, UMgrTruckProbe, UMgrParam,
   UMgrQueue, UMgrLEDCard, UMgrHardHelper, UMgrRemotePrint, U02NReader,
-  UMgrERelay, UMultiJS, UMgrRemoteVoice, UMgrCodePrinter, UMgrLEDDisp,
-  UMgrRFID102, UMgrVoiceNet, UBlueReader;
+  UMgrERelay, {$IFDEF QHSN} UMultiJS_Reply, {$ELSE}UMultiJS,{$ENDIF}
+  UMgrRemoteVoice, UMgrCodePrinter, UMgrLEDDisp, UMgrRFID102,
+  UMgrVoiceNet;
 
 class function THardwareWorker.ModuleInfo: TPlugModuleInfo;
 begin
@@ -73,7 +74,11 @@ begin
     end;
 
     nStr := '¼ÆÊýÆ÷';
-    gMultiJSManager.LoadFile(nCfg + 'JSQ.xml');
+    if not Assigned(gMultiJSManager) then
+    begin
+      gMultiJSManager := TMultiJSManager.Create;
+      gMultiJSManager.LoadFile(nCfg + 'JSQ.xml');
+    end;
 
     nStr := '¼ÌµçÆ÷';
     gERelayManager.LoadConfig(nCfg + 'ERelay.xml');
@@ -112,7 +117,7 @@ begin
     begin
       gProberManager := TProberManager.Create;
       gProberManager.LoadConfig(nCfg + 'TruckProber.xml');
-    end; 
+    end;
   except
     on E:Exception do
     begin
@@ -148,7 +153,9 @@ end;
 
 procedure THardwareWorker.BeforeStartServer;
 begin
-  //gTruckQueueManager.StartQueue(gParamManager.ActiveParam.FDB.FID);
+  {$IFDEF QHSN}
+  gTruckQueueManager.StartQueue(gParamManager.ActiveParam.FDB.FID);
+  {$ENDIF}
   //truck queue
 
   gHardwareHelper.OnProce := WhenReaderCardArrived;
@@ -167,11 +174,13 @@ begin
   g02NReader.OnCardOut := WhenReaderCardOut;
   g02NReader.StartReader;
   //near reader
-
+  {$IFDEF QHSN}
   gMultiJSManager.SaveDataProc := WhenSaveJS;
   gMultiJSManager.StartJS;
   //counter
-  //gERelayManager.ControlStart;
+  
+  gERelayManager.ControlStart;
+  {$ENDIF}
   //erelay
 
   gRemotePrinter.StartPrinter;
@@ -182,8 +191,9 @@ begin
   if Assigned(gNetVoiceHelper) then
     gNetVoiceHelper.StartVoice;
   //NetVoice
-
-  //gCardManager.StartSender;
+  {$IFDEF QHSN}
+  gCardManager.StartSender;
+  {$ENDIF}
   //led display
   gDisplayManager.StartDisplay;
   //small led
@@ -200,8 +210,9 @@ begin
   if Assigned(gNetVoiceHelper) then
     gNetVoiceHelper.StopVoice;
   //NetVoice  
-
-  //gERelayManager.ControlStop;
+  {$IFDEF QHSN}
+  gERelayManager.ControlStop;
+  {$ENDIF}
   //erelay
   gMultiJSManager.StopJS;
   //counter
@@ -224,7 +235,9 @@ begin
 
   gDisplayManager.StopDisplay;
   //small led
-  //gCardManager.StopSender;
+  {$IFDEF QHSN}
+  gCardManager.StopSender;
+  {$ENDIF}
   //led
   gProberManager.StopProber;
   //TruckProbe

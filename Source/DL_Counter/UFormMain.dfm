@@ -20,7 +20,7 @@ object fFormMain: TfFormMain
     Left = 0
     Top = 37
     Width = 573
-    Height = 178
+    Height = 174
     HorzScrollBar.Smooth = True
     HorzScrollBar.Tracking = True
     VertScrollBar.Smooth = True
@@ -31,7 +31,7 @@ object fFormMain: TfFormMain
   end
   object SBar: TStatusBar
     Left = 0
-    Top = 403
+    Top = 399
     Width = 573
     Height = 19
     Panels = <>
@@ -95,7 +95,7 @@ object fFormMain: TfFormMain
   end
   object cxSplitter1: TcxSplitter
     Left = 0
-    Top = 215
+    Top = 211
     Width = 573
     Height = 8
     HotZoneClassName = 'TcxXPTaskBarStyle'
@@ -104,7 +104,7 @@ object fFormMain: TfFormMain
   end
   object dxChart1: TdxOrgChart
     Left = 0
-    Top = 223
+    Top = 219
     Width = 573
     Height = 180
     DefaultNodeWidth = 60

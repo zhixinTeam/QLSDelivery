@@ -82,6 +82,7 @@ object FDM: TFDM
     Top = 128
   end
   object ImageBar: TcxImageList
+    BkColor = 14120960
     FormatVersion = 1
     DesignInfo = 4456468
     ImageInfo = <

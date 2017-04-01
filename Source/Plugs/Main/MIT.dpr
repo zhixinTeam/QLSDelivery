@@ -28,8 +28,7 @@ uses
   UFormPerform in '..\Forms\UFormPerform.pas' {fFormPerform},
   UFormServiceURL in '..\Forms\UFormServiceURL.pas' {fFormServiceURL},
   UFramePlugs in '..\Forms\UFramePlugs.pas' {fFramePlugs: TFrame},
-  BPM2ERPService in '..\Common\BPM2ERPService.pas',
-  BPM2ERPService1 in '..\Common\BPM2ERPService1.pas';
+  BPM2ERPService in '..\Common\BPM2ERPService.pas';
 
 {$R *.res}
 {$R RODLFile.RES}

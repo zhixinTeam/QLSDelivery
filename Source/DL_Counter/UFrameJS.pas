@@ -4,12 +4,14 @@
 *******************************************************************************}
 unit UFrameJS;
 
+{$I Link.Inc}
 {$I js_inc.inc}
 interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  UMultiJS, ULibFun, USysConst, UFormWait, UFormInputbox, cxLookAndFeels,
+  {$IFDEF QHSN} UMultiJS_Reply, {$ELSE}UMultiJS,{$ENDIF} ULibFun, USysConst,
+  UFormWait, UFormInputbox, cxLookAndFeels,
   cxLookAndFeelPainters, cxContainer, cxEdit, StdCtrls, ExtCtrls, cxLabel,
   cxGraphics, cxControls;
 

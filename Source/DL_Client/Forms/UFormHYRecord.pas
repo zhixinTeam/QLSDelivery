@@ -83,7 +83,6 @@ type
     cxTextEdit28: TcxTextEdit;
     cxTextEdit45: TcxTextEdit;
     Label41: TLabel;
-    cxTextEdit55: TcxTextEdit;
     Label42: TLabel;
     cxTextEdit56: TcxTextEdit;
     Label43: TLabel;
@@ -118,6 +117,7 @@ type
     cbxCenterID: TcxComboBox;
     dxLayoutControl1Item9: TdxLayoutItem;
     dxLayoutControl1Group4: TdxLayoutGroup;
+    cbxSgzl: TcxComboBox;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditIDPropertiesButtonClick(Sender: TObject;
@@ -337,6 +337,23 @@ begin
     end;
   end;
 
+  if cbxSgzl.Properties.Items.Count < 1 then
+  begin
+    nStr := 'Select D_Value from %s where D_Name=''%s'' ';
+    nStr := Format(nStr,[sTable_SysDict,sFlag_Sgzl]);
+    with FDM.QueryTemp(nStr) do
+    if RecordCount > 0 then
+    begin
+      First;
+      while not Eof do
+      begin
+        if Fields[0].AsString<> '' then
+          cbxSgzl.Properties.Items.Add(Fields[0].AsString);
+        Next;
+      end;
+    end;
+  end;
+
   if cbxCenterID.Properties.Items.Count < 1 then
   begin
     nStr := 'Select I_CenterID from %s ';
@@ -441,9 +458,18 @@ begin
     EditStock.SetFocus;
     ShowMsg('请选择生产线', sHint); Exit;
   end;
+  {$ENDIF}
+  
+  {$IFDEF QHSN}
+  if cbxCenterID.ItemIndex < 0 then
+  begin
+    EditStock.SetFocus;
+    ShowMsg('请选择生产线', sHint); Exit;
+  end;
   {$ELSE}
   cbxCenterID.ItemIndex := -1;
   {$ENDIF}
+
   
   if FRecordID = '' then
   begin

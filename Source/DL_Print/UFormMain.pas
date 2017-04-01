@@ -252,31 +252,153 @@ begin
 end;
 
 //------------------------------------------------------------------------------
+//Date: 2016-10-28
+//Parm: 交货单号;提示;数据对象;打印机
+//Desc: 打印nBill交货单号
+function PrintBill4(const nBill: string; var nHint: string;
+ const nPrinter: string = ''): Boolean;
+var nStr,nIfFenChe: string;
+    nDS: TDataSet;
+begin
+  Result := False;
+  try
+    nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID From %s b Where L_ID=''%s''';
+    nStr := Format(nStr, [sTable_Bill, nBill]);
+
+    nDS := FDM.SQLQuery(nStr, FDM.SQLQuery1);
+    if not Assigned(nDS) then Exit;
+
+    if nDS.RecordCount < 1 then
+    begin
+      nHint := '交货单[ %s ] 已无效!!';
+      nHint := Format(nHint, [nBill]);
+      Exit;
+    end;
+
+    nStr := gPath + 'Report\LadingBill4.fr3';
+    if not FDR.LoadReportFile(nStr) then
+    begin
+      nHint := '无法正确加载报表文件';
+      Exit;
+    end;
+
+    if nPrinter = '' then
+         FDR.Report1.PrintOptions.Printer := 'My_Default_Printer'
+    else FDR.Report1.PrintOptions.Printer := nPrinter;
+
+    FDR.Dataset1.DataSet := FDM.SQLQuery1;
+    FDR.PrintReport;
+    Result := FDR.PrintSuccess;
+    if Result then
+    begin
+      nStr := 'update %s set L_BDPrint=L_BDPrint+1 Where L_ID=''%s''';
+      nStr := Format(nStr, [sTable_Bill, nBill]);
+      with FDM.SQLTemp do
+      begin
+        Close;
+        SQL.Text:=nStr;
+        ExecSQL;
+      end;
+    end;
+  except
+    on e:Exception do
+    begin
+      WriteLog('PrintBill4: '+e.Message);
+    end;
+  end;
+end;
+
+//------------------------------------------------------------------------------
+//Date: 2016-10-28
+//Parm: 交货单号;提示;数据对象;打印机
+//Desc: 打印nBill交货单号
+function PrintBill6(const nBill: string; var nHint: string;
+ const nPrinter: string = ''): Boolean;
+var nStr,nIfFenChe: string;
+    nDS: TDataSet;
+begin
+  Result := False;
+  try
+    nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID From %s b Where L_ID=''%s''';
+    nStr := Format(nStr, [sTable_Bill, nBill]);
+
+    nDS := FDM.SQLQuery(nStr, FDM.SQLQuery1);
+    if not Assigned(nDS) then Exit;
+
+    if nDS.RecordCount < 1 then
+    begin
+      nHint := '交货单[ %s ] 已无效!!';
+      nHint := Format(nHint, [nBill]);
+      Exit;
+    end;
+
+    nStr := gPath + 'Report\LadingBill6.fr3';
+    if not FDR.LoadReportFile(nStr) then
+    begin
+      nHint := '无法正确加载报表文件';
+      Exit;
+    end;
+
+    if nPrinter = '' then
+         FDR.Report1.PrintOptions.Printer := 'My_Default_Printer'
+    else FDR.Report1.PrintOptions.Printer := nPrinter;
+
+    FDR.Dataset1.DataSet := FDM.SQLQuery1;
+    FDR.PrintReport;
+    Result := FDR.PrintSuccess;
+    if Result then
+    begin
+      nStr := 'update %s set L_BDPrint=L_BDPrint+1 Where L_ID=''%s''';
+      nStr := Format(nStr, [sTable_Bill, nBill]);
+      with FDM.SQLTemp do
+      begin
+        Close;
+        SQL.Text:=nStr;
+        ExecSQL;
+      end;
+    end;
+  except
+    on e:Exception do
+    begin
+      WriteLog('PrintBill6: '+e.Message);
+    end;
+  end;
+end;
+
+//------------------------------------------------------------------------------
 //Date: 2012-4-1
 //Parm: 交货单号;提示;数据对象;打印机
 //Desc: 打印nBill交货单号
 function PrintBillReport(const nBill: string; var nHint: string;
  const nPrinter: string = ''; const nMoney: string = '0'): Boolean;
-var nStr: string;
+var nStr,nIfFenChe: string;
     nDS: TDataSet;
+    nP4OK,nP6OK:Boolean;
 begin
   Result := False;
   try
-    try
-      nStr := 'Select *,%s As L_ValidMoney From %s b Where L_ID=''%s''';
-      nStr := Format(nStr, [nMoney, sTable_Bill, nBill]);
+    nStr := 'Select *,%s As L_ValidMoney From %s b Where L_ID=''%s''';
+    nStr := Format(nStr, [nMoney, sTable_Bill, nBill]);
 
-      nDS := FDM.SQLQuery(nStr, FDM.SQLQuery1);
-      if not Assigned(nDS) then Exit;
+    nDS := FDM.SQLQuery(nStr, FDM.SQLQuery1);
+    if not Assigned(nDS) then Exit;
 
-      if nDS.RecordCount < 1 then
-      begin
-        nHint := '交货单[ %s ] 已无效!!';
-        nHint := Format(nHint, [nBill]);
-        Exit;
-      end;
-      gIfHY:= nDS.Fieldbyname('L_IfHYPrint').AsString;
-
+    if nDS.RecordCount < 1 then
+    begin
+      nHint := '交货单[ %s ] 已无效!!';
+      nHint := Format(nHint, [nBill]);
+      Exit;
+    end;
+    nIfFenChe:= nDS.FieldByName('L_IfFenChe').AsString;
+    //gIfHY:= nDS.Fieldbyname('L_IfHYPrint').AsString;
+    if nIfFenChe='Y' then
+    begin
+      nP4OK:=PrintBill4(nBill,nHint,nPrinter);
+      Sleep(200);
+      nP6OK:=PrintBill6(nBill,nHint,nPrinter);
+      Result:=True;
+    end else
+    begin
       nStr := gPath + 'Report\LadingBill.fr3';
       if not FDR.LoadReportFile(nStr) then
       begin
@@ -302,14 +424,12 @@ begin
           ExecSQL;
         end;
       end;
-    except
-      on e:Exception do
-      begin
-        WriteLog('PrintBillReport: '+e.Message);
-      end;
     end;
-  finally
-    Result:=True;
+  except
+    on e:Exception do
+    begin
+      WriteLog('PrintBillReport: '+e.Message);
+    end;
   end;
 end;
 
@@ -323,42 +443,38 @@ var nStr: string;
 begin
   Result := False;
   try
-    try
-      nStr := 'Select * From %s oo Inner Join %s od on oo.O_ID=od.D_OID Where D_ID=''%s''';
-      nStr := Format(nStr, [sTable_Order, sTable_OrderDtl, nOrder]);
+    nStr := 'Select * From %s oo Inner Join %s od on oo.O_ID=od.D_OID Where D_ID=''%s''';
+    nStr := Format(nStr, [sTable_Order, sTable_OrderDtl, nOrder]);
 
-      nDS := FDM.SQLQuery(nStr, FDM.SQLQuery1);
-      if not Assigned(nDS) then Exit;
+    nDS := FDM.SQLQuery(nStr, FDM.SQLQuery1);
+    if not Assigned(nDS) then Exit;
 
-      if nDS.RecordCount < 1 then
-      begin
-        nHint := '采购单[ %s ] 已无效!!';
-        nHint := Format(nHint, [nOrder]);
-        Exit;
-      end;
-
-      nStr := gPath + 'Report\PurchaseOrder.fr3';
-      if not FDR.LoadReportFile(nStr) then
-      begin
-        nHint := '无法正确加载报表文件';
-        Exit;
-      end;
-
-      if nPrinter = '' then
-           FDR.Report1.PrintOptions.Printer := 'My_Default_Printer'
-      else FDR.Report1.PrintOptions.Printer := nPrinter;
-
-      FDR.Dataset1.DataSet := FDM.SQLQuery1;
-      FDR.PrintReport;
-      Result := FDR.PrintSuccess;
-    except
-      on e:Exception do
-      begin
-        WriteLog('PrintOrderReport: '+e.Message);
-      end;
+    if nDS.RecordCount < 1 then
+    begin
+      nHint := '采购单[ %s ] 已无效!!';
+      nHint := Format(nHint, [nOrder]);
+      Exit;
     end;
-  finally
-    Result:=True;
+
+    nStr := gPath + 'Report\PurchaseOrder.fr3';
+    if not FDR.LoadReportFile(nStr) then
+    begin
+      nHint := '无法正确加载报表文件';
+      Exit;
+    end;
+
+    if nPrinter = '' then
+         FDR.Report1.PrintOptions.Printer := 'My_Default_Printer'
+    else FDR.Report1.PrintOptions.Printer := nPrinter;
+
+    FDR.Dataset1.DataSet := FDM.SQLQuery1;
+    FDR.PrintReport;
+    Result := FDR.PrintSuccess;
+  except
+    on e:Exception do
+    begin
+      WriteLog('PrintOrderReport: '+e.Message);
+    end;
   end;
 end;
 
@@ -385,6 +501,7 @@ begin
       nHint := Format(nHint, [nBill]);
       Exit;
     end;
+    if nDS.Fieldbyname('L_IfHYPrint').AsString <> 'Y' then Exit;
 
     if (nDS.FieldByName('P_ID').AsString = '') or
       (nDS.FieldByName('P_ID').IsNull) then
@@ -513,10 +630,10 @@ begin
 
     WriteLog('开始打印: ' + nBill);
     if nType = 'P' then
-         PrintOrderReport(nBill, nHint, nPrinter)
+      PrintOrderReport(nBill, nHint, nPrinter)
     else begin
       nPrintOK:=PrintBillReport(nBill, nHint, nPrinter, nMoney);
-      if (nPrintOK=True) and (gIfHY='Y') then PrintHYReport(nBill,nHint,nHyprinter);
+      if (nPrintOK=True) then PrintHYReport(nBill,nHint,nHyprinter);
     end;
     WriteLog('打印结束.' + nHint);
   finally

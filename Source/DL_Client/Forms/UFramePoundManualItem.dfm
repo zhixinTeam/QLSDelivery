@@ -1,6 +1,6 @@
 inherited fFrameManualPoundItem: TfFrameManualPoundItem
   Width = 1019
-  Height = 309
+  Height = 574
   Font.Height = -15
   object GroupBox1: TGroupBox
     Left = 8

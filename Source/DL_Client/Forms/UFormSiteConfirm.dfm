@@ -119,12 +119,14 @@ inherited fFormSiteConfirm: TfFormSiteConfirm
       Left = 81
       Top = 236
       ParentFont = False
+      Properties.DropDownListStyle = lsFixedList
       TabOrder = 8
       Width = 121
     end
     object EditCustomer: TcxTextEdit [12]
       Left = 81
       Top = 86
+      ParentFont = False
       TabOrder = 2
       Width = 121
     end

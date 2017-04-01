@@ -424,7 +424,9 @@ begin
       end;
     end;
   end;
+  {$IFNDEF QHSN}
   nStr:=OpenDoor(nCard,'0');
+  {$ENDIF}
   
   if not FPoundTunnel.FUserInput then
     gPoundTunnelManager.ActivePort(FPoundTunnel.FID, OnPoundData, True);
@@ -639,11 +641,13 @@ begin
     end else FUIData.FPData.FValue := nVal;
   end;
 
+  {$IFNDEF QHSN}
   if IsTunnelOK(FPoundTunnel.FID)= sFlag_No then
   begin
     ShowMsg('车辆未站稳,请稍后', sHint);
     Exit;
   end;
+  {$ENDIF}
   SetUIData(False);
 
 end;
@@ -654,6 +658,7 @@ var nStr: string;
     nInit: Int64;
     nChar: Char;
     nCard: string;
+    nP: TFormCommandParam;
 begin
   nCard := '';
   try
@@ -663,8 +668,13 @@ begin
     while GetTickCount - nInit < 5 * 1000 do
     begin
       ShowWaitForm(ParentForm, '正在读卡', False);
+      {$IFDEF QHSN}
+      CreateBaseFormItem(cFI_FormReadCard, PopedomItem, @nP);
+      if (nP.FCommand <> cCmd_ModalResult) or (nP.FParamA <> mrOK) then Exit;
+      nStr := Trim(nP.FParamB);
+      {$ELSE}
       nStr := ReadPoundCard(FPoundTunnel.FID);
-
+      {$ENDIF}
       if nStr <> '' then
       begin
         nCard := nStr;
@@ -800,7 +810,8 @@ begin
          nNextStatus := sFlag_TruckBFP
     else nNextStatus := sFlag_TruckBFM;
     {$ELSE}
-    if FBillItems[0].FStatus = sFlag_TruckXH then
+    if (FBillItems[0].FStatus = sFlag_TruckBFP) or
+      (FBillItems[0].FStatus = sFlag_TruckXH) then
          nNextStatus := sFlag_TruckBFM
     else nNextStatus := sFlag_TruckBFP;
     {$ENDIF}
@@ -881,9 +892,10 @@ begin
 
         if ((FType = sFlag_Dai) and (
             ((nVal > 0) and (FPoundDaiZ > 0) and (nVal > FPoundDaiZ)) or
-            ((nVal < 0) and (FPoundDaiF > 0) and (-nVal > FPoundDaiF)))) or
+            ((nVal < 0) and (FPoundDaiF > 0) and (-nVal > FPoundDaiF)))) then
+            {or
            ((FType = sFlag_San) and (
-            (nVal < 0) and (FPoundSanF > 0) and (-nVal > FPoundSanF))) then
+            (nVal < 0) and (FPoundSanF > 0) and (-nVal > FPoundSanF))) then}
         begin
           nStr := '车辆[ %s ]实际装车量误差较大,详情如下:' + #13#10#13#10 +
                   '开单量: %.2f吨,' + //#13#10 +
@@ -957,7 +969,8 @@ begin
     if Pos('余额不足',nFoutData)>0 then
     begin
       PlayVoice(nFoutData);
-      Result:=True;
+      Application.MessageBox(PChar(nFoutData),PChar('提示'),MB_OK);
+      //Result:=True;
     end;
   end;
 end;
@@ -968,12 +981,13 @@ var
   nBool: Boolean;
   nStr:string;
 begin
+  {$IFNDEF QHSN}
   if IsTunnelOK(FPoundTunnel.FID)=sFlag_No then
   begin
     ShowMsg('车辆未站稳,请稍后', sHint);
     Exit;
   end;
-
+  {$ENDIF}
   nBool := False;
   try
     BtnSave.Enabled := False;
@@ -987,20 +1001,14 @@ begin
     begin
       PlayVoice(#9 + FUIData.FTruck);
       //播放语音
-
-      Timer2.Enabled := True;
-
-      //{$IFDEF HR1847}
-      //gKRMgrProber.TunnelOC(FPoundTunnel.FID, True);
-      //{$ELSE}
-      //gProberManager.TunnelOC(FPoundTunnel.FID, True);
-      //{$ENDIF}
       TunnelOC(FPoundTunnel.FID,sFlag_Yes);
       //开红绿灯
       gPoundTunnelManager.ClosePort(FPoundTunnel.FID);
       //关闭表头
+      {$IFNDEF QHSN}
       nStr:=OpenDoor(FCardTmp,'1');
       //开启出口道闸
+      {$ENDIF}
       if (FUIData.FPoundID <> '') or RadioCC.Checked then
         PrintPoundReport(FUIData.FPoundID, True);
       //原料或出厂模式

@@ -63,6 +63,23 @@
 </Interface>
 </Interfaces>
 </Service>
+<Service Name="SrvWebchat" UID="{063CBB11-9815-407C-8F1C-6E78E500735C}">
+<Documentation><![CDATA[Service For Webchat]]></Documentation>
+<Interfaces>
+<Interface Name="Default" UID="{D744CECB-440B-466B-B6A4-C36AAAF941FC}">
+<Operations>
+<Operation Name="Action" UID="{B9D2F40D-4805-456B-ACCA-E69C77EEF14E}">
+<Parameters>
+<Parameter Name="nFunName" DataType="AnsiString" Flag="In" >
+</Parameter>
+<Parameter Name="nData" DataType="AnsiString" Flag="InOut" >
+</Parameter>
+</Parameters>
+</Operation>
+</Operations>
+</Interface>
+</Interfaces>
+</Service>
 </Services>
 <Structs>
 </Structs>

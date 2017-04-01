@@ -39,6 +39,8 @@ function GetAXTPRESTIGEMBYCONT(const nCustAcc, nDataAreaID, nContractId :string)
 //function GetAXLocationID(const XMLPrimaryKey: Widestring):Boolean;//获取仓库ID
 //function GetAXCenterID(const XMLPrimaryKey: Widestring):Boolean;//获取生产线ID
 function UpdateYKAmount(const XMLPrimaryKey: Widestring): Boolean;//更新预扣金额
+function GetThInfo(const XMLPrimaryKey: Widestring):Boolean; //获取提货单信息
+function GetPurchInfo(const XMLPrimaryKey: Widestring):Boolean; //获取采购单信息
 
 implementation
 
@@ -2513,6 +2515,50 @@ begin
       end;
     end;
   end;
+end;
+
+//获取提货单信息
+function GetThInfo(const XMLPrimaryKey: Widestring):Boolean;
+var nStr, nLID, nCustAcc, nContQuota: string;
+    nIdx: Integer;
+    nXML: TNativeXml;
+    nNode, nTmp: TXmlNode;
+begin
+  nXML := TNativeXml.Create;
+  try
+    nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
+    nNode := nXML.Root.FindNode('Primary');
+    if not Assigned(nNode) then
+    begin
+      Result:=False;
+      Exit;
+    end;
+  finally
+    nXML.Free;
+  end;
+  Result:= True;
+end;
+
+//获取采购单信息
+function GetPurchInfo(const XMLPrimaryKey: Widestring):Boolean; 
+var nStr, nLID, nCustAcc, nContQuota: string;
+    nIdx: Integer;
+    nXML: TNativeXml;
+    nNode, nTmp: TXmlNode;
+begin
+  nXML := TNativeXml.Create;
+  try
+    nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
+    nNode := nXML.Root.FindNode('Primary');
+    if not Assigned(nNode) then
+    begin
+      Result:=False;
+      Exit;
+    end;
+  finally
+    nXML.Free;
+  end;
+  Result:= True;
 end;
 
 

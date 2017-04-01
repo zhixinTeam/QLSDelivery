@@ -32,11 +32,11 @@ inherited fFramePoundQuery: TfFramePoundQuery
       Top = 94
       Hint = 'T.P_Truck'
       ParentFont = False
-      TabOrder = 8
+      TabOrder = 6
       Width = 125
     end
     object EditTruck: TcxButtonEdit [1]
-      Left = 661
+      Left = 269
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -45,12 +45,12 @@ inherited fFramePoundQuery: TfFramePoundQuery
           Kind = bkEllipsis
         end>
       Properties.OnButtonClick = EditTruckPropertiesButtonClick
-      TabOrder = 3
+      TabOrder = 1
       OnKeyPress = OnCtrlKeyPress
       Width = 125
     end
     object EditCus: TcxButtonEdit [2]
-      Left = 849
+      Left = 457
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -59,7 +59,7 @@ inherited fFramePoundQuery: TfFramePoundQuery
           Kind = bkEllipsis
         end>
       Properties.OnButtonClick = EditTruckPropertiesButtonClick
-      TabOrder = 4
+      TabOrder = 2
       OnKeyPress = OnCtrlKeyPress
       Width = 125
     end
@@ -68,7 +68,7 @@ inherited fFramePoundQuery: TfFramePoundQuery
       Top = 94
       Hint = 'T.P_ID'
       ParentFont = False
-      TabOrder = 7
+      TabOrder = 5
       Width = 125
     end
     object cxTextEdit3: TcxTextEdit [4]
@@ -76,11 +76,11 @@ inherited fFramePoundQuery: TfFramePoundQuery
       Top = 94
       Hint = 'T.P_PDate'
       ParentFont = False
-      TabOrder = 9
+      TabOrder = 7
       Width = 125
     end
     object EditDate: TcxButtonEdit [5]
-      Left = 1037
+      Left = 645
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -90,7 +90,7 @@ inherited fFramePoundQuery: TfFramePoundQuery
         end>
       Properties.ReadOnly = True
       Properties.OnButtonClick = EditDatePropertiesButtonClick
-      TabOrder = 5
+      TabOrder = 3
       Width = 185
     end
     object cxTextEdit4: TcxTextEdit [6]
@@ -98,21 +98,21 @@ inherited fFramePoundQuery: TfFramePoundQuery
       Top = 94
       Hint = 'T.P_MDate'
       ParentFont = False
-      TabOrder = 10
+      TabOrder = 8
       Width = 125
     end
     object Check1: TcxCheckBox [7]
-      Left = 1227
+      Left = 835
       Top = 36
       Caption = #26597#35810#24050#21024#38500
       ParentFont = False
-      TabOrder = 6
+      TabOrder = 4
       Transparent = True
       OnClick = Check1Click
       Width = 110
     end
     object EditPID: TcxButtonEdit [8]
-      Left = 93
+      Left = 81
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -125,49 +125,11 @@ inherited fFramePoundQuery: TfFramePoundQuery
       OnKeyPress = OnCtrlKeyPress
       Width = 125
     end
-    object EditLID: TcxButtonEdit [9]
-      Left = 281
-      Top = 36
-      ParentFont = False
-      Properties.Buttons = <
-        item
-          Default = True
-          Kind = bkEllipsis
-        end>
-      Properties.OnButtonClick = EditTruckPropertiesButtonClick
-      TabOrder = 1
-      OnKeyPress = OnCtrlKeyPress
-      Width = 121
-    end
-    object EditOID: TcxButtonEdit [10]
-      Left = 477
-      Top = 36
-      ParentFont = False
-      Properties.Buttons = <
-        item
-          Default = True
-          Kind = bkEllipsis
-        end>
-      Properties.OnButtonClick = EditTruckPropertiesButtonClick
-      TabOrder = 2
-      OnKeyPress = OnCtrlKeyPress
-      Width = 121
-    end
     inherited dxGroup1: TdxLayoutGroup
       inherited GroupSearch1: TdxLayoutGroup
         object dxLayout1Item9: TdxLayoutItem
-          Caption = #38144#21806#30917#21333#21495':'
+          Caption = #30917#21333#32534#21495':'
           Control = EditPID
-          ControlOptions.ShowBorder = False
-        end
-        object dxLayout1Item10: TdxLayoutItem
-          Caption = #25552#36135#21333#21495':'
-          Control = EditLID
-          ControlOptions.ShowBorder = False
-        end
-        object dxLayout1Item11: TdxLayoutItem
-          Caption = #37319#36141#30917#21333#21495':'
-          Control = EditOID
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item2: TdxLayoutItem

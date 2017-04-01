@@ -163,6 +163,7 @@ inherited fFormZTLine: TfFormZTLine
     object cbxLocationID: TcxComboBox [14]
       Left = 81
       Top = 186
+      Enabled = False
       ParentFont = False
       Properties.ReadOnly = False
       Properties.OnChange = cbxLocationIDPropertiesChange
@@ -269,6 +270,8 @@ inherited fFormZTLine: TfFormZTLine
         end
         object dxLayout1Item9: TdxLayoutItem
           Caption = #20179#24211'ID:'
+          Enabled = False
+          Visible = False
           Control = cbxLocationID
           ControlOptions.ShowBorder = False
         end

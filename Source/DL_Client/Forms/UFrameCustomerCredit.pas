@@ -134,7 +134,6 @@ procedure TfFrameCustomerCredit.QueryDetail(const nWhere: string);
 var nStr: string;
 begin
   EditDate.Text := Format('%s жа %s', [Date2Str(FStart), Date2Str(FEnd)]);
-
   if chkZKZY.Checked then
   begin
     nStr := 'Select cc.*,C_Name,C_MaCredLmt From %s cc ' +
@@ -146,7 +145,6 @@ begin
             ' Left Join %s cus On cus.C_ID=cc.C_CusID';
     nStr := Format(nStr, [sTable_CusCredit, sTable_Customer]);
   end;
-  
   if nWhere = '' then
        nStr := nStr + ' Where (C_Date>=''$ST'' and C_Date <''$End'')'
   else nStr := nStr + ' Where (' + nWhere + ')';

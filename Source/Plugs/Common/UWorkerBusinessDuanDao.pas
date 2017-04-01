@@ -10,7 +10,7 @@ interface
 uses
   Windows, Classes, Controls, DB, SysUtils, UBusinessWorker, UBusinessPacker,
   UBusinessConst, UMgrDBConn, UMgrParam, ZnMD5, ULibFun, UFormCtrl, USysLoger,
-  USysDB, UMITConst, UWorkerBusiness, BPM2ERPService1;
+  USysDB, UMITConst, UWorkerBusiness, BPM2ERPService;
 
 type
   TWorkerBusinessDuanDao = class(TMITDBWorker)

@@ -37,6 +37,8 @@ const
   cBC_UpdateTruckInfo         = $0017;   //保存车辆信息
   cBC_GetTruckPoundData       = $0015;   //获取车辆称重数据
   cBC_SaveTruckPoundData      = $0016;   //保存车辆称重数据
+  cBC_ReadZhiKaInfo           = $0018;   //读取销售订单信息
+  cBC_ReadStockPrice          = $0019;   //读取订单物料价格
 
   cBC_SaveBills               = $0020;   //保存交货单列表
   cBC_DeleteBill              = $0021;   //删除交货单
@@ -97,19 +99,19 @@ const
 
   cBC_SyncInvDim              = $0089;   //远程同步维度信息
   cBC_SyncInvCenter           = $0090;   //远程同步生产线信息
-  cBC_SyncInvLocation         = $0091;   //远程同步仓库信息
-  cBC_SyncTprGem              = $0092;   //远程同步信用额度（客户）
-  cBC_SyncTprGemCont          = $0093;   //远程同步信用额度（客户-合同）
-  cBC_SyncEmpTable            = $0094;   //远程同步员工信息
-  cBC_SyncInvCenGroup         = $0095;   //远程同步物料组生产线
-  cBC_GetSalesOrder           = $0096;   //获取销售订单
-  cBC_GetSalesOrdLine         = $0097;   //获取销售订单行
-  cBC_GetSupAgreement         = $0098;   //获取补充协议
-  cBC_GetCreLimCust           = $0099;   //获取信用额度增减（客户）
-  cBC_GetCreLimCusCont        = $0100;   //获取信用额度增减（客户-合同）
-  cBC_GetSalesCont            = $0101;   //获取销售合同
-  cBC_GetSalesContLine        = $0102;   //获取销售合同行
-  cBC_GetVehicleNo            = $0103;   //获取车号
+  cBC_SyncInvLocation         = $0120;   //远程同步仓库信息
+  cBC_SyncTprGem              = $0121;   //远程同步信用额度（客户）
+  cBC_SyncTprGemCont          = $0122;   //远程同步信用额度（客户-合同）
+  cBC_SyncEmpTable            = $0123;   //远程同步员工信息
+  cBC_SyncInvCenGroup         = $0124;   //远程同步物料组生产线
+  cBC_GetSalesOrder           = $0125;   //获取销售订单
+  cBC_GetSalesOrdLine         = $0126;   //获取销售订单行
+  cBC_GetSupAgreement         = $0127;   //获取补充协议
+  cBC_GetCreLimCust           = $0128;   //获取信用额度增减（客户）
+  cBC_GetCreLimCusCont        = $0129;   //获取信用额度增减（客户-合同）
+  cBC_GetSalesCont            = $0130;   //获取销售合同
+  cBC_GetSalesContLine        = $0131;   //获取销售合同行
+  cBC_GetVehicleNo            = $0132;   //获取车号
   cBC_GetPurOrder             = $0104;   //获取采购订单
   cBC_GetPurOrdLine           = $0105;   //获取采购订单行
   cBC_SyncFYBillAX            = $0106;   //同步提货单到AX
@@ -126,7 +128,22 @@ const
   cBC_GetAXCompanyArea        = $0117;   //在线获取销售区域
   cBC_GetAXInVentSum          = $0118;   //在线获取生产线余量
   cBC_SyncAXwmsLocation       = $0119;   //同步库位信息到DL
-  cBC_GetSalesOrdValue        = $0120;   //获取订单行余量
+  cBC_GetSalesOrdValue        = $0133;   //获取订单行余量
+
+  cBC_VerifPrintCode          = $0091;   //验证喷码信息
+  cBC_WaitingForloading       = $0092;   //工厂待装查询
+  cBC_BillSurplusTonnage      = $0093;   //网上订单可下单数量查询
+  cBC_GetOrderInfo            = $0094;   //获取订单信息，用于网上商城下单
+  cBC_GetOrderList            = $0103;   //获取订单列表，用于网上商城下单
+
+  cBC_WeChat_getCustomerInfo  = $0095;   //微信平台接口：获取客户注册信息
+  cBC_WeChat_get_Bindfunc     = $0096;   //微信平台接口：客户与微信账号绑定
+  cBC_WeChat_send_event_msg   = $0097;   //微信平台接口：发送消息
+  cBC_WeChat_edit_shopclients = $0098;   //微信平台接口：新增商城用户
+  cBC_WeChat_edit_shopgoods   = $0099;   //微信平台接口：添加商品
+  cBC_WeChat_get_shoporders   = $0100;   //微信平台接口：获取订单信息
+  cBC_WeChat_complete_shoporders   = $0101;   //微信平台接口：修改订单状态
+  cBC_WeChat_get_shoporderbyNO   = $0102;   //微信平台接口：根据订单号获取订单信息
 
 type
   PWorkerQueryFieldData = ^TWorkerQueryFieldData;
@@ -142,6 +159,7 @@ type
     FCommand  : Integer;           //命令
     FData     : string;            //数据
     FExtParam : string;            //参数
+    FRemoteUL : string;            //工厂服务器UL
   end;
 
   TPoundStationData = record
@@ -188,17 +206,39 @@ type
     FRecID      : string;          //订单行编码
     FKw         : string;          //库位
     FWorkOrder  : string;          //班别
-    FTriaTrade  : string;          //三角贸易
     FNeiDao     : string;          //内倒
+    FTriaTrade  : string;          //三角贸易
   end;
 
   TLadingBillItems = array of TLadingBillItem;
   //交货单列表
 
+  TQueueListItem = record
+    FStockNO   : string;
+    FStockName : string;
+
+    FLineCount : Integer;
+    FTruckCount: Integer;
+  end;
+  TQueueListItems = array of TQueueListItem;
+  //待装车辆排队列表
+
+  PWorkerWebChatData = ^TWorkerWebChatData;
+  TWorkerWebChatData = record
+    FBase     : TBWDataBase;
+    FCommand  : Integer;           //类型
+    FData     : string;            //数据
+    FExtParam : string;            //参数
+    FRemoteUL : string;            //工厂服务器UL
+  end;        
+
 procedure AnalyseBillItems(const nData: string; var nItems: TLadingBillItems);
 //解析由业务对象返回的交货单数据
 function CombineBillItmes(const nItems: TLadingBillItems): string;
 //合并交货单数据为业务对象能处理的字符串
+
+procedure AnalyseQueueListItems(const nData: string; var nItems: TQueueListItems);
+//解析由业务对象返回的待装排队数据
 
 resourcestring
   {*PBWDataBase.FParam*}
@@ -209,6 +249,8 @@ resourcestring
                                                         //业务模块
   sPlug_ModuleHD              = '{B584DCD6-40E5-413C-B9F3-6DD75AEF1C62}';
                                                         //硬件守护
+  sPlug_ModuleRemote          = '{B584DCD7-40E5-413C-B9F3-6DD75AEF1C63}';
+                                                      //MIT互相访问                                                        
                                                                                                    
   {*common function*}  
   sSys_BasePacker             = 'Sys_BasePacker';       //基本封包器
@@ -221,19 +263,17 @@ resourcestring
   sBus_BusinessCommand        = 'Bus_BusinessCommand';  //业务指令
   sBus_HardwareCommand        = 'Bus_HardwareCommand';  //硬件指令
   sBus_BusinessPurchaseOrder  = 'Bus_BusinessPurchaseOrder'; //采购单相关
-  sBus_BusinessRegWeiXin      = 'Bus_BusinessRegWeiXin'; //微信注册相关
   sBus_BusinessDuanDao        = 'Bus_BusinessDuanDao';  //短倒业务相关
 
   {*client function name*}
   sCLI_ServiceStatus          = 'CLI_ServiceStatus';    //服务状态
   sCLI_GetQueryField          = 'CLI_GetQueryField';    //查询的字段
+  sBus_BusinessWebchat        = 'Bus_BusinessWebchat';  //Web平台服务
 
   sCLI_BusinessSaleBill       = 'CLI_BusinessSaleBill'; //交货单业务
   sCLI_BusinessCommand        = 'CLI_BusinessCommand';  //业务指令
   sCLI_HardwareCommand        = 'CLI_HardwareCommand';  //硬件指令
   sCLI_BusinessPurchaseOrder  = 'CLI_BusinessPurchaseOrder'; //采购单相关
-  sCLI_BusinessRegWeiXin      = 'CLI_BusinessRegWeiXin';  //微信注册
-  sCLI_BusinessBindUserWeiXin = 'CLI_BusinessBindUserWeiXin'; //工厂绑定用户（微信）
   sCLI_BusinessDuanDao        = 'CLI_BusinessDuanDao';  //短倒业务相关
 
 implementation
@@ -330,8 +370,8 @@ begin
         FRecID    := Values['RecID'];             //订单行编码
         FKw       := Values['KuWei'];             //库位
         FWorkOrder:= Values['WorkOrder'];         //班别
-        FTriaTrade:= Values['TriaTrade'];         //三角贸易
         FNeiDao   := Values['NeiDao'];            //内倒
+        FTriaTrade:= Values['TriaTrade'];         //三角贸易
       end;
 
       Inc(nInt);
@@ -417,8 +457,8 @@ begin
         Values['RecID']      := FRecID;             //订单行编码
         Values['KuWei']      := FKw;                //库位
         Values['WorkOrder']  := FWorkOrder;         //班别
+        Values['NeiDao']     := FNeiDao;            //内倒
         Values['TriaTrade']  := FTriaTrade;         //三角贸易
-        Values['NeiDao']     := FNeiDao;              //内倒
       end;
 
       nListA.Add(PackerEncodeStr(nListB.Text));
@@ -431,6 +471,40 @@ begin
     nListB.Free;
     nListA.Free;
   end;
+end;
+
+//Date: 2016-09-20
+//Parm: 待装队列数据;解析结果
+//Desc: 解析nData为结构化列表数据
+procedure AnalyseQueueListItems(const nData: string; var nItems: TQueueListItems);
+var nIdx,nInt: Integer;
+    nListA,nListB: TStrings;
+begin
+  nListA := TStringList.Create;
+  nListB := TStringList.Create;
+  try
+    nListA.Text := PackerDecodeStr(nData);
+    //bill list
+    nInt := 0;
+    SetLength(nItems, nListA.Count);
+
+    for nIdx:=0 to nListA.Count - 1 do
+    begin
+      nListB.Text := PackerDecodeStr(nListA[nIdx]);
+      //bill item
+
+      with nListB,nItems[nInt] do
+      begin
+        FStockName := Values['StockName'];
+        FLineCount := StrToIntDef(Values['LineCount'],0);
+        FTruckCount := StrToIntDef(Values['TruckCount'],0);
+      end;
+      Inc(nInt);
+    end;
+  finally
+    nListB.Free;
+    nListA.Free;
+  end;   
 end;
 
 end.

@@ -4,11 +4,13 @@
 *******************************************************************************}
 unit USysConst;
 
+{$I Link.Inc}
 interface
 
 uses
   Windows, Classes, SysUtils, UBusinessPacker, UBusinessWorker, UBusinessConst,
-  UClientWorker, UMITPacker, UWaitItem, ULibFun, UMultiJS, USysDB, USysLoger;
+  UClientWorker, UMITPacker, UWaitItem, ULibFun,
+  {$IFDEF QHSN} UMultiJS_Reply, {$ELSE}UMultiJS,{$ENDIF} USysDB, USysLoger;
 
 type
   TSysParam = record

@@ -241,16 +241,14 @@ begin
 
     Values['StockNO']       := FCardData.Values['SQ_StockNo'];
     Values['StockName']     := FCardData.Values['SQ_StockName'];
-
     if nCardType='L' then
           Values['Value']   := EditValue.Text
     else  Values['Value']   := '0.00';
-
     Values['RecID']         := FCardData.Values['SQ_RecID'];
     if chkNeiDao.Checked then
-      Values['NeiDao']:= sFlag_Yes
+      Values['NeiDao'] := sFlag_Yes
     else
-      Values['NeiDao']:= sFlag_No;
+      Values['NeiDao'] := sFlag_No;
   end;
 
   nOrder := SaveOrder(PackerEncodeStr(FListA.Text));

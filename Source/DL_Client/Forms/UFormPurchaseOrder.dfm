@@ -1,29 +1,29 @@
 inherited fFormPurchaseOrder: TfFormPurchaseOrder
   Left = 451
   Top = 243
-  ClientHeight = 277
-  ClientWidth = 478
+  ClientHeight = 262
+  ClientWidth = 488
   OnClose = FormClose
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
-    Width = 478
-    Height = 277
+    Width = 488
+    Height = 262
     inherited BtnOK: TButton
-      Left = 332
-      Top = 244
+      Left = 342
+      Top = 229
       Caption = #24320#21333
       TabOrder = 8
     end
     inherited BtnExit: TButton
-      Left = 402
-      Top = 244
+      Left = 412
+      Top = 229
       TabOrder = 9
     end
     object EditValue: TcxTextEdit [2]
       Left = 279
-      Top = 152
+      Top = 144
       ParentFont = False
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
@@ -69,7 +69,7 @@ inherited fFormPurchaseOrder: TfFormPurchaseOrder
     end
     object EditTruck: TcxButtonEdit [6]
       Left = 81
-      Top = 152
+      Top = 144
       ParentFont = False
       Properties.Buttons = <
         item
@@ -86,7 +86,7 @@ inherited fFormPurchaseOrder: TfFormPurchaseOrder
     end
     object EditCardType: TcxComboBox [7]
       Left = 81
-      Top = 177
+      Top = 169
       ParentFont = False
       Properties.DropDownListStyle = lsEditFixedList
       Properties.Items.Strings = (
@@ -101,13 +101,13 @@ inherited fFormPurchaseOrder: TfFormPurchaseOrder
     end
     object cxLabel1: TcxLabel [8]
       Left = 221
-      Top = 177
+      Top = 169
       Caption = #27880':'#20020#26102#21345#20986#21378#26102#22238#25910';'#22266#23450#21345#20986#21378#26102#19981#22238#25910
       ParentFont = False
     end
     object chkNeiDao: TcxCheckBox [9]
       Left = 23
-      Top = 202
+      Top = 194
       Caption = #20869#37096#20498#36816
       ParentFont = False
       TabOrder = 5

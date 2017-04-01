@@ -456,7 +456,6 @@ begin
     if (FStatus <> sFlag_TruckBFP) and (FNextStatus = sFlag_TruckZT) then
       FNextStatus := sFlag_TruckBFP;
     //状态校正
-
     FSelected := (FNextStatus = sFlag_TruckBFP) or
                  (FNextStatus = sFlag_TruckBFM);
     //可称重状态判定
@@ -816,7 +815,6 @@ begin
         nZhikaYL:=GetZhikaYL(FRecID);
         if FType = sFlag_Dai then
         begin
-          //if nZhikaYL-FInnerData.FValue<0 then
           if nZhikaYL<0 then
           begin
             Result:=True;
@@ -830,14 +828,14 @@ begin
           end;
         end else
         begin
-          if nZhikaYL-nNet+FInnerData.FValue<0 then
+          if nZhikaYL+FInnerData.FValue-nNet<0 then
           begin
             Result:=True;
             nStr := '车辆[ %s ]订单量不足,详情如下:' + #13#10#13#10 +
                     '订单量: %.2f吨,' + #13#10 +
                     '装车量: %.2f吨,' + #13#10 +
                     '需补交量: %.2f吨';
-            nStr := Format(nStr, [FTruck, nZhikaYL, nNet, Abs(nZhikaYL-nNet+FInnerData.FValue)]);
+            nStr := Format(nStr, [FTruck, nZhikaYL, nNet, Abs(nZhikaYL+FInnerData.FValue-nNet)]);
             nDaiWc:=nStr;
             Exit;
           end;
@@ -1135,7 +1133,7 @@ begin
   //不在称重中
   if gSysParam.FIsManual then Exit;
   //手动时无效
-  //{$IFDEF YDKP}
+
   if FPoundTunnel.FPort.FMaxValue>0 then
   begin
     if nValue>FPoundTunnel.FPort.FMaxValue then
@@ -1150,7 +1148,7 @@ begin
       Exit;
     end;
   end;
-  //{$ENDIF}
+
   if FCardUsed = sFlag_Provide then
   begin
     if FInnerData.FPData.FValue > 0 then
@@ -1189,12 +1187,13 @@ begin
     PlayVoice('车辆未停到位,请移动车辆.');
     Exit;
   end;
-  
+
   FIsSaveing := True;
   FPoundVoice:='';
   if FCardUsed = sFlag_Provide then
        nRet := SavePoundData(FPoundVoice)
   else nRet := SavePoundSale(FPoundVoice);
+
   if nRet then
   begin
     TimerDelay.Enabled := True;
@@ -1217,13 +1216,40 @@ begin
       {$ENDIF}
       PlayVoice(FPoundVoice);
       //播放语音
-      Timer2.Enabled := True;
       nStr:=TunnelOC(FPoundTunnel.FID,sFlag_Yes);
       //开红绿灯
       {$IFDEF GGJC}
       nStr:=OpenDoor(FCardTmp,'0');
       WritesysLog(FCardTmp+'开启入道闸');
-      {$ELSE}
+      Exit;
+      {$ENDIF}
+
+      {$IFDEF ZXKP}
+      if GetDaoChe(FUIData.FStockNo) then
+      begin
+        nStr:=OpenDoor(FCardTmp,'0');
+        WritesysLog(FCardTmp+'开启入道闸');
+      end else
+      begin
+        nStr:=OpenDoor(FCardTmp,'1');
+        WritesysLog(FCardTmp+'开启出道闸');
+      end;
+      Exit;
+      {$ENDIF}
+
+      {$IFDEF QHSN}
+      if (FUIData.FNeiDao=sFlag_Yes) then
+      begin
+        nStr:=OpenDoor(FCardTmp,'0');
+        WritesysLog(FCardTmp+'开启入道闸');
+      end else
+      begin
+        nStr:=OpenDoor(FCardTmp,'1');
+        WritesysLog(FCardTmp+'开启出道闸');
+      end;
+      Exit;
+      {$ENDIF}
+      
       if GetAutoInFactory(FUIData.FStockNo) then
       begin
         nStr:=OpenDoor(FCardTmp,'0');
@@ -1233,14 +1259,12 @@ begin
         nStr:=OpenDoor(FCardTmp,'1');
         WritesysLog(FCardTmp+'开启出道闸');
       end;
-      {$ENDIF}
       //开启出口道闸
     end else
     begin
       WriteSysLog(Format('对车辆[ %s ]称重完毕.', [FUIData.FTruck]));
       PlayVoice(#9 + FUIData.FTruck);
       //播放语音
-      Timer2.Enabled := True;
       nStr:=TunnelOC(FPoundTunnel.FID,sFlag_Yes);
       //开红绿灯
       {$IFDEF LZST}
@@ -1253,29 +1277,44 @@ begin
         nStr:=OpenDoor(FCardTmp,'1');
         WritesysLog(FCardTmp+'开启出道闸');
       end;
-      {$ELSE}
-        {$IFDEF ZXKP}
-        if GetDaoChe(FUIData.FStockNo) then
-        begin
-          nStr:=OpenDoor(FCardTmp,'0');
-          WritesysLog(FCardTmp+'开启入道闸');
-        end else
-        begin
-          nStr:=OpenDoor(FCardTmp,'1');
-          WritesysLog(FCardTmp+'开启出道闸');
-        end;
-        {$ELSE}
-        if GetAutoInFactory(FUIData.FStockNo) then
-        begin
-          nStr:=OpenDoor(FCardTmp,'0');
-          WritesysLog(FCardTmp+'开启入道闸');
-        end else
-        begin
-          nStr:=OpenDoor(FCardTmp,'1');
-          WritesysLog(FCardTmp+'开启出道闸');
-        end;
-        {$ENDIF}
+      Exit;
       {$ENDIF}
+      
+      {$IFDEF ZXKP}
+      if GetDaoChe(FUIData.FStockNo) then
+      begin
+        nStr:=OpenDoor(FCardTmp,'0');
+        WritesysLog(FCardTmp+'开启入道闸');
+      end else
+      begin
+        nStr:=OpenDoor(FCardTmp,'1');
+        WritesysLog(FCardTmp+'开启出道闸');
+      end;
+      Exit;
+      {$ENDIF}
+
+      {$IFDEF QHSN}
+      if (FUIData.FNeiDao=sFlag_Yes) then
+      begin
+        nStr:=OpenDoor(FCardTmp,'0');
+        WritesysLog(FCardTmp+'开启入道闸');
+      end else
+      begin
+        nStr:=OpenDoor(FCardTmp,'1');
+        WritesysLog(FCardTmp+'开启出道闸');
+      end;
+      Exit;
+      {$ENDIF}
+
+      if GetAutoInFactory(FUIData.FStockNo) then
+      begin
+        nStr:=OpenDoor(FCardTmp,'0');
+        WritesysLog(FCardTmp+'开启入道闸');
+      end else
+      begin
+        nStr:=OpenDoor(FCardTmp,'1');
+        WritesysLog(FCardTmp+'开启出道闸');
+      end;
       //开启出口道闸
     end;
   except
@@ -1388,7 +1427,7 @@ begin
   while Assigned(nP) do
   begin
     if (nP is TBaseFrame) and
-       (TBaseFrame(nP).FrameID = cFI_FramePoundManual) then
+       (TBaseFrame(nP).FrameID = cFI_FramePoundAuto) then
     begin
       TBaseFrame(nP).Close();
       Exit;

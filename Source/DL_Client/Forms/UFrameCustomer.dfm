@@ -164,7 +164,12 @@ inherited fFrameCustomer: TfFrameCustomer
     end
     object N4: TMenuItem
       Caption = #21516#27493#36828#31243#23458#25143
+      Visible = False
       OnClick = N4Click
+    end
+    object m_bindWechartAccount: TMenuItem
+      Caption = #20851#32852#24494#20449#21830#22478#36134#25143
+      OnClick = m_bindWechartAccountClick
     end
   end
 end

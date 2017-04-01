@@ -10,8 +10,7 @@ interface
 uses
   Windows, Classes, SysUtils, DateUtils, UBusinessConst, UMgrDBConn,
   UBusinessWorker, UWaitItem, ULibFun, USysDB, UMITConst, USysLoger,
-  UBusinessPacker, NativeXml, UMgrParam, UWorkerBusiness, BPM2ERPService1,
-  UWorkerBusinessDuanDao;
+  UBusinessPacker, NativeXml, UMgrParam, UWorkerBusiness, UWorkerBusinessDuanDao;
 
 type
   TAXSyncer = class;
@@ -29,7 +28,7 @@ type
     //提货单同步计时计数
     FNumPoundSync: Integer;
     //磅单同步计时计数
-    FNumAXBASESync: Integer;
+    //FNumAXBASESync: Integer;
     //基础表同步计数计时
     FWaiter: TWaitObject;
     //等待对象
@@ -199,7 +198,7 @@ begin
     Inc(FNumAXSync);
     //inc counter
     Inc(FNumPoundSync);
-    Inc(FNumAXBASESync);
+    //Inc(FNumAXBASESync);
 
     if FNumAXSync >= 3 then
       FNumAXSync := 0;
@@ -207,10 +206,11 @@ begin
     if FNumPoundSync>=5 then
       FNumPoundSync:=0;
     //同步磅单到AX: 6次/小时
-    //if FNumAXBASESync>=1 then
-    //  FNumAXBASESync:=0;
-
-    if (FNumAXSync <> 0) and (FNumPoundSync<>0) then Continue;//and (FNumAXBASESync<>0)
+    {if FNumAXBASESync>=30 then
+      FNumAXBASESync:=0; }
+    //同步基础信息
+    
+    if (FNumAXSync <> 0) and (FNumPoundSync<>0)  then Continue; //and (FNumAXBASESync<>0)
     //无业务可做
 
     //--------------------------------------------------------------------------
@@ -218,6 +218,7 @@ begin
     //其它进程正在执行
 
     FDBConn := nil;
+    with gParamManager.ActiveParam^ do
     try
       FDBConn := gDBConnManager.GetConnection(gDBConnManager.DefaultConnection, nErr);
       if not Assigned(FDBConn) then Continue;
@@ -244,16 +245,17 @@ begin
         WriteLog('同步磅单到AX完毕,耗时: ' + IntToStr(GetTickCount - nInit));
       end;
 
-      {if (FNumAXBASESync=0) and (gAXSyncer.SyncTime=FormatDateTime('hh:mm',Now)) then
+      {if FNumAXBASESync=0 then
       begin
         WriteLog('同步AX基础表数据...');
         nInit := GetTickCount;
         DoNewAXSync;
         WriteLog('同步AX基础表完毕,耗时: ' + IntToStr(GetTickCount - nInit));
-      end;  }
+      end; }
     finally
-      FSyncLock.SyncLockLeave();
       gDBConnManager.ReleaseConnection(FDBConn);
+      FSyncLock.SyncLockLeave();
+      WriteLog('Release FDBConn');
     end;
   except
     on E:Exception do
@@ -285,7 +287,7 @@ end;
 procedure TAXSyncThread.DoNewBillSyncAX;
 var
   nErr: Integer;
-  nSql,nStr: string;
+  nSQL,nStr: string;
   nOut: TWorkerBusinessCommand;
   nIdx:Integer;
 begin
@@ -394,7 +396,7 @@ begin
     begin
       if RecordCount<1 then
       begin
-        WriteLog('无提货单同步数据');
+        WriteLog('无空车出厂提货单同步数据');
         Exit;
       end;
       First;
@@ -589,25 +591,41 @@ begin
     begin
       WriteLog('信用额度（客户-合同）信息同步失败');
     end;
-    if not TWorkerBusinessCommander.CallMe(cBC_SyncProvider,'','',@nOut) then
+    if not TWorkerBusinessCommander.CallMe(cBC_GetSalesOrder,'','',@nOut) then
     begin
-      WriteLog('供应商信息同步失败');
+      WriteLog('销售订单同步失败');
     end;
-    if not TWorkerBusinessCommander.CallMe(cBC_SyncMaterails,'','',@nOut) then
+    if not TWorkerBusinessCommander.CallMe(cBC_GetSalesOrdLine,'','',@nOut) then
     begin
-      WriteLog('物料信息同步失败');
+      WriteLog('销售订单行同步失败');
     end;
-    if not TWorkerBusinessCommander.CallMe(cBC_SyncInvDim,'','',@nOut) then
+    if not TWorkerBusinessCommander.CallMe(cBC_GetSupAgreement,'','',@nOut) then
     begin
-      WriteLog('维度信息同步失败');
+      WriteLog('补充协议同步失败');
     end;
-    if not TWorkerBusinessCommander.CallMe(cBC_SyncInvCenter,'','',@nOut) then
+    if not TWorkerBusinessCommander.CallMe(cBC_GetSalesCont,'','',@nOut) then
     begin
-      WriteLog('生产线信息同步失败');
-    end; 
-    if not TWorkerBusinessCommander.CallMe(cBC_SyncInvLocation,'','',@nOut) then
+      WriteLog('销售合同同步失败');
+    end;
+    if not TWorkerBusinessCommander.CallMe(cBC_GetSalesContLine,'','',@nOut) then
     begin
-      WriteLog('仓库信息同步失败');
+      WriteLog('销售合同行同步失败');
+    end;
+    if not TWorkerBusinessCommander.CallMe(cBC_GetSalesCont,'','',@nOut) then
+    begin
+      WriteLog('销售合同同步失败');
+    end;
+    if not TWorkerBusinessCommander.CallMe(cBC_GetSalesContLine,'','',@nOut) then
+    begin
+      WriteLog('销售合同行同步失败');
+    end;
+    if not TWorkerBusinessCommander.CallMe(cBC_GetPurOrder,'','',@nOut) then
+    begin
+      WriteLog('采购订单同步失败');
+    end;
+    if not TWorkerBusinessCommander.CallMe(cBC_GetPurOrdLine,'','',@nOut) then
+    begin
+      WriteLog('采购订单行行同步失败');
     end;
     {$IFDEF DEBUG}
     //WriteLog(nSql);

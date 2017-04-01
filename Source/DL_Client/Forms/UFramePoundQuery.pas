@@ -44,10 +44,6 @@ type
     dxLayout1Item9: TdxLayoutItem;
     N7: TMenuItem;
     N8: TMenuItem;
-    EditLID: TcxButtonEdit;
-    dxLayout1Item10: TdxLayoutItem;
-    EditOID: TcxButtonEdit;
-    dxLayout1Item11: TdxLayoutItem;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditTruckPropertiesButtonClick(Sender: TObject;
@@ -169,26 +165,6 @@ begin
       FJBWhere := 'P_ID like ''%%%s%%''';
       FJBWhere := Format(FJBWhere, [EditPID.Text]);
     end;
-    InitFormData(FWhere);
-  end else
-
-  if Sender = EditLID then
-  begin
-    EditLID.Text := Trim(EditLID.Text);
-    if EditLID.Text = '' then Exit;
-
-    FWhere := 'P_Bill like ''%%%s%%''';
-    FWhere := Format(FWhere, [EditLID.Text]);
-    InitFormData(FWhere);
-  end else
-
-  if Sender = EditOID then
-  begin
-    EditOID.Text := Trim(EditOID.Text);
-    if EditOID.Text = '' then Exit;
-
-    FWhere := 'P_Order like ''%%%s%%''';
-    FWhere := Format(FWhere, [EditOID.Text]);
     InitFormData(FWhere);
   end else
 

@@ -45,6 +45,15 @@ type
     procedure Invoke_DL2WRZSINFO(const __Instance:IInterface; const __Message:IROMessage; const __Transport:IROTransport; out __oResponseOptions:TROResponseOptions);
   end;
 
+  TSrvWebchat_Invoker = class(TROInvoker)
+  private
+  protected
+  public
+    constructor Create; override;
+  published
+    procedure Invoke_Action(const __Instance:IInterface; const __Message:IROMessage; const __Transport:IROTransport; out __oResponseOptions:TROResponseOptions);
+  end;
+
 implementation
 
 uses
@@ -141,6 +150,38 @@ begin
   finally
   end;
 end;
+
+{ TSrvWebchat_Invoker }
+
+constructor TSrvWebchat_Invoker.Create;
+begin
+  inherited Create;
+  FAbstract := False;
+end;
+
+procedure TSrvWebchat_Invoker.Invoke_Action(const __Instance:IInterface; const __Message:IROMessage; const __Transport:IROTransport; out __oResponseOptions:TROResponseOptions);
+{ function Action(const nFunName: AnsiString; var nData: AnsiString): Boolean; }
+var
+  nFunName: AnsiString;
+  nData: AnsiString;
+  lResult: Boolean;
+begin
+  try
+    __Message.Read('nFunName', TypeInfo(AnsiString), nFunName, []);
+    __Message.Read('nData', TypeInfo(AnsiString), nData, []);
+
+    lResult := (__Instance as ISrvWebchat).Action(nFunName, nData);
+
+    __Message.InitializeResponseMessage(__Transport, 'MIT_Service', 'SrvWebchat', 'ActionResponse');
+    __Message.Write('Result', TypeInfo(Boolean), lResult, []);
+    __Message.Write('nData', TypeInfo(AnsiString), nData, []);
+    __Message.Finalize;
+    __Message.UnsetAttributes(__Transport);
+
+  finally
+  end;
+end;
+
 
 initialization
 end.

@@ -41,6 +41,11 @@ const
   cCmd_EditData       = $1005;                       //修改数据
   cCmd_ViewData       = $1006;                       //查看数据
 
+  cSendWeChatMsgType_AddBill=1; //开提货单
+  cSendWeChatMsgType_OutFactory=2; //车辆出厂
+  cSendWeChatMsgType_Report=3; //报表
+  cSendWeChatMsgType_DelBill=4; //删提货单  
+
 type
   TSysParam = record
     FProgID     : string;                            //程序标识
@@ -48,6 +53,7 @@ type
     FMainTitle  : string;                            //主窗体标题
     FHintText   : string;                            //提示文本
     FCopyRight  : string;                            //版权声明
+    FFactory    : string;                            //工厂ID
 
     FAppFlag    : string;                            //程序标识
     FParam      : string;                            //启动参数
@@ -63,6 +69,10 @@ type
 
     FDisplayDPI : Integer;                           //屏幕分辨率
     FAutoMin    : Boolean;                           //自动最小化
+    
+    FSaleArea   : string;                            //销售点
+    FProvFirm   : string;                            //供应厂区
+    FGPWSURL    : string;                            //集团公共web服务平台地址
   end;
   //系统参数
 
@@ -147,9 +157,15 @@ begin
         FIconFile  := ReadString(FProgID, 'IconFile', gPath + 'Icons\Icon.ini');
         FIconFile  := StringReplace(FIconFile, '$Path\', gPath, [rfIgnoreCase]);
 
+        FGPWSURL   := ReadString(FProgID, 'GPWSURL', '');
+        FFactory   := ReadString(FProgID, 'FactoryId', '');
+
         FLocalMAC   := MakeActionID_MAC;
         GetLocalIPConfig(FLocalName, FLocalIP);
         FDisplayDPI := GetDeviceCaps(GetDC(0), LOGPIXELSY);
+
+        FSaleArea  := ReadString(FProgID, 'SaleArea', '');
+        FProvFirm  := ReadString(FProgID, 'ProvFirm', '');
       end;
     end;
   finally

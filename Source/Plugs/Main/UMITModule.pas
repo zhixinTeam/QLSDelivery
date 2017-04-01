@@ -13,10 +13,9 @@ uses
   Windows, Forms, Classes, SysUtils, ULibFun, UBusinessWorker, UBusinessPacker,
   UTaskMonitor, USysShareMem, USysLoger, UMITConst, UMITPacker,
   {$IFDEF HardMon}UEventHardware, UWorkerHardware,{$ENDIF} UWorkerBusiness,
-  {$IFDEF MicroMsg}UMgrRemoteWXMsg,{$ENDIF} UMemDataPool, UMgrWeiXinSendMsg,//by lih 2016-06-04
-  UMgrDBConn, UMgrParam, UMgrPlug, UMgrChannel, UChannelChooser, USAPConnection,
-  USyncAXBaseInfo, UWorkerBusinessDuanDao;
-  //by lih 2016-06-29
+  UMemDataPool, UMgrDBConn, UMgrParam, UMgrPlug, UMgrChannel, UChannelChooser,
+  USAPConnection, USyncAXBaseInfo, UWorkerBusinessDuanDao;
+                  //by lih 2016-06-29
 
 procedure InitSystemObject(const nMainForm: THandle);
 procedure RunSystemObject;
@@ -98,8 +97,6 @@ begin
   gTaskMonitor.StartMon;
   //mon task start
 
-  gWeiXinSender.Start;
-  //开始微信发送
   gAXSyncer.Start;
   //开启同步AX
 end;
@@ -109,9 +106,6 @@ begin
   inherited;
   gTaskMonitor.StopMon;
   //stop mon task
-
-  gWeiXinSender.Stop;
-  //停止微信发送
 
   gAXSyncer.Stop;
   //停止同步AX
@@ -197,9 +191,6 @@ begin
   {$IFDEF MicroMsg}
   gWXPlatFormHelper.LoadConfig(gPath + 'Hardware\MicroMsg.XML');
   {$ENDIF} //micro message
-
-  gWeiXinSender:= TWeiXinSender.Create;
-  //微信发送
 
   gAXSyncer:=TAXSyncer.Create;
   //同步AX基础表数据

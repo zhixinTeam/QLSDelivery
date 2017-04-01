@@ -13,41 +13,29 @@ uses
   UClientWorker, UMITPacker,
   UFrameLog, UFrameSysLog, UFormIncInfo, UFormBackupSQL, UFormRestoreSQL,
   UFormPassword, UFormBaseInfo, UFrameAuthorize, UFormAuthorize,
-  UFrameCustomer, UFormCustomer, UFormGetCustom, UFrameSalesMan, UFormSalesMan,
-  UFrameSaleContract, UFormSaleContract, UFrameZhiKa, UFormZhiKa,
-  UFormGetContract, UFormZhiKaAdjust, UFormZhiKaFixMoney, UFrameZhiKaVerify,
-  UFormZhiKaVerify, UFrameShouJu, UFormShouJu, UFramePayment, UFormPayment,
-  UFrameCustomerCredit, UFormCustomerCredit, UFrameCusAccount,
-  UFrameCusInOutMoney, UFrameInvoiceWeek, UFormInvoiceWeek, UFormInvoiceGetWeek,
-  UFrameInvoice, UFormInvoice, UFormInvoiceAdjust,UFrameInvoiceK, UFormInvoiceK,
-  UFrameInvoiceDtl, UFrameInvoiceZZ, UFormInvoiceZZAll, UFormInvoiceZZCus,
-  UFormGetZhiKa, UFrameBill, UFormReadCard, UFormTruckEmpty,
-  UFormBill, UFormGetTruck, UFrameZhiKaDetail, UFormZhiKaFreeze,
+  UFrameCustomer, UFormCustomer, UFormGetCustom, UFrameSaleContract, UFormSaleContract,
+  UFrameZhiKa, UFormZhiKa, UFormGetContract, UFormZhiKaAdjust, UFormZhiKaFixMoney,
+  UFrameZhiKaVerify, UFormZhiKaVerify, UFrameCustomerCredit, UFormCustomerCredit,
+  UFrameCusAccount, UFrameCusInOutMoney, UFormGetZhiKa, UFrameBill, UFormReadCard,
+  UFormTruckEmpty, UFormBill, UFormGetTruck, UFrameZhiKaDetail, UFormZhiKaFreeze,
   UFormZhiKaPrice, UFrameQueryDiapatch, UFrameTruckQuery, UFrameBillCard,
   UFormCard, UFormTruckIn, UFormTruckOut, UFormLadingDai, UFormLadingSan,
   UFramePoundManual, UFramePoundAuto, UFramePMaterails, UFormPMaterails,
   UFramePProvider, UFormPProvider, UFramePoundQuery, UFrameQuerySaleDetail,
-  UFrameZTDispatch, UFrameTrucks, UFormTruck, UFormRFIDCard,  
-  {$IFDEF MicroMsg}
-  UFrameWeiXinAccount, UFormWeiXinAccount,
-  UFrameWeiXinSendlog, UFormWeiXinSendlog,
-  {$ENDIF}
-  {.$IFDEF XAZL}
+  UFrameZTDispatch, UFrameTrucks, UFormTruck, UFormRFIDCard,
+
   UFramePurchaseOrder, UFormPurchaseOrder, UFormPurchasing,
   UFrameQueryOrderDetail, UFrameOrderCard,  UFrameOrderDetail,
   UFormGetProvider, UFormGetMeterails, UFramePOrderBase, UFormPOrderBase,
-  UFormGetPOrderBase, UFrameDeduct, UFormDeduct, UFormGetNCStock,  
-  {.$ENDIF}
+  UFormGetPOrderBase, UFrameDeduct, UFormDeduct, UFormGetNCStock,
   //----------------------------------------------------------------------------
   UFormHYStock, UFormHYData, UFormHYRecord, UFormGetStockNo,
-  UFrameHYStock, UFrameHYData, UFrameHYRecord, UFormWeixinReg,
-  UFormWeiXinBindUser, UFormAXBaseLoad, UFormSiteConfirm,
+  UFrameHYStock, UFrameHYData, UFrameHYRecord, UFormAXBaseLoad, UFormSiteConfirm,
   //by lih 2016-05-26 //2016-07-18
-  UFrameUpInfo, UFramePoundWuCha, UFormPWuCha, UFrameZTQuery,
-  UFormPoundKw, UFormWorkSet, UFrameUpPurchase, UFramePoundDevia,
-  UFrameLSCard, UFormLSCard, UFormTransfer, UFrameQueryTransferDetail;
-  
-
+  UFrameUpInfo, UFramePoundWuCha, UFormPWuCha, UFrameZTQuery, UFormPoundKw,
+  UFormWorkSet, UFrameUpPurchase, UFramePoundDevia, UFrameLSCard, UFormLSCard,
+  UFormTransfer, UFrameQueryTransferDetail, UFrameSTCard, UFormSTCard,
+  uFormGetWechartAccount, UFrameWeixinBind,UFormWeixinBind;
 
 procedure InitSystemObject;
 procedure RunSystemObject;
@@ -182,6 +170,15 @@ begin
   begin
     gSysParam.FHardMonURL := Fields[0].AsString;
   end;
+
+  nStr := 'select D_value from %s where D_Name=''%s''';
+  nStr := Format(nStr,[sTable_SysDict,sFlag_Factoryid]);
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+  begin
+    gSysParam.FFactory := FieldByName('D_value').AsString;
+  end;
+
 end;
 
 //Desc: 释放系统对象

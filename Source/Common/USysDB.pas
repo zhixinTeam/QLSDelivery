@@ -94,6 +94,7 @@ ResourceString
   sFlag_Returns       = 'R';                         //退货
   sFlag_Other         = 'O';                         //其它
   sFlag_DuanDao       = 'D';                         //短倒(预制皮重,单次称重)
+  sFlag_ST            = 'T';                         //商砼
   
   sFlag_TiHuo         = 'T';                         //自提
   sFlag_SongH         = 'S';                         //送货
@@ -164,6 +165,8 @@ ResourceString
 
   sFlag_DeductFix     = 'F';                         //固定值扣减
   sFlag_DeductPer     = 'P';                         //百分比扣减
+  sFlag_LoadExtInfo   = 'ExtInfo;';                  //载入附加
+  sFlag_AllowZeroNum  = 'ZeroNum;';                  //允许没量
 
   sFlag_SysParam      = 'SysParam';                  //系统参数
   sFlag_EnableBakdb   = 'Uses_BackDB';               //备用库
@@ -171,6 +174,7 @@ ResourceString
   sFlag_ZhiKaVerify   = 'ZhiKaVerify';               //纸卡审核
   sFlag_PrintZK       = 'PrintZK';                   //打印纸卡
   sFlag_PrintBill     = 'PrintStockBill';            //需打印订单
+  sFlag_PrintFHD      = 'PrintFHD';                  //打印发运单
   sFlag_ViaBillCard   = 'ViaBillCard';               //直接制卡
   sFlag_PayCredit     = 'Pay_Credit';                //回款冲信用
   sFlag_HYValue       = 'HYMaxValue';                //化验批次量
@@ -201,6 +205,7 @@ ResourceString
   sFlag_ZhiKaItem     = 'ZhiKaItem';                 //纸卡信息项
   sFlag_BillItem      = 'BillItem';                  //提单信息项
   sFlag_TruckQueue    = 'TruckQueue';                //车辆队列
+  sFlag_ZTLineGroup   = 'ZTLineGroup';               //栈台分组
                                                                
   sFlag_PaymentItem   = 'PaymentItem';               //付款方式信息项
   sFlag_PaymentItem2  = 'PaymentItem2';              //销售回款信息项
@@ -211,10 +216,13 @@ ResourceString
 
   sFlag_HardSrvURL    = 'HardMonURL';
   sFlag_MITSrvURL     = 'MITServiceURL';             //服务地址
+  sFlag_Factoryid     = 'FactoryId';                 //工厂ID，与微信平台交互数据时使用
+  sFlag_AICMWorkshop  = 'aicmworkshop';              //自助办卡系统-发货车间管理
 
   sFlag_AutoIn        = 'Truck_AutoIn';              //自动进厂
   sFlag_AutoOut       = 'Truck_AutoOut';             //自动出厂
   sFlag_InTimeout     = 'InFactTimeOut';             //进厂超时(队列)
+  sFlag_InAndCreate   = 'InFactAndCreate';           //HY进厂间隔
   sFlag_SanMultiBill  = 'SanMultiBill';              //散装预开多单
   sFlag_NoDaiQueue    = 'NoDaiQueue';                //袋装禁用队列
   sFlag_NoSanQueue    = 'NoSanQueue';                //散装禁用队列
@@ -238,6 +246,7 @@ ResourceString
   sFlag_Hhcl          = 'HuYanHhcl';                 //混合材类
   sFlag_OnLineModel   = 'OnLineModel';               //在线模式
   sFlag_NoSampleID    = 'NoSampleID';                //无试样编号
+  sFlag_Sgzl          = 'HuYanSgzl';                 //石膏种类
 
   {*数据表*}
   sTable_Group        = 'Sys_Group';                 //用户组
@@ -255,8 +264,9 @@ ResourceString
   sTable_SerialBase   = 'Sys_SerialBase';            //编码种子
   sTable_SerialStatus = 'Sys_SerialStatus';          //编号状态
   sTable_WorkePC      = 'Sys_WorkePC';               //验证授权
-  
+
   sTable_Customer     = 'S_Customer';                //客户信息
+  sTable_CustomerExt  = 'S_CustomerExt';             //客户扩展
   sTable_Salesman     = 'S_Salesman';                //业务人员
   sTable_SaleContract = 'S_Contract';                //销售合同
   sTable_SContractExt = 'S_ContractExt';             //合同扩展
@@ -306,6 +316,7 @@ ResourceString
   sTable_WeixinLog    = 'Sys_WeixinLog';             //微信日志
   sTable_WeixinMatch  = 'Sys_WeixinMatch';           //账号匹配
   sTable_WeixinTemp   = 'Sys_WeixinTemplate';        //信息模板
+  sTable_WeixinBind   = 'sys_WeixinCusBind';         //微信账号绑定
 
   sTable_PoundLog     = 'Sys_PoundLog';              //过磅数据
   sTable_PoundBak     = 'Sys_PoundBak';              //过磅作废
@@ -313,6 +324,7 @@ ResourceString
 
   sTable_BindInfo     = 'W_BindInfo';                //用户绑定（微信）
   sTable_CustomerInfo = 'W_CustomerInfo';            //客户信息（微信）
+  sTable_WebOrderMatch   = 'S_WebOrderMatch';        //商城订单映射
 
   sTable_InventDim       = 'Sys_InventDim';          //维度信息
   sTable_InventCenter    = 'Sys_InventCenter';       //生产线基础表
@@ -329,14 +341,16 @@ ResourceString
   sTable_InOutFatory     = 'L_InOutFactory';         //临时进厂出厂表
   sTable_KuWei           = 'Sys_KuWei';              //库位设置表
   sTable_CompanyArea     = 'Sys_CompanyArea';        //销售区域
+  sTable_STInOutFact     = 'L_STInOutFact';          //商砼车进出表
+
 
   sTable_K3_SyncItem  = 'DL_SyncItem';               //数据同步项
   sTable_K3_Customer  = 'T_Organization';            //组织结构(客户)
 
   sTable_AX_Cust      = 'ERP_CustTable';             //客户信息
   sTable_AX_VEND      = 'ERP_VVendTable';            //供应商信息
-  sTable_AX_INVENT    = 'ERP_InventTable';           //物料信息
   sTable_AX_COMPANY   = 'COMPANYDOMAINLIST';         //公司信息
+  sTable_AX_INVENT    = 'ERP_InventTable';           //物料信息
   sTable_AX_INVENTDIM = 'INVENTDIM';                 //维度基础表
   sTable_AX_INVENTCENTER  = 'XTTINVENTCENTERTABLE';  //生产线基础表
   sTable_AX_INVENTLOCATION  = 'INVENTLOCATION';      //仓库基础表
@@ -479,7 +493,7 @@ ResourceString
   -----------------------------------------------------------------------------}
 
   sSQL_NewStockMatch = 'Create Table $Table(R_ID $Inc, M_Group varChar(8),' +
-       'M_ID varChar(20), M_Name varChar(80), M_Status Char(1))';
+       'M_ID varChar(20), M_Name varChar(80), M_Status Char(1), M_LineNo varChar(32))';
   {-----------------------------------------------------------------------------
    相似品种映射: StockMatch
    *.R_ID: 记录编号
@@ -487,6 +501,7 @@ ResourceString
    *.M_ID: 物料号
    *.M_Name: 物料名称
    *.M_Status: 状态
+   *.M_LineNo: 通道专用分组
   -----------------------------------------------------------------------------}
   
   sSQL_NewSalesMan = 'Create Table $Table(R_ID $Inc, S_ID varChar(15),' +
@@ -540,7 +555,21 @@ ResourceString
    *.C_MaCredLmt：强制信用额度[校验是否强制]
    *.C_CelPhone：移动电话
   -----------------------------------------------------------------------------}
-  
+
+  sSQL_NewCustomerExt = 'Create Table $Table(R_ID $Inc, E_CusID varChar(15), ' +
+       'E_CusName varChar(80), E_CusPY varChar(80), E_CustExtName varChar(100), ' +
+       'E_CustExtPY varChar(50), E_Memo varChar(50))';
+  {-----------------------------------------------------------------------------
+   客户扩展表: CustomerExt
+   *.R_ID: 记录号
+   *.E_CusID: 客户编号
+   *.E_CusName: 客户名称
+   *.E_CusPY: 拼音简写
+   *.E_CustExtName: 客户扩展名称
+   *.E_CustExtPY: 客户扩展拼音
+   *.E_Memo: 备注信息
+  -----------------------------------------------------------------------------}
+
   sSQL_NewCusAccount = 'Create Table $Table(R_ID $Inc, A_CID varChar(15),' +
        'A_Used Char(1), A_InMoney Decimal(15,5) Default 0,' +
        'A_OutMoney Decimal(15,5) Default 0, A_DebtMoney Decimal(15,5) Default 0,' +
@@ -640,8 +669,8 @@ ResourceString
    *.C_BillBalance3M：三个月票据余额
    *.C_BillBalance6M：六个月票据余额
    *.C_PrestigeQuota：固定信用余额
-   *.C_TemporBalance：临时余额
-   *.C_TemporAmount： 临时授信金额
+   *.C_TemporBalance：临时授信金额
+   *.C_TemporAmount： 临时余额
    *.C_WarningAmount：预警金额
    *.C_TemporTakeEffect：是否失效(0：否/1：是)
    *.C_FailureDate：失效日期
@@ -838,11 +867,11 @@ ResourceString
 
   sSQL_NewZhiKaDtl = 'Create Table $Table(R_ID $Inc, D_ZID varChar(15),' +
        'D_Type Char(1), D_StockNo varChar(20), D_StockName varChar(80),' +
-       'D_Price $Float, D_Value $Float, D_PPrice $Float, D_TotalValue $Float,' +
+       'D_Price $Float, D_Value $Float, D_PPrice $Float, ' +
        'D_TPrice Char(1) Default ''Y'', D_LineNum numeric(28, 12) Default 0,'+
        'D_SalesStatus int Default(0), DATAAREAID varChar(3),'+
        'D_RECID bigint not null default ((0)),D_Blocked int not null default((0)),'+
-       'D_Memo varChar(200))';
+       'D_Memo varChar(200), D_TotalValue $Float)';
   {-----------------------------------------------------------------------------
    纸卡明细:ZhiKaDtl
    *.R_ID:记录编号
@@ -852,7 +881,6 @@ ResourceString
    *.D_Price:单价
    *.D_Value:办理量
    *.D_PPrice:调价前单价
-   *.D_TotalValue: 订单总量
    *.D_TPrice:允许调价
    *.D_LineNum:行号
    *.D_RECID:行编码
@@ -860,6 +888,7 @@ ResourceString
    *.DATAAREAID: 账套
    *.D_Blocked：已停止
    *.D_Memo: 备注
+   *.D_TotalValue: 订单总量
   -----------------------------------------------------------------------------}
 
   sSQL_NewBill = 'Create Table $Table(R_ID $Inc, L_ID varChar(20),' +
@@ -884,7 +913,7 @@ ResourceString
        'L_DelMan varChar(32), L_DelDate DateTime,';
   sSQL_NewBill1 ='L_NewSendWx Char(1), L_DelSendWx Char(1), L_OutSendWx Char(1), '+
        'P_PStation varChar(10), P_MStation varChar(10), L_PID varChar(15),'+
-       'L_LineRecID bigint,'+
+       'L_LineNum numeric(28, 12) not null Default ((0)),L_LineRecID bigint,'+
        'L_InvLocationId varChar(20),L_InvCenterId varChar(20),'+
        'L_PlanQty numeric(28, 12) not null Default ((0)),L_CW varChar(10),'+
        'L_Transporter varChar(20),L_vendpicklistid varChar(60),'+
@@ -894,6 +923,7 @@ ResourceString
        'L_FYDELNUM int not null default((0)),L_EmptyOut char(1) not null default(''N''),'+
        'L_EOUTAX Char(1) not null default((0)),L_EOUTNUM int not null default((0)),'+
        'L_WorkOrder varchar(10), L_KHSBM varchar(20), L_OrgXSQYMC varChar(20),'+
+       'L_IfHYPrint Char(1), L_IfFenChe Char(1), L_IfNeiDao Char(1),'+
        'L_TriaTrade Char(1), L_ContQuota Char(1))';
   {-----------------------------------------------------------------------------
    交货单表: Bill
@@ -906,7 +936,7 @@ ResourceString
    *.L_SaleID,L_SaleMan:业务员
    *.L_Type: 类型(袋,散)
    *.L_StockNo: 物料编号
-   *.L_StockName: 物料描述
+   *.L_StockName: 物料描述 
    *.L_Value: 提货量
    *.L_Price: 提货单价
    *.L_ZKMoney: 占用纸卡限提(Y/N)
@@ -934,6 +964,7 @@ ResourceString
    *.P_PStation,P_MStation: （皮/毛）地磅编号
    *.L_PID: 磅单号
    祁连山新增
+   *.L_LineNum:行号
    *.L_LineRecID: 订单行编码  (AX必须)
    *.L_InvLocationId:仓库 (AX必须)
    *.L_InvCenterId:生产线 (AX必须)
@@ -955,6 +986,9 @@ ResourceString
    *.L_WorkOrder: 班次
    *.L_KHSBM: 区域码
    *.L_OrgXSQYMC: 最终销售区域
+   *.L_IfHYPrint: 是否打印化验单
+   *.L_IfFenChe: 是否分车提货
+   *.L_IfNeiDao: 是否内倒
    *.L_TriaTrade: 是否三角贸易
    *.L_ContQuota: 是否专款专用（0：否 1：是）
   -----------------------------------------------------------------------------}
@@ -964,7 +998,7 @@ ResourceString
        'M_TriangleTrade Char(1), M_IntComOriSalesId varChar(20), M_PurchType Char(1),' +
        'M_Man varChar(32), M_Date DateTime, ' +
        'M_DelMan varChar(32), M_DelDate DateTime, M_Memo varChar(500),'+
-       'DATAAREAID varChar(3))';
+       'DATAAREAID varChar(3),M_DState varChar(10))';
   {-----------------------------------------------------------------------------
    采购申请单主表: OrderBaseMain
    *.R_ID: 编号
@@ -981,6 +1015,7 @@ ResourceString
    *.M_DelDate: 采购申请单删除时间
    *.M_Memo: 动作备注
    *.DATAAREAID：账套
+   *.M_DState: 审核状态(30,40有效) 0  草稿 10 正在审核 20 已拒绝  30 已批准 35 正在进行外部审查 50 定案 40 已确认
   -----------------------------------------------------------------------------}
 
   sSQL_NewOrderBase = 'Create Table $Table(R_ID $Inc, B_ID varChar(20),' +
@@ -1039,7 +1074,7 @@ ResourceString
        'O_Truck varChar(15), O_OStatus Char(1),' +
        'O_Man varChar(32), O_Date DateTime,' +
        'O_DelMan varChar(32), O_DelDate DateTime, O_Memo varChar(500),'+
-       'O_BRecID bigint not null default ((0)))';
+       'O_BRecID bigint not null default ((0)),O_IfNeiDao Char(1))';
   {-----------------------------------------------------------------------------
    采购订单表: Order
    *.R_ID: 编号
@@ -1061,6 +1096,7 @@ ResourceString
    *.O_DelDate: 采购单删除时间
    *.O_Memo: 动作备注
    *.O_BRecID: 行编码
+   *.O_IfNeiDao: 内倒（Y: 是  N: 否）
   -----------------------------------------------------------------------------}
 
   sSQL_NewOrderDtl = 'Create Table $Table(R_ID $Inc, D_ID varChar(20),' +
@@ -1078,7 +1114,7 @@ ResourceString
        'D_YLine varChar(15), D_YLineName varChar(32), ' +
        'D_DelMan varChar(32), D_DelDate DateTime, D_YSResult Char(1), ' +
        'D_OutFact DateTime, D_OutMan varChar(32), D_Memo varChar(500),'+
-       'D_BDAX Char(1) not null default((0)),D_BDNUM int not null default((0)),'+
+       'D_BDAX Char(1) not null default((0)),D_BDNUM int not null default((0))),'+
        'D_RecID bigint not null default ((0)))';
   {-----------------------------------------------------------------------------
    采购订单明细表: OrderDetail
@@ -1132,11 +1168,12 @@ ResourceString
 
     sSQL_NewTruck = 'Create Table $Table(R_ID $Inc, T_Truck varChar(15), ' +
        'T_PY varChar(15), T_Owner varChar(32), T_Phone varChar(15), T_Used Char(1), ' +
+       'T_OwnerIDCard varChar(64), T_SerialNO varChar(64),' +
        'T_PrePValue $Float, T_PrePMan varChar(32), T_PrePTime DateTime, ' +
        'T_PrePUse Char(1), T_MinPVal $Float, T_MaxPVal $Float, ' +
        'T_PValue $Float Default 0, T_PTime Integer Default 0,' +
        'T_PlateColor varChar(12),T_Type varChar(12), T_LastTime DateTime, ' +
-       'T_Card varChar(32), T_CardUse Char(1), T_NoVerify Char(1),' +
+       'T_Card varChar(32),T_Card2 varChar(32), T_CardUse Char(1), T_NoVerify Char(1),' +
        'T_Valid Char(1), T_VIPTruck Char(1), T_HasGPS Char(1),'+
        'T_CompanyID varChar(10),T_XTECB varChar(10),T_VendAccount varChar(20),'+
        'T_Driver varChar(10), T_SaleID varChar(20), T_RecID bigint not null default ((0)),'+
@@ -1150,6 +1187,8 @@ ResourceString
    *.T_PY: 车牌拼音
    *.T_Owner: 车主
    *.T_Phone: 联系方式
+   *.T_OwnerIDCard: 车主身份证号
+   *.T_SerialNO: 行车证号
    *.T_Used: 用途(供应,销售)
    *.T_PrePValue: 预置皮重
    *.T_PrePMan: 预置司磅
@@ -1162,7 +1201,8 @@ ResourceString
    *.T_PlateColor: 车牌颜色
    *.T_Type: 车型
    *.T_LastTime: 上次活动
-   *.T_Card: 电子标签
+   *.T_Card: 电子标签1
+   *.T_Card2: 电子标签2
    *.T_CardUse: 使用电子签(Y/N)
    *.T_NoVerify: 不校验时间
    *.T_Valid: 是否有效
@@ -1430,6 +1470,26 @@ ResourceString
    *.W_TComment: 备注
   -----------------------------------------------------------------------------}
 
+  sSQL_NewWeixinCusBind = 'Create Table $Table(R_ID $Inc, w_CID varchar(15),'
+        +'w_CusName varchar(500),wcb_Phone varchar(11),'
+        +'wcb_Appid varchar(20),wcb_Bindcustomerid varchar(32),wcb_Namepinyin varchar(20),'
+        +'wcb_Email varchar(20),wcb_Openid varchar(28),wcb_Binddate varchar(25),'
+        +'wcb_WebMallStatus char(1))';
+  {-----------------------------------------------------------------------------
+  sys_WeixinCusBind微信客户绑定
+  *.R_ID:记录号
+  *.w_CID:客户号
+  *.w_CusName:客户名称
+  *.wcb_Phone:电话号码
+  *.wcb_Appid:appid
+  *.wcb_Bindcustomerid:绑定客户id
+  *.wcb_Namepinyin:姓名
+  *.wcb_Email:邮箱
+  *.wcb_Openid:openid
+  *.wcb_Binddate:绑定日期
+  *.wcb_WebMallStatus:是否开通商城用户，默认值0：未开通 1：已开通
+  -----------------------------------------------------------------------------}
+
   sSQL_NewProvider = 'Create Table $Table(R_ID $Inc, P_ID varChar(32),' +
        'P_Name varChar(80),P_PY varChar(80), P_Phone varChar(20),' +
        'P_Saler varChar(32),P_Memo varChar(50))';
@@ -1517,8 +1577,8 @@ ResourceString
        'R_28Ya1 varChar(20), R_28Ya2 varChar(20), R_28Ya3 varChar(20),' +
        'R_28Ya4 varChar(20), R_28Ya5 varChar(20), R_28Ya6 varChar(20),' +
        'R_Date DateTime, R_Man varChar(32),'+
-       'R_BatQuaStart varchar(20) not null default(''0''),'+
-       'R_BatQuaEnd varchar(20) not null default(''0''),'+
+       'R_BatQuaStart int not null default 0,'+
+       'R_BatQuaEnd int not null default 0,'+
        'R_BatValid char(1) not null default(''Y''),'+
        'R_ZMJNAME varChar(20), R_ZMJVALUE varChar(20),'+
        'R_C3S varChar(20), R_C3A varChar(20),'+
@@ -1629,6 +1689,15 @@ ResourceString
    *.Email：电子邮箱
    *.OpenId：
    *.BindDate：绑定日期
+  -----------------------------------------------------------------------------}
+  sSQL_NewWebOrderMatch = 'Create Table $Table(R_ID $Inc,'+
+       'WOM_WebOrderID varchar(32) null,WOM_LID varchar(20) null,'+
+       'WOM_deleted char(1) default ''N'')';
+  {-----------------------------------------------------------------------------
+   商城订单与提货单对照表: WebOrderMatch
+   *.R_ID: 记录编号
+   *.WOM_WebOrderID: 商城订单
+   *.WOM_LID: 提货单
   -----------------------------------------------------------------------------}
   sSQL_NewInventDim = 'Create Table $Table(ID $Inc, I_DimID varChar(20),' +
        'I_BatchID varChar(20), I_WMSLocationID varChar(10), I_SerialID varChar(20),' +
@@ -1748,10 +1817,12 @@ ResourceString
   -----------------------------------------------------------------------------}
   sSQL_NewInOutFatory = 'Create Table $Table(R_ID $Inc, I_Card varChar(16),I_Truck varChar(20),' +
        'I_CusName varChar(80), I_Context varChar(100), I_Memo varChar(200), '+
-       'I_Man varChar(20),I_Date datetime, I_InDate datetime, I_OutDate datetime)';
+       'I_Man varChar(20),I_Date datetime, I_InDate datetime, I_OutDate datetime,'+
+       'I_CType varChar(10))';
   {-----------------------------------------------------------------------------
    临时卡进厂出厂表：L_InOutFactory
    *.I_Card: 卡号
+   *.I_CType: 卡类型（暂无定义）
    *.I_Truck：车号
    *.I_CusName：客户名称
    *.I_Context：内容
@@ -1830,6 +1901,23 @@ ResourceString
    *.$Table:扩展信息表
    *.$Group:分组名称
    *.$ID:信息标识
+  -----------------------------------------------------------------------------}
+  sSQL_NewSTInOutFact = 'Create Table $Table(R_ID $Inc, I_Card varChar(16),I_Truck varChar(20),' +
+       'I_CusName varChar(80), I_Context varChar(100), I_Memo varChar(200), '+
+       'I_Man varChar(20),I_Date datetime, I_InDate datetime, I_OutDate datetime,'+
+       'I_CType varChar(32))';
+  {-----------------------------------------------------------------------------
+   商砼卡进出表：L_STInOutFact
+   *.I_Card: 卡号
+   *.I_CType: 卡类型（暂无定义）
+   *.I_Truck：车号
+   *.I_CusName：客户名称
+   *.I_Context：内容
+   *.I_Memo：备注
+   *.I_Man: 操作人
+   *.I_Date: 操作日期
+   *.I_InDate: 进厂日期
+   *.I_OutDate: 出厂日期
   -----------------------------------------------------------------------------}
 
 function CardStatusToStr(const nStatus: string): string;
@@ -1912,6 +2000,7 @@ begin
   AddSysTableItem(sTable_WorkePC, sSQL_NewWorkePC,'');
 
   AddSysTableItem(sTable_Customer, sSQL_NewCustomer,'');
+  AddSysTableItem(sTable_CustomerExt, sSQL_NewCustomerExt,'');
   AddSysTableItem(sTable_Salesman, sSQL_NewSalesMan,'');
   AddSysTableItem(sTable_SaleContract, sSQL_NewSaleContract,'');
   AddSysTableItem(sTable_SContractExt, sSQL_NewSContractExt,'');
@@ -1931,6 +2020,7 @@ begin
   AddSysTableItem(sTable_WeixinLog, sSQL_NewWXLog,'');
   AddSysTableItem(sTable_WeixinMatch, sSQL_NewWXMatch,'');
   AddSysTableItem(sTable_WeixinTemp, sSQL_NewWXTemplate,'');
+  AddSysTableItem(sTable_WeixinBind,sSQL_NewWeixinCusBind,'');
 
   AddSysTableItem(sTable_ZhiKa, sSQL_NewZhiKa,'');
   AddSysTableItem(sTable_ZhiKaDtl, sSQL_NewZhiKaDtl,'');
@@ -1981,6 +2071,9 @@ begin
 
   AddSysTableItem(sTable_Transfer, sSQL_NewTransfer,'');
   AddSysTableItem(sTable_TransferBak, sSQL_NewTransfer,'');
+  AddSysTableItem(sTable_STInOutFact, sSQL_NewSTInOutFact,'');
+  AddSysTableItem(sTable_WebOrderMatch,sSQL_NewWebOrderMatch,'');
+
 end;
 
 //Desc: 清理系统表

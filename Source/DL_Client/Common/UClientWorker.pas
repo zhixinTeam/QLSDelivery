@@ -63,18 +63,6 @@ type
     function GetFixedServiceURL: string; override;
   end;
 
-  TClientBusinessRegWeiXin = class(TClient2MITWorker)  //by lih 2016-05-26
-  public
-    function GetFlagStr(const nFlag: Integer): string; override;
-    class function FunctionName: string; override;
-  end;
-
-  TClientBusinessBindUserWeiXin = class(TClient2MITWorker)  //by lih 2016-05-30
-  public
-    function GetFlagStr(const nFlag: Integer): string; override;
-    class function FunctionName: string; override;
-  end;
-
 implementation
 
 uses
@@ -338,45 +326,11 @@ begin
   Result := gSysParam.FHardMonURL;
 end;
 
-//------------------------------------------------------------------------------
-class function TClientBusinessRegWeiXin.FunctionName: string;    //by lih 2016-05-26
-begin
-  Result := sCLI_BusinessRegWeiXin;
-end;
-
-function TClientBusinessRegWeiXin.GetFlagStr(const nFlag: Integer): string;  //by lih 2016-05-26
-begin
-  Result := inherited GetFlagStr(nFlag);
-
-  case nFlag of
-   cWorker_GetPackerName : Result := sBus_BusinessCommand;
-   cWorker_GetMITName    : Result := sBus_BusinessRegWeiXin;
-  end;
-end;
-
-//------------------------------------------------------------------------------
-class function TClientBusinessBindUserWeiXin.FunctionName: string;    //by lih 2016-05-30
-begin
-  Result := sCLI_BusinessBindUserWeiXin;
-end;
-
-function TClientBusinessBindUserWeiXin.GetFlagStr(const nFlag: Integer): string;  //by lih 2016-05-30
-begin
-  Result := inherited GetFlagStr(nFlag);
-
-  case nFlag of
-   cWorker_GetPackerName : Result := sBus_BusinessCommand;
-   cWorker_GetMITName    : Result := sBus_BusinessRegWeiXin;
-  end;
-end;
-
 initialization
   gBusinessWorkerManager.RegisteWorker(TClientWorkerQueryField);
   gBusinessWorkerManager.RegisteWorker(TClientBusinessCommand);
   gBusinessWorkerManager.RegisteWorker(TClientBusinessSaleBill);
   gBusinessWorkerManager.RegisteWorker(TClientBusinessHardware);
   gBusinessWorkerManager.RegisteWorker(TClientBusinessPurchaseOrder);
-  gBusinessWorkerManager.RegisteWorker(TClientBusinessRegWeiXin);  //by lih 2016-05-26
-  gBusinessWorkerManager.RegisteWorker(TClientBusinessBindUserWeiXin);  //by lih 2016-05-30
 
 end.

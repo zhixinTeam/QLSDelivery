@@ -21,10 +21,20 @@ type
     dxLayout1Item3: TdxLayoutItem;
     chkValue: TcxCheckBox;
     dxLayout1Item4: TdxLayoutItem;
+    dxLayout1Group2: TdxLayoutGroup;
+    BtnReadCard1: TButton;
+    dxLayout1Item7: TdxLayoutItem;
+    edtRFIDCard2: TcxTextEdit;
+    dxLayout1Item5: TdxLayoutItem;
+    dxLayout1Group3: TdxLayoutGroup;
+    BtnReadCard2: TButton;
+    dxLayout1Item8: TdxLayoutItem;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BtnOKClick(Sender: TObject);
     procedure edtRFIDCardKeyPress(Sender: TObject; var Key: Char);
     procedure tmrReadCardTimer(Sender: TObject);
+    procedure BtnReadCard1Click(Sender: TObject);
+    procedure BtnReadCard2Click(Sender: TObject);
   private
     { Private declarations }
     FParam: PFormCommandParam;
@@ -32,6 +42,7 @@ type
     function  ActionComPort(const nStop: Boolean):Boolean;
     function  GetStr(nPStr: PChar; nLen: Integer): string;
     function  GetHexStr(nBinStr: string): string;
+    function  ReadCardNo:string;
   public
     { Public declarations }
     class function CreateForm(const nPopedom: string = '';
@@ -95,12 +106,13 @@ begin
     InitFormData;
     if not ActionComPort(False) then Exit;
     
-    tmrReadCard.Enabled := True;
+    //tmrReadCard.Enabled := True;
     chkValue.Checked := FParam.FParamC = sFlag_Yes;
 
     FParam.FCommand := cCmd_ModalResult;
     FParam.FParamA  := ShowModal;
     FParam.FParamB  := Trim(edtRFIDCard.Text);
+    FParam.FParamD  := Trim(edtRFIDCard2.Text);
 
     if chkValue.Checked then
          FParam.FParamC := sFlag_Yes
@@ -115,6 +127,7 @@ begin
   ActiveControl := edtRFIDCard;
   edtTruck.Text := FParam.FParamA;
   edtRFIDCard.Text := FParam.FParamB;
+  edtRFIDCard2.Text := FParam.FParamD;
 end;
 
 procedure TfFormRFIDCard.FormClose(Sender: TObject;
@@ -122,15 +135,16 @@ procedure TfFormRFIDCard.FormClose(Sender: TObject;
 begin
   inherited;
   ActionComPort(True);
-  tmrReadCard.Enabled := False;
+  //tmrReadCard.Enabled := False;
 end;
 
 procedure TfFormRFIDCard.BtnOKClick(Sender: TObject);
-var nRFIDCard: string;
+var nRFIDCard,nRFIDCard2: string;
 begin
   inherited;
   nRFIDCard := Trim(edtRFIDCard.Text);
-  if nRFIDCard = '' then
+  nRFIDCard2 := Trim(edtRFIDCard2.Text);
+  if (nRFIDCard = '') and (nRFIDCard2='') then
   begin
     ActiveControl := edtRFIDCard;
     edtRFIDCard.SelectAll;
@@ -188,9 +202,42 @@ begin
 
   if nCard <> '' then
   begin
-    tmrReadCard.Enabled := False;
+    //tmrReadCard.Enabled := False;
     edtRFIDCard.Text := nCard;
-  end;  
+  end;
+end;
+
+function TfFormRFIDCard.ReadCardNo:string;
+var
+  nStr, nSEPC, nCard, nTemps: string;
+  nEPC: array[0..gRFIDBuffSize-1] of Char;
+  nStartAddr, nCmdRet, nTotallen, nCardNum, nCardIndex, nEPClen: Integer;
+begin
+  nCmdRet := Inventory_G2(gReaderItem.FReadAddr, 0, 0, 0, nEPC, nTotallen,
+    nCardNum, gReaderItem.FReadIndex);
+  //xxxxxx
+
+  case nCmdRet of
+  $01, $02, $03:
+  begin
+    nTemps :=GetStr(nEPC,nTotallen);
+
+    nStartAddr:=1;
+    for nCardIndex := 1 to nCardNum do
+    begin
+      nEPClen    := Ord(nTemps[nStartAddr]) + 1;
+      nSEPC      := Copy(nTemps, nStartAddr, nEPClen) ;
+
+      nStartAddr := nStartAddr + nEPClen;
+      if Length(nSEPC) <> nEPClen then Continue;
+      nStr := GetHexStr(nSEPC);
+
+      nCard := Copy(nStr, 3, Length(nStr)-2);
+    end;
+  end;
+  end;
+
+  if nCard <> '' then Result := nCard else Result := '';
 end;
 
 //Desc: ´®¿Ú²Ù×÷
@@ -262,6 +309,16 @@ begin
   Result := '';
   for nIdx := 1 to Length(nBinStr) do
     Result := Result + IntToHex(ord(nBinStr[nIdx]), 2);
+end;
+
+procedure TfFormRFIDCard.BtnReadCard1Click(Sender: TObject);
+begin
+  edtRFIDCard.Text:=ReadCardNo;
+end;
+
+procedure TfFormRFIDCard.BtnReadCard2Click(Sender: TObject);
+begin
+  edtRFIDCard2.Text:=ReadCardNo;
 end;
 
 initialization

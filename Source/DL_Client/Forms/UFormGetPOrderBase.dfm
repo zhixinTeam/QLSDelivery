@@ -1,7 +1,7 @@
 inherited fFormGetPOrderBase: TfFormGetPOrderBase
   Left = 401
   Top = 134
-  Width = 616
+  Width = 630
   Height = 384
   BorderStyle = bsSizeable
   Constraints.MinHeight = 300
@@ -11,16 +11,16 @@ inherited fFormGetPOrderBase: TfFormGetPOrderBase
   PixelsPerInch = 96
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
-    Width = 608
+    Width = 622
     Height = 353
     inherited BtnOK: TButton
-      Left = 462
+      Left = 476
       Top = 320
       Caption = #30830#23450
       TabOrder = 4
     end
     inherited BtnExit: TButton
-      Left = 532
+      Left = 546
       Top = 320
       TabOrder = 5
     end

@@ -1,11 +1,11 @@
 inherited fFrameNormal: TfFrameNormal
-  Width = 602
+  Width = 701
   Height = 367
   ParentBackground = False
   object ToolBar1: TToolBar
     Left = 0
     Top = 22
-    Width = 602
+    Width = 701
     Height = 37
     ButtonHeight = 35
     ButtonWidth = 67
@@ -96,7 +96,7 @@ inherited fFrameNormal: TfFrameNormal
   object cxGrid1: TcxGrid
     Left = 0
     Top = 167
-    Width = 602
+    Width = 701
     Height = 200
     Align = alClient
     BorderStyle = cxcbsNone
@@ -118,7 +118,7 @@ inherited fFrameNormal: TfFrameNormal
   object dxLayout1: TdxLayoutControl
     Left = 0
     Top = 59
-    Width = 602
+    Width = 701
     Height = 100
     Align = alTop
     BevelEdges = [beLeft, beRight, beBottom]
@@ -144,7 +144,7 @@ inherited fFrameNormal: TfFrameNormal
   object cxSplitter1: TcxSplitter
     Left = 0
     Top = 159
-    Width = 602
+    Width = 701
     Height = 8
     HotZoneClassName = 'TcxXPTaskBarStyle'
     AlignSplitter = salTop
@@ -153,7 +153,7 @@ inherited fFrameNormal: TfFrameNormal
   object TitlePanel1: TZnBitmapPanel
     Left = 0
     Top = 0
-    Width = 602
+    Width = 701
     Height = 22
     Align = alTop
     object TitleBar: TcxLabel
@@ -179,8 +179,8 @@ inherited fFrameNormal: TfFrameNormal
       Properties.ShadowedColor = clBlack
       Transparent = True
       Height = 22
-      Width = 602
-      AnchorX = 301
+      Width = 701
+      AnchorX = 351
       AnchorY = 11
     end
   end

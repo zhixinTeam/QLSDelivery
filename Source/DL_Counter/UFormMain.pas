@@ -10,9 +10,10 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  UMultiJS, USysConst, UFrameJS, cxGraphics, cxControls, cxLookAndFeels,
+  {$IFDEF QHSN} UMultiJS_Reply, {$ELSE}UMultiJS,{$ENDIF}
+  USysConst, UFrameJS, cxGraphics, cxControls, cxLookAndFeels,
   cxLookAndFeelPainters, Menus, ImgList, dxorgchr, cxSplitter, ComCtrls,
-  ToolWin, ExtCtrls;
+  ToolWin, ExtCtrls, UMemDataPool;
 
 type
   TfFormMain = class(TForm)
@@ -101,6 +102,8 @@ begin
              
   nIni := TIniFile.Create(gPath + sConfigFile);
   try
+    gMemDataManager := TMemDataManager.Create;
+    //ÄÚ´æ¹ÜÀíÆ÷
     gChannelManager := TChannelManager.Create;
     gSysParam.FHardMonURL := nIni.ReadString('Config', 'HardURL', 'xx');
     nIni.Free;
@@ -173,8 +176,11 @@ end;
 procedure TfFormMain.InitFormData;
 begin
   gSysLoger := TSysLoger.Create(gPath + 'Logs\');
-  gMultiJSManager.LoadFile(gPath + 'JSQ.xml');
-
+  if not Assigned(gMultiJSManager) then
+  begin
+    gMultiJSManager := TMultiJSManager.Create;
+    gMultiJSManager.LoadFile(gPath + 'JSQ.xml');
+  end;
   LoadTunnelPanels;
   ResetPanelPosition;
 

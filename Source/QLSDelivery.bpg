@@ -9,7 +9,8 @@ MAKE = $(ROOT)\bin\make.exe -$(MAKEFLAGS) -f$**
 DCC = $(ROOT)\bin\dcc32.exe $**
 BRCC = $(ROOT)\bin\brcc32.exe $**
 #------------------------------------------------------------------------------
-PROJECTS = RemotePrinter.exe Client.exe MIT.exe Counter.exe DL_SelfHelp.exe
+PROJECTS = RemotePrinter.exe Client.exe MIT.exe Counter.exe DL_SelfHelp.exe \
+  GPWS.exe DL_AICM.exe
 #------------------------------------------------------------------------------
 default: $(PROJECTS)
 #------------------------------------------------------------------------------
@@ -27,6 +28,12 @@ Counter.exe: DL_Counter\Counter.dpr
   $(DCC)
 
 DL_SelfHelp.exe: DL_SelfHelp\DL_SelfHelp.dpr
+  $(DCC)
+
+GPWS.exe: GroupPublicWebService\Main\GPWS.dpr
+  $(DCC)
+
+DL_AICM.exe: DL_AutomaticIssueCardMachine\DL_AICM.dpr
   $(DCC)
 
 

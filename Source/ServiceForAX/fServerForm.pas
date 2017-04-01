@@ -6,7 +6,7 @@ uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs, StdCtrls,
   uROClient, uROPoweredByRemObjectsButton, uROClientIntf, uROServer,
   uROSOAPMessage, uROIndyHTTPServer, uROIndyTCPServer, IniFiles, USysLoger,
-  ExtCtrls, AppEvnts, ComObj;
+  ExtCtrls, AppEvnts, ComObj, ShellAPI;
 
 type
   TServerForm = class(TForm)
@@ -18,15 +18,18 @@ type
     ChkModel: TCheckBox;
     ApplicationEvents1: TApplicationEvents;
     BtnConn: TButton;
+    tmrRestart: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure ChkModelClick(Sender: TObject);
     procedure ApplicationEvents1Exception(Sender: TObject; E: Exception);
+    procedure tmrRestartTimer(Sender: TObject);
   private
     { Private declarations }
   public
     { Public declarations }
+    gTime:string;
   end;
 
 var
@@ -58,17 +61,20 @@ begin
   myini:=TIniFile.Create('.\SetParam.ini');
   try
     nPort:=myini.ReadInteger('Param','Port',8099);
+    gTime:=myini.ReadString('Param','Time','23:59');
   finally
     myini.Free;
   end;
   ROServer.Port:= nPort;
   ROServer.Active := true;
   lblport.Caption:='运行端口：'+inttostr(nPort);
+  chkShowLog.Checked := True;
   if not Assigned(gSysLoger) then
     gSysLoger := TSysLoger.Create('.\Logs\');
   WriteLog('系统启动');
   if GetOnLineModel then ChkModel.Checked:=True else ChkModel.Checked:=False;
-  
+  tmrRestart.Interval := 60*1000;
+  tmrRestart.Enabled := True;
 end;
 
 procedure TServerForm.FormDestroy(Sender: TObject);
@@ -126,6 +132,12 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TServerForm.tmrRestartTimer(Sender: TObject);
+begin
+  if FormatDateTime('hh:mm',Now)=gTime then
+    ShellExecute(Self.Handle, 'open', PChar(Application.ExeName), nil, nil, SW_SHOWNORMAL);
 end;
 
 end.

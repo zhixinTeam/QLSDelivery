@@ -94,28 +94,6 @@ begin
     gPoundTunnelManager := TPoundTunnelManager.Create;
     gPoundTunnelManager.LoadConfig(gPath + 'Tunnels.xml');
   end;
-
-  {$IFDEF QLS}
-
-  {$ELSE}
-  {$IFDEF HR1847}   //30330123
-  if not Assigned(gKRMgrProber) then
-  begin
-    gKRMgrProber := TKRMgrProber.Create;
-    gKRMgrProber.LoadConfig(gPath + 'TruckProber.xml');
-
-    Inc(gSysParam.FProberUser);
-  end;
-  {$ELSE}
-  if not Assigned(gProberManager) then
-  begin
-    gProberManager := TProberManager.Create;
-    gProberManager.LoadConfig(gPath + 'TruckProber.xml');
-  end;
-  Inc(gSysParam.FProberUser);
-  gProberManager.StartProber;
-  {$ENDIF}
-  {$ENDIF}
   
   if gSysParam.FVoiceUser < 1 then
   begin
@@ -223,9 +201,6 @@ begin
         Align := alTop;
         HintLabel.Caption := nT.FName;
         PoundTunnel := nT;
-
-        //Additional.Clear;
-        //SplitStr(nT.FAdditional, Additional, 0, ';', False);
       end;
     end;
   end;
