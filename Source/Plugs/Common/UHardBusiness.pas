@@ -349,7 +349,7 @@ begin
     nDBConn := gDBConnManager.GetConnection(FDB.FID, nIdx);
     if not Assigned(nDBConn) then
     begin
-      //WriteNearReaderLog('连接HM数据库失败(DBConn Is Null).');
+      WriteHardHelperLog('连接M数据库失败(DBConn Is Null).');
       Exit;
     end;
     if not nDBConn.FConn.Connected then
@@ -903,11 +903,11 @@ begin
 
   if (nReader <> '') and (Pos('V',nReader)<=0) then gHYReaderManager.OpenDoor(nReader);
   //抬杆
-
+  SendMsgToWebMall(nTrucks[0].FID,cSendWeChatMsgType_OutFactory);
+  //发送微信消息
+  
   for nIdx:=Low(nTrucks) to High(nTrucks) do
   begin
-    //发送微信消息
-    SendMsgToWebMall(nTrucks[nIdx].FID,cSendWeChatMsgType_OutFactory);
     {$IFDEF ZXKP}
     if (nCardType = sFlag_Provide) and (nTrucks[nIdx].FNeiDao = sFlag_Yes) then
     begin
@@ -952,9 +952,9 @@ begin
       gRemotePrinter.PrintBill(nTrucks[nIdx].FID + #9 + nPrinter + nStr);
       WriteHardHelperLog(nTrucks[nIdx].FID + #9 + nPrinter + nStr);
     end;
-    //更新微信订单状态
-    ModifyWebOrderStatus(nTrucks[nIdx].FID,'1');
   end; //打印报表
+  //更新微信订单状态
+  ModifyWebOrderStatus(nTrucks[0].FID,'1');
 end;
 
 //Date: 2012-10-19

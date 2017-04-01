@@ -3809,7 +3809,6 @@ end;
 //读取订单物料价格 lih  2017-02-07
 function TWorkerBusinessCommander.ReadStockPrice(var nData: string): Boolean;
 var nStr,nRecID: string;
-    nWorker: PDBWorker;
     nPos: Integer;
 begin
   if FIn.FData <> '' then
@@ -3836,7 +3835,7 @@ begin
   begin
     nStr := 'Select D_Price From %s Where D_Blocked=''0'' and D_RECID=''%s''';
     nStr := Format(nStr, [sTable_ZhiKaDtl, nRecID]);
-    with gDBConnManager.SQLQuery(nStr, nWorker, '') do
+    with gDBConnManager.WorkerQuery(FDBConn,nStr) do
     if RecordCount < 1 then
     begin
       FOut.FData := '0.00';

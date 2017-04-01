@@ -744,7 +744,11 @@ begin
       if FUIData.FPData.FValue > FUIData.FMData.FValue then
       begin
         WriteLog('皮重应小于毛重');
-        FIsSaveing := False;
+        //FIsSaveing := False;
+        nStr := '车辆称重异常，请联系司磅管理人员';
+        nDaiWc:=nStr;
+        FIsSaveing := True;
+        Result := True;
         Exit;
       end;
 
@@ -913,7 +917,7 @@ begin
 
           if (nNet > 0) and (Abs(nVal) > gSysParam.FPoundSanF) then
           begin
-            nStr := '车辆[%s]实时皮重误差较大,请通知司机检查车厢';
+            nStr := '车辆[%s]实时皮重误差较大,请司机检查车厢';
             nStr := Format(nStr, [FUIData.FTruck]);
             PlayVoice(nStr);
 
@@ -939,10 +943,11 @@ begin
 
       if (nNet > 0) and (Abs(nVal) > gSysParam.FEmpTruckWc) then
       begin
-        nStr := '车辆[%s]实时皮重误差较大,请通知司机检查车厢';
+        nStr := '车辆[%s]实时皮重误差较大,请司机联系司磅管理员检查车厢';
         nStr := Format(nStr, [FUIData.FTruck]);
-        PlayVoice(nStr);
-
+        nDaiWc:=nStr;
+        
+        {PlayVoice(nStr);
         nStr := '车辆[ %s ]实时皮重误差较大,详情如下:' + #13#10#13#10 +
                 '※.实时皮重: %.2f吨' + #13#10 +
                 '※.历史皮重: %.2f吨' + #13#10 +
@@ -950,7 +955,7 @@ begin
                 '是否继续保存?';
         nStr := Format(nStr, [FUIData.FTruck, nNet,
                        FUIData.FPData.FValue, nVal]);
-        if not QueryDlg(nStr, sAsk) then
+        if not QueryDlg(nStr, sAsk) then }
         begin
           FIsSaveing := True;
           Result:=True;

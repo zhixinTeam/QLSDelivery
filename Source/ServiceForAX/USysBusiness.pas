@@ -1760,8 +1760,8 @@ begin
             Values['B_StockName']:= FieldByName('Name').AsString;
             Values['B_BStatus']:= FieldByName('PurchStatus').AsString;
             Values['B_Value']:= FieldByName('QtyOrdered').AsString;
-            //Values['B_SentValue']:= FieldByName('PurchReceivedNow').AsString;
-            //Values['B_RestValue']:= FieldByName('RemainPurchPhysical').AsString;
+            Values['B_SentValue']:= FieldByName('PurchReceivedNow').AsString;
+            Values['B_RestValue']:= FieldByName('RemainPurchPhysical').AsString;
             Values['B_Blocked']:= FieldByName('Blocked').AsString;
             Values['B_Date']:= FormatDateTime('yyyy-mm-dd hh:mm:ss',Now);
           end;
@@ -1780,6 +1780,8 @@ begin
                   ''',B_StockName='''+Values['B_StockName']+
                   ''',B_BStatus='''+Values['B_BStatus']+
                   ''',B_Value='''+Values['B_Value']+
+                  ''',B_SentValue='''+Values['B_SentValue']+
+                  ''',B_RestValue='''+Values['B_RestValue']+
                   ''',B_Blocked='''+Values['B_Blocked']+
                   ''',B_Date='''+Values['B_Date']+
                   ''' where B_ID=''%s'' and DataAreaID=''%s'' and B_RECID=''%s'' ';
@@ -1787,11 +1789,12 @@ begin
           end else
           begin
             nStr:= 'Insert into %s (B_ID,B_StockNo,B_StockName,B_BStatus,'+
-                   'B_Value,B_Blocked,B_Date,'+
+                   'B_Value,B_SentValue,B_RestValue,B_Blocked,B_Date,'+
                    'DataAreaID,B_RECID) '+
                    'values ('''+Values['B_ID']+''','''+Values['B_StockNo']+''','''+
                    Values['B_StockName']+''','''+Values['B_BStatus']+''','''+
-                   Values['B_Value']+''','''+
+                   Values['B_Value']+''','''+Values['B_SentValue']+''','''+
+                   Values['B_RestValue']+''','''+
                    Values['B_Blocked']+''','''+Values['B_Date']+''','''+
                    nDataAreaID+''','''+nRecid+''')';
             nStr := Format(nStr, [sTable_OrderBase]);

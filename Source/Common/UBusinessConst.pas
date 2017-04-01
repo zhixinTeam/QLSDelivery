@@ -49,6 +49,10 @@ const
   cBC_GetSampleID             = $0026;   //获取试样编号
   cBC_GetCenterID             = $0027;   //获取生产线ID
 
+  cBC_GetPostBills            = $0030;   //获取岗位交货单
+  cBC_SavePostBills           = $0031;   //保存岗位交货单
+  
+  
   cBC_SaveOrder               = $0040;
   cBC_DeleteOrder             = $0041;
   cBC_SaveOrderCard           = $0042;
@@ -59,14 +63,9 @@ const
   cBC_DeleteOrderBase         = $0047;   //删除采购申请单
   cBC_GetGYOrderValue         = $0048;   //获取已收货量
 
-  cBC_SaveDDCard              = $0047;
-  cBC_LogOffDDCard            = $0048;
   cBC_GetPostDDs              = $0049;   //获取岗位采购单
   cBC_SavePostDDs             = $0050;   //保存岗位采购单
   cBC_AXSyncDuanDao           = $0051;   //同步短倒
-
-  cBC_GetPostBills            = $0030;   //获取岗位交货单
-  cBC_SavePostBills           = $0031;   //保存岗位交货单
 
   cBC_ChangeDispatchMode      = $0053;   //切换调度模式
   cBC_GetPoundCard            = $0054;   //获取磅站卡号
@@ -99,19 +98,7 @@ const
 
   cBC_SyncInvDim              = $0089;   //远程同步维度信息
   cBC_SyncInvCenter           = $0090;   //远程同步生产线信息
-  cBC_SyncInvLocation         = $0120;   //远程同步仓库信息
-  cBC_SyncTprGem              = $0121;   //远程同步信用额度（客户）
-  cBC_SyncTprGemCont          = $0122;   //远程同步信用额度（客户-合同）
-  cBC_SyncEmpTable            = $0123;   //远程同步员工信息
-  cBC_SyncInvCenGroup         = $0124;   //远程同步物料组生产线
-  cBC_GetSalesOrder           = $0125;   //获取销售订单
-  cBC_GetSalesOrdLine         = $0126;   //获取销售订单行
-  cBC_GetSupAgreement         = $0127;   //获取补充协议
-  cBC_GetCreLimCust           = $0128;   //获取信用额度增减（客户）
-  cBC_GetCreLimCusCont        = $0129;   //获取信用额度增减（客户-合同）
-  cBC_GetSalesCont            = $0130;   //获取销售合同
-  cBC_GetSalesContLine        = $0131;   //获取销售合同行
-  cBC_GetVehicleNo            = $0132;   //获取车号
+
   cBC_GetPurOrder             = $0104;   //获取采购订单
   cBC_GetPurOrdLine           = $0105;   //获取采购订单行
   cBC_SyncFYBillAX            = $0106;   //同步提货单到AX
@@ -128,14 +115,25 @@ const
   cBC_GetAXCompanyArea        = $0117;   //在线获取销售区域
   cBC_GetAXInVentSum          = $0118;   //在线获取生产线余量
   cBC_SyncAXwmsLocation       = $0119;   //同步库位信息到DL
+  cBC_SyncInvLocation         = $0120;   //远程同步仓库信息
+  cBC_SyncTprGem              = $0121;   //远程同步信用额度（客户）
+  cBC_SyncTprGemCont          = $0122;   //远程同步信用额度（客户-合同）
+  cBC_SyncEmpTable            = $0123;   //远程同步员工信息
+  cBC_SyncInvCenGroup         = $0124;   //远程同步物料组生产线
+  cBC_GetSalesOrder           = $0125;   //获取销售订单
+  cBC_GetSalesOrdLine         = $0126;   //获取销售订单行
+  cBC_GetSupAgreement         = $0127;   //获取补充协议
+  cBC_GetCreLimCust           = $0128;   //获取信用额度增减（客户）
+  cBC_GetCreLimCusCont        = $0129;   //获取信用额度增减（客户-合同）
+  cBC_GetSalesCont            = $0130;   //获取销售合同
+  cBC_GetSalesContLine        = $0131;   //获取销售合同行
+  cBC_GetVehicleNo            = $0132;   //获取车号
   cBC_GetSalesOrdValue        = $0133;   //获取订单行余量
 
   cBC_VerifPrintCode          = $0091;   //验证喷码信息
   cBC_WaitingForloading       = $0092;   //工厂待装查询
   cBC_BillSurplusTonnage      = $0093;   //网上订单可下单数量查询
   cBC_GetOrderInfo            = $0094;   //获取订单信息，用于网上商城下单
-  cBC_GetOrderList            = $0103;   //获取订单列表，用于网上商城下单
-
   cBC_WeChat_getCustomerInfo  = $0095;   //微信平台接口：获取客户注册信息
   cBC_WeChat_get_Bindfunc     = $0096;   //微信平台接口：客户与微信账号绑定
   cBC_WeChat_send_event_msg   = $0097;   //微信平台接口：发送消息
@@ -144,6 +142,7 @@ const
   cBC_WeChat_get_shoporders   = $0100;   //微信平台接口：获取订单信息
   cBC_WeChat_complete_shoporders   = $0101;   //微信平台接口：修改订单状态
   cBC_WeChat_get_shoporderbyNO   = $0102;   //微信平台接口：根据订单号获取订单信息
+  cBC_GetOrderList            = $0103;   //获取订单列表，用于网上商城下单
 
 type
   PWorkerQueryFieldData = ^TWorkerQueryFieldData;

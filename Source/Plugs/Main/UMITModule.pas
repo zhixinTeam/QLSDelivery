@@ -14,8 +14,8 @@ uses
   UTaskMonitor, USysShareMem, USysLoger, UMITConst, UMITPacker,
   {$IFDEF HardMon}UEventHardware, UWorkerHardware,{$ENDIF} UWorkerBusiness,
   UMemDataPool, UMgrDBConn, UMgrParam, UMgrPlug, UMgrChannel, UChannelChooser,
-  USAPConnection, USyncAXBaseInfo, UWorkerBusinessDuanDao;
-                  //by lih 2016-06-29
+  USAPConnection, USyncAXBaseInfo; //by lih 2016-06-29
+                  
 
 procedure InitSystemObject(const nMainForm: THandle);
 procedure RunSystemObject;

@@ -307,8 +307,7 @@ function PrintYesNo:Boolean;
 //是否打印
 function SaveTransferInfo(nTruck, nMateID, nMate, nSrcAddr, nDstAddr:string):Boolean;
 //短倒磁卡办理
-function LogoutDuanDaoCard(const nCard: string): Boolean;
-//注销指定磁卡
+
 function GetAutoInFactory(const nStockNo:string):Boolean;
 //获取是否自动进厂
 function GetCenterSUM(nStockNo,nCenterID:string):string;
@@ -3035,12 +3034,6 @@ begin
   end;
 end;
 
-//注销指定磁卡
-function LogoutDuanDaoCard(const nCard: string): Boolean;
-var nOut: TWorkerBusinessCommand;
-begin
-  Result := CallBusinessDuanDao(cBC_LogOffDDCard, nCard, '', @nOut);
-end;
 
 //获取是否自动进厂
 function GetAutoInFactory(const nStockNo:string):Boolean;
@@ -3120,7 +3113,8 @@ var
   nSQL:string;
 begin
   Result:= 0.0;
-  nSQL := 'Select (B_Value-IsNull(B_SentValue,0)-IsNull(B_FreezeValue,0)) As B_RestValue From %s Where B_RecID=''%s'' ';
+  //nSQL := 'Select (B_Value-IsNull(B_SentValue,0)-IsNull(B_FreezeValue,0)) As B_RestValue From %s Where B_RecID=''%s'' ';
+  nSQL := 'Select B_RestValue From %s Where B_RecID=''%s'' ';
   nSQL := Format(nSQL, [sTable_OrderBase, nRecID]);
   WriteLog(nSQL);
   with FDM.QueryTemp(nSQL) do

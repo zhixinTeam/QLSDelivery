@@ -194,11 +194,8 @@ begin
         FRestValue:= Format('%.2f', [FieldByName('B_MaxValue').AsFloat])
       else}
       if FieldByName('B_Value').AsFloat>0 then
-        FRestValue:= Format('%.2f', [FieldByName('B_MaxValue').AsFloat])
-      else
-      {if FieldByName('B_Value').AsFloat>0 then
         FRestValue:= Format('%.2f', [FieldByName('B_RestValue').AsFloat])
-      else}
+      else
         FRestValue := '0.00';
 
       {if (FieldByName('B_MaxValue').AsFloat>0)

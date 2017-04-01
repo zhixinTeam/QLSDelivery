@@ -10,7 +10,7 @@ interface
 uses
   Windows, Classes, SysUtils, DateUtils, UBusinessConst, UMgrDBConn,
   UBusinessWorker, UWaitItem, ULibFun, USysDB, UMITConst, USysLoger,
-  UBusinessPacker, NativeXml, UMgrParam, UWorkerBusiness, UWorkerBusinessDuanDao;
+  UBusinessPacker, NativeXml, UMgrParam, UWorkerBusiness;
 
 type
   TAXSyncer = class;
@@ -43,7 +43,6 @@ type
     procedure DoEmptyBillSyncAX;
     procedure DoPoundSyncAX;
     procedure DoPurSyncAX;
-    procedure DoDuanSyncAX;
     procedure Execute; override;
     //执行线程
   public
@@ -518,54 +517,6 @@ begin
     on e:Exception do
     begin
       WriteLog('同步采购磅单错误'+e.Message);
-    end;
-  end;
-end;
-
-//Date: 2016-10-03
-//lih: 同步短倒磅单到AX
-procedure TAXSyncThread.DoDuanSyncAX;
-var
-  nErr: Integer;
-  nSql,nStr: string;
-  nOut: TWorkerBusinessCommand;
-  nIdx:Integer;
-begin
-  try
-    FListA.Clear;
-    nSQL := 'select T_ID From %s '+
-            'where (T_MDate is not null) and '+
-            '((T_DDAX <> ''1'') or (T_DDAX is null)) and '+
-            'T_SyncNum<=3';
-    nSQL := Format(nSQL,[sTable_Transfer]);
-    with gDBConnManager.WorkerQuery(FDBConn,nSql) do
-    begin
-      if RecordCount<1 then
-      begin
-        WriteLog('无短倒磅单同步数据');
-        Exit;
-      end;
-      First;
-      while not Eof do
-      begin
-        FListA.Add(FieldByName('T_ID').AsString);
-        Next;
-      end;
-    end;
-    if FListA.Count>0 then
-    begin
-      for nIdx:=0 to FListA.Count - 1 do
-      begin
-        if not TWorkerBusinessCommander.CallMe(cBC_AXSyncDuanDao,FListA[nIdx],'',@nOut) then
-        begin
-          WriteLog(FListA[nIdx]+'短倒磅单同步失败');
-        end;
-      end;
-    end;
-  except
-    on e:Exception do
-    begin
-      WriteLog('同步短倒磅单错误'+e.Message);
     end;
   end;
 end;
