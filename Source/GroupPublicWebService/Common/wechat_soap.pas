@@ -53,8 +53,8 @@ end;
 
 function GetReviceWS(UseWSDL: Boolean; Addr: string; HTTPRIO: THTTPRIO): ReviceWS;
 const
-  defWSDL = 'http://101.200.195.224/wxplatform/ws/revicews?wsdl';
-  defURL  = 'http://101.200.195.224/wxplatform/ws/revicews';
+  defWSDL = 'http://47.92.67.228/wxplatform/ws/revicews?wsdl'; //101.200.195.224
+  defURL  = 'http://47.92.67.228/wxplatform/ws/revicews';
   defSvc  = 'ReviceWSImplService';
   defPrt  = 'ReviceWSImplPort';
 var

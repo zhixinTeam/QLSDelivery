@@ -66,30 +66,6 @@ type
     items:array of stShopOrderItem;
     function ParseWebResponse(var nData:string):Boolean;override;
   end;
-  
-  TMITDBWorker = class(TBusinessWorkerBase)
-  protected
-    FErrNum: Integer;
-    //错误码
-    FDBConn: PDBWorker;
-    //数据通道
-    FDataIn,FDataOut: PBWDataBase;
-    //入参出参
-    FDataOutNeedUnPack: Boolean;
-    //需要解包
-    procedure GetInOutData(var nIn,nOut: PBWDataBase); virtual; abstract;
-    //出入参数
-    function VerifyParamIn(var nData: string): Boolean; virtual;
-    //验证入参
-    function DoDBWork(var nData: string): Boolean; virtual; abstract;
-    function DoAfterDBWork(var nData: string; nResult: Boolean): Boolean; virtual;
-    //数据业务
-  public
-    function DoWork(var nData: string): Boolean; override;
-    //执行业务
-    procedure WriteLog(const nEvent: string);
-    //记录日志
-  end;
 
   TBusWorkerBusinessWebchat = class(TBusinessWorkerBase)
   private
@@ -113,7 +89,10 @@ type
     //获取订单信息
 
     function GetOrderList(var nData:string):Boolean;
-    //获取订单列表         
+    //获取订单列表
+
+    function GetPurchaseContractList(var nData:string):Boolean;
+    //获取采购订单列表
 
     function GetCustomerInfo(var nData:string):boolean;
     //获取客户注册信息
@@ -262,6 +241,7 @@ begin
     cBC_BillSurplusTonnage     : Result := GetBillSurplusTonnage(nData);
     cBC_GetOrderInfo           : Result := GetOrderInfo(nData);
     cBC_GetOrderList           : Result := GetOrderList(nData);
+    cBC_GetPurchaseContractList : Result := GetPurchaseContractList(nData);
 
     cBC_WeChat_getCustomerInfo :Result := getCustomerInfo(nData);  //微信平台接口：获取客户注册信息
     cBC_WeChat_get_Bindfunc    :Result := get_Bindfunc(nData);  //微信平台接口：客户与微信账号绑定
@@ -271,6 +251,7 @@ begin
     cBC_WeChat_get_shoporders :Result := get_shoporders(nData);  //微信平台接口：获取订单信息
     cBC_WeChat_complete_shoporders : Result := complete_shoporders(nData); //微信平台接口：订单完成
     cBC_WeChat_get_shoporderbyno : Result := get_shoporderbyno(nData);  //微信平台接口：根据订单号获取订单信息
+    cBC_WeChat_get_shopPurchasebyNO : Result := get_shoporderbyno(nData);
    else
     begin
       Result := False;
@@ -379,7 +360,7 @@ begin
 
       with Root.NodeNew('EXMG') do
       begin
-        NodeNew('MsgTxt').ValueAsString     := '????3?|';
+        NodeNew('MsgTxt').ValueAsString     := '业务执行成功';
         NodeNew('MsgResult').ValueAsString  := sFlag_Yes;
         NodeNew('MsgCommand').ValueAsString := IntToStr(FIn.FCommand);
       end;
@@ -501,10 +482,11 @@ function TBusWorkerBusinessWebchat.GetOrderList(var nData:string):Boolean;
 var nOut: TWorkerBusinessCommand;
   nCardData,nCardItem:TStringList;
   i:Integer;
+  nRequest,nResponse:string;
 begin
    Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
               @nOut, cBC_GetOrderList, Trim(FIn.FRemoteUL));
-
+  nRequest := PackerDecodeStr(fin.FData);
   nCardData := TStringList.Create;
   nCardItem := TStringList.Create;
   try
@@ -533,6 +515,7 @@ begin
               NodeNew('StockNo').ValueAsString := nCardItem.Values['XCB_Cement'];
               NodeNew('StockName').ValueAsString := nCardItem.Values['XCB_CementName'];
               NodeNew('MaxNumber').ValueAsString := nCardItem.Values['XCB_RemainNum'];
+              //NodeNew('SaleArea').ValueAsString := nCardItem.Values['pcb_name'];
             end;
           end;
         end;
@@ -550,7 +533,69 @@ begin
     nCardData.Free;
   end;
   nData := FPacker.XMLBuilder.WriteToString;
+  nResponse := FPacker.XMLBuilder.WriteToString;
+  WriteLog('TBusWorkerBusinessWebchat.GetOrderList request='+nRequest);
+  WriteLog('TBusWorkerBusinessWebchat.GetOrderList request='+nResponse);
 end;
+//获取采购合同列表
+function TBusWorkerBusinessWebchat.GetPurchaseContractList(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+  nCardData,nCardItem:TStringList;
+  i:Integer;
+  nRequest,nResponse:string;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
+              @nOut, cBC_GetPurchaseContractList, Trim(FIn.FRemoteUL));
+  nCardData := TStringList.Create;
+  nCardItem := TStringList.Create;
+  nRequest := PackerDecodeStr(fin.FData);
+  try
+    BuildDefaultXMLPack;
+    if Result then
+    begin
+      nCardData.Text := PackerDecodeStr(nOut.FData);
+      nCardItem.Text := PackerDecodeStr(nCardData.Strings[0]);
+      with FPacker.XMLBuilder do
+      begin
+        with Root.NodeNew('head') do
+        begin
+          NodeNew('ProvId').ValueAsString := nCardItem.Values['provider_code'];
+          NodeNew('ProvName').ValueAsString := nCardItem.Values['provider_name'];
+        end;
+        with Root.NodeNew('Items') do
+        begin
+          for i := 0 to nCardData.Count-1 do
+          begin
+            nCardItem.Text := PackerDecodeStr(nCardData.Strings[i]);
+            with NodeNew('Item') do
+            begin
+              NodeNew('SetDate').ValueAsString := nCardItem.Values['con_date'];
+              NodeNew('BillNumber').ValueAsString := nCardItem.Values['pcId'];
+              NodeNew('StockNo').ValueAsString := nCardItem.Values['con_materiel_Code'];
+              NodeNew('StockName').ValueAsString := nCardItem.Values['con_materiel_name'];
+              NodeNew('MaxNumber').ValueAsString := FloatToStr(StrToFloatdef(nCardItem.Values['con_quantity'],0)-StrToFloatdef(nCardItem.Values['con_finished_quantity'],0));
+            end;
+          end;
+        end;
+
+        with Root.NodeNew('EXMG') do
+        begin
+          NodeNew('MsgTxt').ValueAsString     := '业务执行成功';
+          NodeNew('MsgResult').ValueAsString  := sFlag_Yes;
+          NodeNew('MsgCommand').ValueAsString := IntToStr(FIn.FCommand);
+        end;
+      end;
+    end;
+  finally
+    nCardItem.Free;
+    nCardData.Free;
+  end;
+  nData := FPacker.XMLBuilder.WriteToString;
+  nResponse := FPacker.XMLBuilder.WriteToString;
+  WriteLog('TBusWorkerBusinessWebchat.GetPurchaseContractList request='+nRequest);
+  WriteLog('TBusWorkerBusinessWebchat.GetPurchaseContractList request='+nResponse);
+end;
+
 
 //获取客户注册信息
 function TBusWorkerBusinessWebchat.GetCustomerInfo(var nData:string):boolean;
@@ -896,98 +941,6 @@ begin
     nObj.Free;
     nService := nil;
   end;  
-end;
-
-//------------------------------------------------------------------------------
-//Date: 2012-3-13
-//Parm: 如参数护具
-//Desc: 获取连接数据库所需的资源
-function TMITDBWorker.DoWork(var nData: string): Boolean;
-begin
-  Result := False;
-  FDBConn := nil;
-
-  with gParamManager.ActiveParam^ do
-  try
-    FDBConn := gDBConnManager.GetConnection(FDB.FID, FErrNum);
-    if not Assigned(FDBConn) then
-    begin
-      nData := '连接数据库失败(DBConn Is Null).';
-      Exit;
-    end;
-
-    if not FDBConn.FConn.Connected then
-      FDBConn.FConn.Connected := True;
-    //conn db
-
-    FDataOutNeedUnPack := True;
-    GetInOutData(FDataIn, FDataOut);
-    FPacker.UnPackIn(nData, FDataIn);
-
-    with FDataIn.FVia do
-    begin
-      FUser   := gSysParam.FAppFlag;
-      FIP     := gSysParam.FLocalIP;
-      FMAC    := gSysParam.FLocalMAC;
-      FTime   := FWorkTime;
-      FKpLong := FWorkTimeInit;
-    end;
-
-    {$IFDEF DEBUG}
-    WriteLog('Fun: '+FunctionName+' InData:'+ FPacker.PackIn(FDataIn, False));
-    {$ENDIF}
-    if not VerifyParamIn(nData) then Exit;
-    //invalid input parameter
-
-    FPacker.InitData(FDataOut, False, True, False);
-    //init exclude base
-    FDataOut^ := FDataIn^;
-
-    Result := DoDBWork(nData);
-    //execute worker
-
-    if Result then
-    begin
-      if FDataOutNeedUnPack then
-        FPacker.UnPackOut(nData, FDataOut);
-      //xxxxx
-
-      Result := DoAfterDBWork(nData, True);
-      if not Result then Exit;
-
-      with FDataOut.FVia do
-        FKpLong := GetTickCount - FWorkTimeInit;
-      nData := FPacker.PackOut(FDataOut);
-
-      {$IFDEF DEBUG}
-      WriteLog('Fun: '+FunctionName+' OutData:'+ FPacker.PackOut(FDataOut, False));
-      {$ENDIF}
-    end else DoAfterDBWork(nData, False);
-  finally
-    gDBConnManager.ReleaseConnection(FDBConn);
-  end;
-end;
-
-//Date: 2012-3-22
-//Parm: 输出数据;结果
-//Desc: 数据业务执行完毕后的收尾操作
-function TMITDBWorker.DoAfterDBWork(var nData: string; nResult: Boolean): Boolean;
-begin
-  Result := True;
-end;
-
-//Date: 2012-3-18
-//Parm: 入参数据
-//Desc: 验证入参数据是否有效
-function TMITDBWorker.VerifyParamIn(var nData: string): Boolean;
-begin
-  Result := True;
-end;
-
-//Desc: 记录nEvent日志
-procedure TMITDBWorker.WriteLog(const nEvent: string);
-begin
-  gSysLoger.AddLog(TMITDBWorker, FunctionName, nEvent);
 end;
 
 

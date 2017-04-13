@@ -30,6 +30,7 @@ const
   cBC_BillSurplusTonnage      = $0093;   //网上订单可下单数量查询
   cBC_GetOrderInfo            = $0094;   //获取订单信息，用于网上商城下单
   cBC_GetOrderList            = $0103;   //获取订单列表，用于网上商城下单
+  cBC_GetPurchaseContractList = $0107;   //获取采购合同列表，用于网上商城下单
 
   cBC_WeChat_getCustomerInfo  = $0095;   //微信平台接口：获取客户注册信息
   cBC_WeChat_get_Bindfunc     = $0096;   //微信平台接口：客户与微信账号绑定
@@ -39,6 +40,7 @@ const
   cBC_WeChat_get_shoporders   = $0100;   //微信平台接口：获取订单信息
   cBC_WeChat_complete_shoporders   = $0101;   //微信平台接口：修改订单状态
   cBC_WeChat_get_shoporderbyNO   = $0102;   //微信平台接口：根据订单号获取订单信息
+  cBC_WeChat_get_shopPurchasebyNO   = $0108;   //微信平台接口：根据订单号获取订单信息
 
 type
   PWorkerWebChatData = ^TWorkerWebChatData;
