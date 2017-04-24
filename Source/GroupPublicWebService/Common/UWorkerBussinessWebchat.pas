@@ -332,7 +332,7 @@ begin
   end;  
 
   nData := FPacker.XMLBuilder.WriteToString;
-
+end;
 //------------------------------------------------------------------------------
 //Date: 2016-9-20
 //Parm: Œﬁ”√
@@ -382,6 +382,7 @@ begin
         NodeNew('MsgCommand').ValueAsString := IntToStr(FIn.FCommand);
       end;
     end;
+  end;
   nData := FPacker.XMLBuilder.WriteToString;
 end;
 
@@ -732,7 +733,6 @@ var
           nObj.items[i].FGoodsname,
           nObj.items[i].Ftracknumber,
           nobj.items[i].FData,
-          nobj.items[i].Fnamepinyin],
           nobj.items[i].Fnamepinyin,
           nObj.items[i].Ftoaddress,
           nObj.items[i].Fidnumber]);
@@ -797,7 +797,6 @@ var
           nObj.items[i].FGoodsname,
           nObj.items[i].Ftracknumber,
           nobj.items[i].FData,
-          nobj.items[i].Fnamepinyin],
           nobj.items[i].Fnamepinyin,
           nObj.items[i].Ftoaddress,
           nObj.items[i].Fidnumber]);
