@@ -317,6 +317,7 @@ ResourceString
   sTable_WeixinMatch  = 'Sys_WeixinMatch';           //账号匹配
   sTable_WeixinTemp   = 'Sys_WeixinTemplate';        //信息模板
   sTable_WeixinBind   = 'sys_WeixinCusBind';         //微信账号绑定
+  sTable_WeixinBindP  = 'sys_WeixinProBind';         //微信账号绑定（采购）
 
   sTable_PoundLog     = 'Sys_PoundLog';              //过磅数据
   sTable_PoundBak     = 'Sys_PoundBak';              //过磅作废
@@ -342,6 +343,7 @@ ResourceString
   sTable_KuWei           = 'Sys_KuWei';              //库位设置表
   sTable_CompanyArea     = 'Sys_CompanyArea';        //销售区域
   sTable_STInOutFact     = 'L_STInOutFact';          //商砼车进出表
+  sTable_AxPlanInfo      = 'E_AxPlanInfo';           //提货信息表
 
 
   sTable_K3_SyncItem  = 'DL_SyncItem';               //数据同步项
@@ -924,7 +926,8 @@ ResourceString
        'L_EOUTAX Char(1) not null default((0)),L_EOUTNUM int not null default((0)),'+
        'L_WorkOrder varchar(10), L_KHSBM varchar(20), L_OrgXSQYMC varChar(20),'+
        'L_IfHYPrint Char(1), L_IfFenChe Char(1), L_IfNeiDao Char(1),'+
-       'L_TriaTrade Char(1), L_ContQuota Char(1))';
+       'L_TriaTrade Char(1), L_ContQuota Char(1),L_ToAddr varChar(100),'+
+       'L_IdNumber varChar(50))';
   {-----------------------------------------------------------------------------
    交货单表: Bill
    *.R_ID: 编号
@@ -991,6 +994,8 @@ ResourceString
    *.L_IfNeiDao: 是否内倒
    *.L_TriaTrade: 是否三角贸易
    *.L_ContQuota: 是否专款专用（0：否 1：是）
+   *.L_ToAddr: 去向（送货地点）
+   *.L_IdNumber: 司机身份证号
   -----------------------------------------------------------------------------}
   sSQL_NewOrdBaseMain = 'Create Table $Table(R_ID $Inc, M_ID varChar(20),' +
        'M_CID varChar(50), M_BStatus Char(1), ' +
@@ -1490,6 +1495,26 @@ ResourceString
   *.wcb_WebMallStatus:是否开通商城用户，默认值0：未开通 1：已开通
   -----------------------------------------------------------------------------}
 
+  sSQL_NewWeixinProBind = 'Create Table $Table(R_ID $Inc, w_PID varchar(15),'
+        +'w_PName varchar(500),wcb_Phone varchar(11),'
+        +'wcb_Appid varchar(20),wcb_Bindcustomerid varchar(32),wcb_Namepinyin varchar(20),'
+        +'wcb_Email varchar(20),wcb_Openid varchar(28),wcb_Binddate varchar(25),'
+        +'wcb_WebMallStatus char(1))';
+  {-----------------------------------------------------------------------------
+  sys_WeixinCusBind微信客户绑定
+  *.R_ID:记录号
+  *.w_PID:供应商编号
+  *.w_PName:供应商名称
+  *.wcb_Phone:电话号码
+  *.wcb_Appid:appid
+  *.wcb_Bindcustomerid:绑定供应商id
+  *.wcb_Namepinyin:姓名
+  *.wcb_Email:邮箱
+  *.wcb_Openid:openid
+  *.wcb_Binddate:绑定日期
+  *.wcb_WebMallStatus:是否开通商城用户，默认值0：未开通 1：已开通
+  -----------------------------------------------------------------------------}
+
   sSQL_NewProvider = 'Create Table $Table(R_ID $Inc, P_ID varChar(32),' +
        'P_Name varChar(80),P_PY varChar(80), P_Phone varChar(20),' +
        'P_Saler varChar(32),P_Memo varChar(50))';
@@ -1579,6 +1604,7 @@ ResourceString
        'R_Date DateTime, R_Man varChar(32),'+
        'R_BatQuaStart int not null default 0,'+
        'R_BatQuaEnd int not null default 0,'+
+       'R_TotalValue $Float Default 0,'+
        'R_BatValid char(1) not null default(''Y''),'+
        'R_ZMJNAME varChar(20), R_ZMJVALUE varChar(20),'+
        'R_C3S varChar(20), R_C3A varChar(20),'+
@@ -1637,6 +1663,9 @@ ResourceString
    *.R_SHR7D；水化热7D
    *.R_C2S: 矿物C2S
    *.R_CenterID: 生产线ID
+   *.R_BatQuaStart: 批次量
+   *.R_BatQuaEnd: 预警量
+   *.R_TotalValue: 已发量
   -----------------------------------------------------------------------------}
 
   sSQL_NewStockHuaYan = 'Create Table $Table(H_ID $Inc, H_No varChar(15),' +
@@ -1882,6 +1911,51 @@ ResourceString
    *.T_BID: 订单编号
    *.T_BRecID: 行编码
   -----------------------------------------------------------------------------}
+    sSQL_NewSTInOutFact = 'Create Table $Table(R_ID $Inc, I_Card varChar(16),I_Truck varChar(20),' +
+       'I_CusName varChar(80), I_Context varChar(100), I_Memo varChar(200), '+
+       'I_Man varChar(20),I_Date datetime, I_InDate datetime, I_OutDate datetime,'+
+       'I_CType varChar(32))';
+  {-----------------------------------------------------------------------------
+   商砼卡进出表：L_STInOutFact
+   *.I_Card: 卡号
+   *.I_CType: 卡类型（暂无定义）
+   *.I_Truck：车号
+   *.I_CusName：客户名称
+   *.I_Context：内容
+   *.I_Memo：备注
+   *.I_Man: 操作人
+   *.I_Date: 操作日期
+   *.I_InDate: 进厂日期
+   *.I_OutDate: 出厂日期
+  -----------------------------------------------------------------------------}
+  sSQL_NewAxPlanInfo = 'Create Table $Table(R_ID $Inc, AX_PLANQTY $Float, ' +
+       'AX_VEHICLEId varChar(30), AX_ITEMID varChar(30), AX_ITEMNAME varChar(50),  '+
+       'AX_ITEMTYPE varChar(10), AX_ITEMPRICE $Float, AX_CUSTOMERID varChar(30), '+
+       'AX_CUSTOMERNAME varChar(400), AX_TRANSPORTER varChar(50), AX_TRANSPLANID varChar(50), '+
+       'AX_SALESID varChar(50), AX_SALESLINERECID bigint, AX_COMPANYID varChar(30), '+
+       'AX_Destinationcode varChar(32), AX_WMSLocationId varChar(32), AX_FYPlanStatus varChar(32), '+
+       'AX_InventLocationId varChar(32), AX_xtDInventCenterId varChar(32))';
+  {-----------------------------------------------------------------------------
+   AX提货信息表：E_AxPlanInfo
+   *.AX_PLANQTY: 计划提货量
+   *.AX_VEHICLEId: 车牌号码
+   *.AX_ITEMID：物料编码
+   *.AX_ITEMNAME：物料名称
+   *.AX_ITEMTYPE：物料类型（D袋装、S散装）
+   *.AX_ITEMPRICE：单价
+   *.AX_CUSTOMERID: 客户ID
+   *.AX_CUSTOMERNAME: 客户名称
+   *.AX_TRANSPORTER:
+   *.AX_TRANSPLANID: 提货单号（发运计划号）
+   *.AX_SALESID: 订单编号
+   *.AX_SALESLINERECID：订单行编号
+   *.AX_COMPANYID：账套
+   *.AX_Destinationcode：
+   *.AX_WMSLocationId：
+   *.AX_FYPlanStatus：状态
+   *.AX_InventLocationId：仓库
+   *.AX_xtDInventCenterId：生产线
+  -----------------------------------------------------------------------------}
 
 //------------------------------------------------------------------------------
 // 数据查询
@@ -1901,23 +1975,6 @@ ResourceString
    *.$Table:扩展信息表
    *.$Group:分组名称
    *.$ID:信息标识
-  -----------------------------------------------------------------------------}
-  sSQL_NewSTInOutFact = 'Create Table $Table(R_ID $Inc, I_Card varChar(16),I_Truck varChar(20),' +
-       'I_CusName varChar(80), I_Context varChar(100), I_Memo varChar(200), '+
-       'I_Man varChar(20),I_Date datetime, I_InDate datetime, I_OutDate datetime,'+
-       'I_CType varChar(32))';
-  {-----------------------------------------------------------------------------
-   商砼卡进出表：L_STInOutFact
-   *.I_Card: 卡号
-   *.I_CType: 卡类型（暂无定义）
-   *.I_Truck：车号
-   *.I_CusName：客户名称
-   *.I_Context：内容
-   *.I_Memo：备注
-   *.I_Man: 操作人
-   *.I_Date: 操作日期
-   *.I_InDate: 进厂日期
-   *.I_OutDate: 出厂日期
   -----------------------------------------------------------------------------}
 
 function CardStatusToStr(const nStatus: string): string;
@@ -2021,6 +2078,7 @@ begin
   AddSysTableItem(sTable_WeixinMatch, sSQL_NewWXMatch,'');
   AddSysTableItem(sTable_WeixinTemp, sSQL_NewWXTemplate,'');
   AddSysTableItem(sTable_WeixinBind,sSQL_NewWeixinCusBind,'');
+  AddSysTableItem(sTable_WeixinBindP,sSQL_NewWeixinProBind,'');
 
   AddSysTableItem(sTable_ZhiKa, sSQL_NewZhiKa,'');
   AddSysTableItem(sTable_ZhiKaDtl, sSQL_NewZhiKaDtl,'');
@@ -2073,6 +2131,8 @@ begin
   AddSysTableItem(sTable_TransferBak, sSQL_NewTransfer,'');
   AddSysTableItem(sTable_STInOutFact, sSQL_NewSTInOutFact,'');
   AddSysTableItem(sTable_WebOrderMatch,sSQL_NewWebOrderMatch,'');
+
+  AddSysTableItem(sTable_AxPlanInfo, sSQL_NewAxPlanInfo,'');
 
 end;
 
