@@ -35,7 +35,8 @@ uses
   UFrameUpInfo, UFramePoundWuCha, UFormPWuCha, UFrameZTQuery, UFormPoundKw,
   UFormWorkSet, UFrameUpPurchase, UFramePoundDevia, UFrameLSCard, UFormLSCard,
   UFormTransfer, UFrameQueryTransferDetail, UFrameSTCard, UFormSTCard,
-  uFormGetWechartAccount, UFrameWeixinBind,UFormWeixinBind;
+  uFormGetWechartAccount, UFrameWeixinBind, UFormWeixinBind, UFormQLSBill,
+  UFormAXBaseLoadS, UFormAXBaseLoadP;
 
 procedure InitSystemObject;
 procedure RunSystemObject;

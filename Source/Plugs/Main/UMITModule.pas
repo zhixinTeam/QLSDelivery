@@ -11,8 +11,8 @@ interface
 
 uses
   Windows, Forms, Classes, SysUtils, ULibFun, UBusinessWorker, UBusinessPacker,
-  UTaskMonitor, USysShareMem, USysLoger, UMITConst, UMITPacker,
-  {$IFDEF HardMon}UEventHardware, UWorkerHardware,{$ENDIF} UWorkerBusiness,
+  UTaskMonitor, USysShareMem, USysLoger, UMITConst, UMITPacker, UWorkerBusiness,
+  {$IFDEF HardMon}UEventHardware, UWorkerHardware,{$ENDIF} UWorkerClientWebChat,
   UMemDataPool, UMgrDBConn, UMgrParam, UMgrPlug, UMgrChannel, UChannelChooser,
   USAPConnection, USyncAXBaseInfo; //by lih 2016-06-29
                   

@@ -100,6 +100,7 @@ const
   cFI_FormMakeCard      = $1013;                     //办理磁卡
   cFI_FormMakeRFIDCard  = $1014;                     //办理电子标签
 
+  cFI_FormQLSBill       = $1015;                     //开提货单
   cFI_FormBill          = $1016;                     //开提货单
   cFI_FormShouJu        = $1017;                     //开收据
   cFI_FormZhiKaVerify   = $1018;                     //纸卡审核
@@ -179,6 +180,8 @@ const
   cFI_FormTransfer      = $1105;                     //短倒制卡
   cFI_FrameWXBind       = $1106;                     //微信账号绑定
   cFI_FormGetWechartAccount    = $1107;                     //客户注册信息
+  cFI_FormAXBaseLoadS    = $1108;                     //销售基础数据下载
+  cFI_FormAXBaseLoadP    = $1109;                     //采购基础数据下载
 
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
@@ -342,6 +345,7 @@ begin
   AddMenuModuleItem('MAIN_D05', cFI_FrameZhiKa);
   AddMenuModuleItem('MAIN_D06', cFI_FrameBill);
   AddMenuModuleItem('MAIN_D08', cFI_FormTruckEmpty, mtForm);
+  AddMenuModuleItem('MAIN_D09', cFI_FormQLSBill, mtForm);
 
   AddMenuModuleItem('MAIN_E01', cFI_FramePoundManual);
   AddMenuModuleItem('MAIN_E02', cFI_FramePoundAuto);
@@ -397,6 +401,8 @@ begin
   AddMenuModuleItem('MAIN_S03', cFI_FrameUpPurchase);
   AddMenuModuleItem('MAIN_T01', cFI_FrameSTCard);
 
+  AddMenuModuleItem('MAIN_S04', cFI_FormAXBaseLoadS,mtForm);
+  AddMenuModuleItem('MAIN_S05', cFI_FormAXBaseLoadP,mtForm);
 end;
 
 //Desc: 清理模块列表

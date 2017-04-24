@@ -41,6 +41,7 @@ const
   cBC_WeChat_complete_shoporders   = $0101;   //微信平台接口：修改订单状态
   cBC_WeChat_get_shoporderbyNO   = $0102;   //微信平台接口：根据订单号获取订单信息
   cBC_WeChat_get_shopPurchasebyNO   = $0108;   //微信平台接口：根据订单号获取订单信息
+  cBC_WeChat_InOutFactoryTotal  = $0200;   //进出厂量查询（采购进厂量、销售出厂量）
 
 type
   PWorkerWebChatData = ^TWorkerWebChatData;
@@ -122,6 +123,17 @@ type
   TQueueListItems = array of TQueueListItem;
   //待装排队列表
 
+  TInOutFactListItem = record
+    FStockNO   : string;
+    FStockName : string;
+
+    FTruckCount : Integer;
+    FStockValue: Double;
+  end;
+  TInOutFactListItems = array of TInOutFactListItem;
+  //出厂量列表
+
+
 procedure AnalyseBillItems(const nData: string; var nItems: TLadingBillItems);
 //解析由业务对象返回的交货单数据
 function CombineBillItmes(const nItems: TLadingBillItems): string;
@@ -129,6 +141,9 @@ function CombineBillItmes(const nItems: TLadingBillItems): string;
 
 procedure AnalyseQueueListItems(const nData: string; var nItems: TQueueListItems);
 //解析由业务对象返回的待装排队数据
+
+procedure AnalyseInOutFactListItems(const nData: string; var nItems: TInOutFactListItems);
+//解析由业务对象返回的出厂车辆数据
 
 resourcestring
   {*PBWDataBase.FParam*}
@@ -369,6 +384,38 @@ begin
         FStockName := Values['StockName'];
         FLineCount := StrToIntDef(Values['LineCount'],0);
         FTruckCount := StrToIntDef(Values['TruckCount'],0);
+      end;
+      Inc(nInt);
+    end;
+  finally
+    nListB.Free;
+    nListA.Free;
+  end;   
+end;
+
+//解析由业务对象返回的出厂车辆数据  lih 2017-04-19
+procedure AnalyseInOutFactListItems(const nData: string; var nItems: TInOutFactListItems);
+var nIdx,nInt: Integer;
+    nListA,nListB: TStrings;
+begin
+  nListA := TStringList.Create;
+  nListB := TStringList.Create;
+  try
+    nListA.Text := PackerDecodeStr(nData);
+    //bill list
+    nInt := 0;
+    SetLength(nItems, nListA.Count);
+
+    for nIdx:=0 to nListA.Count - 1 do
+    begin
+      nListB.Text := PackerDecodeStr(nListA[nIdx]);
+      //bill item
+
+      with nListB,nItems[nInt] do
+      begin
+        FStockName := Values['StockName'];
+        FTruckCount := StrToIntDef(Values['TruckCount'],0);
+        FStockValue := StrToFloatDef(Values['StockValue'],0);
       end;
       Inc(nInt);
     end;

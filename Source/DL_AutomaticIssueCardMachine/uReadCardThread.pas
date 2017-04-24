@@ -33,13 +33,13 @@ begin
     nStr := Format(nStr,[FSzttceApi.ErrorCode,FSzttceApi.ErrorMsg]);
     Exit;
   end;
-  fFormMain.Timer2.Enabled := False;
+  fFormMain.TimerInsertCard.Enabled := False;
   if not FSzttceApi.ReadCardSerialNo(nCard) then
   begin
     nStr := '∂¡»°ø®∫≈ ß∞‹£∫[Errorcode=%d,ErrorMsg=%s],«Î…‘∫Û÷ÿ ‘';
     nStr := Format(nStr,[FSzttceApi.ErrorCode,FSzttceApi.ErrorMsg]);
     ShowMsg(nStr,sHint);
-    fFormMain.Timer2.Enabled := True;
+    fFormMain.TimerInsertCard.Enabled := True;
     Exit;
   end;
   fFormMain.FCardType := ctTTCE;

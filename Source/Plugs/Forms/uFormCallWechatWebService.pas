@@ -53,7 +53,8 @@ begin
     except
       on E:Exception do
       begin
-        ShowMessage(e.Message);
+        //ShowMessage(e.Message);
+        
       end;
     end;
   finally

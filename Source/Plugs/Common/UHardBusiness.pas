@@ -11,7 +11,7 @@ uses
   Windows, Classes, Controls, SysUtils, UMgrDBConn, UMgrParam, DB,
   UBusinessWorker, UBusinessConst, UBusinessPacker, UMgrQueue,
   UMgrHardHelper, U02NReader, UMgrERelay, UMgrRemotePrint,
-  UMultiJS_Reply, UMgrLEDDisp, UMgrRFID102;
+  UMultiJS_Reply, UMgrLEDDisp, UMgrRFID102, UMITConst;
 
 procedure WhenReaderCardArrived(const nReader: THHReaderItem);
 procedure WhenHYReaderCardArrived(const nReader: PHYReaderItem);
@@ -25,11 +25,12 @@ procedure WhenBusinessMITSharedDataIn(const nData: string);
 procedure WhenSaveJS(const nTunnel: PMultiJSTunnel);
 //保存计数结果
 
-procedure SendMsgToWebMall(const nLid:string;const MsgType:Integer);
+procedure SendMsgToWebMall(const nLid:string;const MsgType:Integer;const nBillType:string);
 //推送消息到微信平台
 function Do_send_event_msg(const nXmlStr: string): string;
 //发送消息
-procedure ModifyWebOrderStatus(const nLId, nStatus:string);
+procedure ModifyWebOrderStatus(const nLId:string;nStatus:Integer=c_WeChatStatusFinished;
+                               const AWebOrderID:string='';const nNetWeight:string='0');
 //修改网上订单状态  nStatus 0:已开卡；1:已出厂
 function Do_ModifyWebOrderStatus(const nXmlStr: string): string;
 //修改网上订单状态
@@ -37,7 +38,7 @@ function Do_ModifyWebOrderStatus(const nXmlStr: string): string;
 implementation
 
 uses
-  ULibFun, USysDB, USysLoger, UTaskMonitor, UMITConst;
+  ULibFun, USysDB, USysLoger, UTaskMonitor;
 
 const
   sPost_In   = 'in';
@@ -259,28 +260,38 @@ begin
 end;}
 
 
-procedure SendMsgToWebMall(const nLid:string;const MsgType:Integer);
+procedure SendMsgToWebMall(const nLid:string;const MsgType:Integer;const nBillType:string);
 var
   nSql:string;
   nDs:TDataSet;
 
   nBills: TLadingBillItems;
   nXmlStr,nData:string;
-  i,nIdx:Integer;
-  nItem:TLadingBillItem;
-  nMobileNo,nCustomerid:string;
-  nDBConn: PDBWorker;
+    nIdx:Integer;
 begin
-  //加载提货单信息
-  if not GetLadingBills(nLid, sFlag_BillDone, nBills) then
+  if nBillType=sFlag_Sale then
   begin
+    //加载提货单信息
+    if not GetLadingBills(nLid, sFlag_BillDone, nBills) then
+    begin
+      Exit;
+    end;
+  end
+  else if nBillType=sFlag_Provide then
+  begin
+    //加载采购订单信息
+    if not GetLadingOrders(nLid, sFlag_BillDone, nBills) then
+    begin
+      Exit;
+    end;  
+  end
+  else begin
     Exit;
   end;
-  //调用web接口发送消息
-  for i := Low(nBills) to High(nBills) do
-  begin
-    nItem := nBills[i];
 
+  for nIdx := Low(nBills) to High(nBills) do
+  with nBills[nIdx] do
+  begin
     nXmlStr := '<?xml version="1.0" encoding="UTF-8"?>'
         +'<DATA>'
         +'<head>'
@@ -305,14 +316,13 @@ begin
         +'	      <Searial></Searial>'
         +'	      <OutFact></OutFact>'
         +'	      <OutMan></OutMan>'
+        +'        <NetWeight>%s</NetWeight>'
         +'	  </Item>	'
         +'</Items>'
         +'   <remark/>'
         +'</DATA>';
-    nXmlStr := Format(nXmlStr,[gSysParam.FFactory, nItem.FCusID, MsgType,//cSendWeChatMsgType_DelBill,
-          nItem.FID,nItem.FCard,nitem.FTruck,
-          nItem.FStockNo,nItem.FStockName,nItem.FCusID,
-          nItem.FCusName]);
+    nXmlStr := Format(nXmlStr,[gSysParam.FFactory, FCusID, MsgType,//cSendWeChatMsgType_DelBill,
+               FID, FCard, FTruck, FStockNo, FStockName, FCusID, FCusName,FloatToStr(FValue)]);
     nXmlStr := PackerEncodeStr(nXmlStr);
     nData := Do_send_event_msg(nXmlStr);
     gSysLoger.AddLog(nData);
@@ -334,38 +344,46 @@ begin
 end;
 
 //修改网上订单状态
-procedure ModifyWebOrderStatus(const nLId, nStatus:string);
+procedure ModifyWebOrderStatus(const nLId:string;nStatus:Integer;const AWebOrderID:string;const nNetWeight:string);
 var
   nXmlStr,nData,nSql:string;
   nDBConn: PDBWorker;
   nWebOrderId:string;
   nIdx:Integer;
 begin
-  nWebOrderId := '';
+  nWebOrderId := AWebOrderID;
   nDBConn := nil;
 
-  with gParamManager.ActiveParam^ do
-  try
-    nDBConn := gDBConnManager.GetConnection(FDB.FID, nIdx);
-    if not Assigned(nDBConn) then
+  if nWebOrderId='' then
+  begin
+    with gParamManager.ActiveParam^ do
     begin
-      WriteHardHelperLog('连接M数据库失败(DBConn Is Null).');
-      Exit;
-    end;
-    if not nDBConn.FConn.Connected then
-    nDBConn.FConn.Connected := True;
+      try
+        nDBConn := gDBConnManager.GetConnection(FDB.FID, nIdx);
+        if not Assigned(nDBConn) then
+        begin
+  //        WriteNearReaderLog('连接HM数据库失败(DBConn Is Null).');
+          Exit;
+        end;
+        if not nDBConn.FConn.Connected then
+        nDBConn.FConn.Connected := True;
 
-    //查询网上商城订单
-    nSql := 'select WOM_WebOrderID from %s where WOM_LID=''%s''';
-    nSql := Format(nSql,[sTable_WebOrderMatch,nLId]);
-    //gSysLoger.AddLog(nSql);
-    with gDBConnManager.WorkerQuery(nDBConn, nSql) do
-    if recordcount>0 then
-    begin
-      nWebOrderId := FieldByName('WOM_WebOrderID').asstring;
+        //查询网上商城订单
+        nSql := 'select WOM_WebOrderID from %s where WOM_LID=''%s''';
+        nSql := Format(nSql,[sTable_WebOrderMatch,nLId]);
+
+        with gDBConnManager.WorkerQuery(nDBConn, nSql) do
+        begin
+          if recordcount>0 then
+          begin
+            nWebOrderId := FieldByName('WOM_WebOrderID').asstring;
+          end;
+        end;
+
+      finally
+        gDBConnManager.ReleaseConnection(nDBConn);
+      end;
     end;
-  finally
-    gDBConnManager.ReleaseConnection(nDBConn);
   end;
 
   if nWebOrderId='' then Exit;
@@ -373,10 +391,11 @@ begin
   nXmlStr := '<?xml version="1.0" encoding="UTF-8"?>'
             +'<DATA>'
             +'<head><ordernumber>%s</ordernumber>'
-            +'<status>'+nStatus+'</status>'
+            +'<status>%d</status>'
+            +'<NetWeight>%s</NetWeight>'
             +'</head>'
             +'</DATA>';
-  nXmlStr := Format(nXmlStr,[nWebOrderId]);
+  nXmlStr := Format(nXmlStr,[nWebOrderId,nStatus,nNetWeight]);
   nXmlStr := PackerEncodeStr(nXmlStr);
 
   nData := Do_ModifyWebOrderStatus(nXmlStr);
@@ -419,7 +438,6 @@ begin
 
   nCardType := '';
   if not GetCardUsed(nCard, nCardType) then Exit;
-  WriteHardHelperLog('MakeTruckIn CardType: '+nCardType);
   
   if nCardType = sFlag_Other then   //临时卡进厂
   begin
@@ -531,7 +549,7 @@ begin
     WriteHardHelperLog(nStr, sPost_In);
     Exit;
   end;
-  WriteHardHelperLog('GetLadingOrders or GetLadingBills Success');
+  
   if Length(nTrucks) < 1 then
   begin
     nStr := '磁卡[ %s ]没有需要进厂车辆.';
@@ -903,8 +921,13 @@ begin
 
   if (nReader <> '') and (Pos('V',nReader)<=0) then gHYReaderManager.OpenDoor(nReader);
   //抬杆
-  SendMsgToWebMall(nTrucks[0].FID,cSendWeChatMsgType_OutFactory);
-  //发送微信消息
+  if gSysParam.FGPWSURL <> '' then
+  begin
+    //更新微信订单状态
+    ModifyWebOrderStatus(nTrucks[0].FID,c_WeChatStatusFinished,'',FloatToStr(nTrucks[0].FValue));
+    //发送微信消息
+    SendMsgToWebMall(nTrucks[0].FID,cSendWeChatMsgType_OutFactory,nCardType);
+  end;
   
   for nIdx:=Low(nTrucks) to High(nTrucks) do
   begin
@@ -953,8 +976,6 @@ begin
       WriteHardHelperLog(nTrucks[nIdx].FID + #9 + nPrinter + nStr);
     end;
   end; //打印报表
-  //更新微信订单状态
-  ModifyWebOrderStatus(nTrucks[0].FID,'1');
 end;
 
 //Date: 2012-10-19

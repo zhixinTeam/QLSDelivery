@@ -66,6 +66,17 @@ begin
   Result:=nil;
   with TfFormAXBaseLoad.Create(Application) do
   begin
+    if not gSysParam.FIsAdmin then
+    begin
+      chkInvent.Visible:=False;
+      chkCement.Visible:=False;
+      chkINVENTDIM.Visible:=False;
+      chkINVENTLOCATION.Visible:=False;
+      chkINVENTCENTER.Visible:=False;
+      chkInvCenGroup.Visible:=False;
+      chkEmpl.Visible:=False;
+      chkTruck.Visible:=False;
+    end;
     Caption := '基础表数据下载';
     ShowModal;
     Free;

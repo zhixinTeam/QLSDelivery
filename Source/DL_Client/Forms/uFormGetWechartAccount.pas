@@ -35,7 +35,6 @@ type
     FSelectedStr:string;
     FNamepinyin:string;
     FPhone:string;
-    FCusID:string;
     //查询数据
     procedure GetResult;
     procedure FilterFunc(const nInputStr:string);
@@ -70,7 +69,6 @@ begin
     FSelectedStr := '';
     FNamepinyin := '';
     FPhone := '';
-    FCusID := nP.FParamE;
 
     Caption := '选择账号';
 //    dxLayout1Item5.Caption := '商城注册信息选择';
@@ -221,16 +219,6 @@ begin
   if ListQuery.ItemIndex > -1 then
   begin
     GetResult;
-    nStr := 'select * from %s where w_CID = ''%s'' and wcb_Namepinyin = ''%s'' ';
-    nStr := Format(nStr,[sTable_WeixinBind, FCusID, FNamepinyin]);
-    with FDM.QuerySQL(nStr) do
-    begin
-      if RecordCount > 0 then
-      begin
-        ShowMsg('商城账户['+FNamepinyin+']与客户['+FCusID+']已经关联，请勿重复操作', sHint);
-        Exit;
-      end;
-    end;
     ModalResult := mrOk;
   end else ShowMsg('请在查询结果中选择', sHint);
 end;

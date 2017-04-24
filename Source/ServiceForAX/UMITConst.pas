@@ -44,11 +44,7 @@ const
   cSendWeChatMsgType_AddBill=1; //开提货单
   cSendWeChatMsgType_OutFactory=2; //车辆出厂
   cSendWeChatMsgType_Report=3; //报表
-  cSendWeChatMsgType_DelBill=4; //删提货单
-
-  c_WeChatStatusCreateCard=0;  //订单已办卡
-  c_WeChatStatusFinished=1;  //订单已完成
-  c_WeChatStatusCancel=2;  //订单取消
+  cSendWeChatMsgType_DelBill=4; //删提货单  
 
 type
   TSysParam = record

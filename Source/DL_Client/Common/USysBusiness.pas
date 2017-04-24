@@ -334,8 +334,14 @@ function get_shoporders(const nXmlStr: string): string;
 //获取订单信息
 function GetDaoChe(const nStockNo:string):Boolean;
 //获取倒车下磅物料
-function GetPurchRestValue(const nRecID:string):Double;
+function GetPurchRestValue(const nRecID:string; var nIfCheck:Boolean):Double;
 //获取采购订单余量
+function LoadSalesInfo(const nZID: string; var nHint: string): TDataset;
+//载入订单信息
+function LoadSaleLineInfo(const nRecID: string; var nHint: string): TDataset;
+//载入订单行
+function LoadAXPlanInfo(const nID: string; var nHint: string): TDataset;
+//载入提货信息
 
 implementation
 
@@ -1443,13 +1449,67 @@ begin
     else
       Add('客户名称:' + nList.Delimiter + FieldByName('C_Name').AsString + ' ');
     Add('项目名称:' + nList.Delimiter + FieldByName('Z_Project').AsString + ' ');
-    
+
     nStr := DateTime2Str(FieldByName('Z_Date').AsDateTime);
     Add('办卡时间:' + nList.Delimiter + nStr);
   end else
   begin
     Result := nil;
     nHint := '纸卡已无效';
+  end;
+end;
+
+//载入订单信息
+function LoadSalesInfo(const nZID: string; var nHint: string): TDataset;
+var nStr: string;
+begin
+  nStr := 'Select zk.*,con.C_ContQuota,cus.C_ID,cus.C_Name From $ZK zk ' +
+          ' Left Join $Con con On con.C_ID=zk.Z_CID ' +
+          ' Left Join $Cus cus On cus.C_ID=zk.Z_Customer ' +
+          'Where Z_ID=''$ID''';
+
+  nStr := MacroValue(nStr, [MI('$ZK', sTable_ZhiKa),
+             MI('$Con', sTable_SaleContract),
+             MI('$Cus', sTable_Customer), MI('$ID', nZID)]);
+
+  Result := FDM.QueryTemp(nStr);
+
+  if Result.RecordCount < 1 then
+  begin
+    Result := nil;
+    nHint := '订单信息已无效';
+  end;
+end;
+
+//载入订单行
+function LoadSaleLineInfo(const nRecID: string; var nHint: string): TDataset;
+var nStr: string;
+begin
+  nStr := 'Select zk.* From $ZK zk Where D_RECID=''$ID''';
+
+  nStr := MacroValue(nStr, [MI('$ZK', sTable_ZhiKaDtl), MI('$ID', nRecID)]);
+
+  Result := FDM.QueryTemp(nStr);
+
+  if Result.RecordCount < 1 then
+  begin
+    Result := nil;
+    nHint := '订单信息已无效';
+  end;
+end;
+
+//载入提货信息
+function LoadAXPlanInfo(const nID: string; var nHint: string): TDataset;
+var nStr: string;
+begin
+  nStr := 'Select ap.* From $AP ap Where AX_TRANSPLANID=''$ID''';
+  nStr := MacroValue(nStr, [MI('$AP', sTable_AxPlanInfo), MI('$ID', nID)]);
+  Result := FDM.QueryTemp(nStr);
+
+  if Result.RecordCount < 1 then
+  begin
+    Result := nil;
+    nHint := '获取提货信息失败';
   end;
 end;
 
@@ -3108,19 +3168,28 @@ begin
 end;
 
 //获取采购订单余量
-function GetPurchRestValue(const nRecID:string):Double;
+function GetPurchRestValue(const nRecID:string; var nIfCheck:Boolean):Double;
 var
   nSQL:string;
 begin
   Result:= 0.0;
+  nIfCheck:= True;
+  nSQL := 'Select a.*,b.* From %s a, %s b ' +
+          'Where a.B_ID=b.M_ID ' +
+          'And ((B_BStatus=''Y'') or (B_BStatus=''1'') or ((M_PurchType=''0'') and (B_BStatus=''0''))) '+
+          'and B_Blocked=''0'' and B_RecID=''%s'' ';
+
+  nSQL := Format(nSQL , [sTable_OrderBase,sTable_OrderBaseMain,nRecID]);
+
   //nSQL := 'Select (B_Value-IsNull(B_SentValue,0)-IsNull(B_FreezeValue,0)) As B_RestValue From %s Where B_RecID=''%s'' ';
-  nSQL := 'Select B_RestValue From %s Where B_RecID=''%s'' ';
-  nSQL := Format(nSQL, [sTable_OrderBase, nRecID]);
+  {nSQL := 'Select B_RestValue From %s Where B_RecID=''%s'' ';
+  nSQL := Format(nSQL, [sTable_OrderBase, nRecID]); }
   WriteLog(nSQL);
   with FDM.QueryTemp(nSQL) do
   if RecordCount > 0 then
   begin
     Result:=FieldByName('B_RestValue').AsFloat;
+    nIfCheck:=FieldByName('M_PurchType').AsString <> '0';
   end;
 end;
 

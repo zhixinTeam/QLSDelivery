@@ -59,6 +59,8 @@ type
     Ftracknumber:string;
     FData:string;
     Fnamepinyin:string;
+    Ftoaddress:string;
+    Fidnumber:string;
   end;
   
   TWebResponse_get_shoporders=class(TWebResponseBaseInfo)
@@ -82,6 +84,9 @@ type
     function GetWaitingForloading(var nData:string):Boolean;
     //工厂待装查询
 
+    function GetInOutFactoryTatol(var nData:string):Boolean;
+    //进出厂量查询（采购进厂量、销售出厂量）
+
     function GetBillSurplusTonnage(var nData:string):Boolean;
     //网上订单可下单数量查询
 
@@ -92,7 +97,7 @@ type
     //获取订单列表
 
     function GetPurchaseContractList(var nData:string):Boolean;
-    //获取采购订单列表
+    //获取采购合同列表       
 
     function GetCustomerInfo(var nData:string):boolean;
     //获取客户注册信息
@@ -189,7 +194,7 @@ begin
   Result := False;
   FPacker.XMLBuilder.Clear;
   FPacker.XMLBuilder.ReadFromString(nData);
-
+  WriteLog(nData);
   //nNode := FPacker.XMLBuilder.Root.FindNode('Head');
   nNode := FPacker.XMLBuilder.Root;
   if not (Assigned(nNode) and Assigned(nNode.FindNode('Command'))) then
@@ -252,6 +257,8 @@ begin
     cBC_WeChat_complete_shoporders : Result := complete_shoporders(nData); //微信平台接口：订单完成
     cBC_WeChat_get_shoporderbyno : Result := get_shoporderbyno(nData);  //微信平台接口：根据订单号获取订单信息
     cBC_WeChat_get_shopPurchasebyNO : Result := get_shoporderbyno(nData);
+
+    cBC_WeChat_InOutFactoryTotal : Result := GetInOutFactoryTatol(nData); //进出厂量统计
    else
     begin
       Result := False;
@@ -325,7 +332,6 @@ begin
   end;  
 
   nData := FPacker.XMLBuilder.WriteToString;
-end;  
 
 //------------------------------------------------------------------------------
 //Date: 2016-9-20
@@ -376,7 +382,56 @@ begin
         NodeNew('MsgCommand').ValueAsString := IntToStr(FIn.FCommand);
       end;
     end;
-  end;  
+  nData := FPacker.XMLBuilder.WriteToString;
+end;
+
+//进出厂量查询（采购进厂量、销售出厂量） lih 2017-04-19
+function TBusWorkerBusinessWebchat.GetInOutFactoryTatol(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+    nItems: TInOutFactListItems;
+    nIdx: Integer;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
+            @nOut, cBC_WeChat_InOutFactoryTotal, Trim(FIn.FRemoteUL));
+  //xxxxxx
+
+  BuildDefaultXMLPack;
+  if Result then
+  begin
+    with FPacker.XMLBuilder do
+    begin
+      with Root.NodeNew('Items') do
+      begin
+        AnalyseInOutFactListItems(nOut.FData, nItems);
+
+        for nIdx := Low(nItems) to High(nItems) do
+        with NodeNew('Item'), nItems[nIdx] do
+        begin
+          NodeNew('StockName').ValueAsString := FStockName;
+          NodeNew('TruckCount').ValueAsString := IntToStr(FTruckCount);
+          NodeNew('StockValue').ValueAsString := FormatFloat('0.00',FStockValue);
+        end;  
+      end;
+
+      with Root.NodeNew('EXMG') do
+      begin
+        NodeNew('MsgTxt').ValueAsString     := '业务执行成功';
+        NodeNew('MsgResult').ValueAsString  := sFlag_Yes;
+        NodeNew('MsgCommand').ValueAsString := IntToStr(FIn.FCommand);
+      end;
+    end;
+  end
+  else begin
+    with FPacker.XMLBuilder do
+    begin
+      with Root.NodeNew('EXMG') do
+      begin
+        NodeNew('MsgTxt').ValueAsString     := nOut.FData;
+        NodeNew('MsgResult').ValueAsString  := sFlag_No;
+        NodeNew('MsgCommand').ValueAsString := IntToStr(FIn.FCommand);
+      end;
+    end;
+  end;
   nData := FPacker.XMLBuilder.WriteToString;
 end;
 
@@ -486,7 +541,6 @@ var nOut: TWorkerBusinessCommand;
 begin
    Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
               @nOut, cBC_GetOrderList, Trim(FIn.FRemoteUL));
-  nRequest := PackerDecodeStr(fin.FData);
   nCardData := TStringList.Create;
   nCardItem := TStringList.Create;
   try
@@ -515,7 +569,7 @@ begin
               NodeNew('StockNo').ValueAsString := nCardItem.Values['XCB_Cement'];
               NodeNew('StockName').ValueAsString := nCardItem.Values['XCB_CementName'];
               NodeNew('MaxNumber').ValueAsString := nCardItem.Values['XCB_RemainNum'];
-              //NodeNew('SaleArea').ValueAsString := nCardItem.Values['pcb_name'];
+              NodeNew('Remark').ValueAsString := nCardItem.Values['XCB_Option'];
             end;
           end;
         end;
@@ -533,10 +587,8 @@ begin
     nCardData.Free;
   end;
   nData := FPacker.XMLBuilder.WriteToString;
-  nResponse := FPacker.XMLBuilder.WriteToString;
-  WriteLog('TBusWorkerBusinessWebchat.GetOrderList request='+nRequest);
-  WriteLog('TBusWorkerBusinessWebchat.GetOrderList request='+nResponse);
 end;
+
 //获取采购合同列表
 function TBusWorkerBusinessWebchat.GetPurchaseContractList(var nData:string):Boolean;
 var nOut: TWorkerBusinessCommand;
@@ -546,15 +598,18 @@ var nOut: TWorkerBusinessCommand;
 begin
   Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
               @nOut, cBC_GetPurchaseContractList, Trim(FIn.FRemoteUL));
+              
   nCardData := TStringList.Create;
   nCardItem := TStringList.Create;
-  nRequest := PackerDecodeStr(fin.FData);
+  nRequest := fin.FData;
+  WriteLog('TBusWorkerBusinessWebchat.GetPurchaseContractList request='+nRequest);
   try
     BuildDefaultXMLPack;
     if Result then
     begin
       nCardData.Text := PackerDecodeStr(nOut.FData);
       nCardItem.Text := PackerDecodeStr(nCardData.Strings[0]);
+      WriteLog('TBusWorkerBusinessWebchat.GetPurchaseContractList nCardItem='+nCardItem.Text);
       with FPacker.XMLBuilder do
       begin
         with Root.NodeNew('head') do
@@ -573,7 +628,7 @@ begin
               NodeNew('BillNumber').ValueAsString := nCardItem.Values['pcId'];
               NodeNew('StockNo').ValueAsString := nCardItem.Values['con_materiel_Code'];
               NodeNew('StockName').ValueAsString := nCardItem.Values['con_materiel_name'];
-              NodeNew('MaxNumber').ValueAsString := FloatToStr(StrToFloatdef(nCardItem.Values['con_quantity'],0)-StrToFloatdef(nCardItem.Values['con_finished_quantity'],0));
+              NodeNew('MaxNumber').ValueAsString := nCardItem.Values['con_price'];//订单剩余量
             end;
           end;
         end;
@@ -592,7 +647,6 @@ begin
   end;
   nData := FPacker.XMLBuilder.WriteToString;
   nResponse := FPacker.XMLBuilder.WriteToString;
-  WriteLog('TBusWorkerBusinessWebchat.GetPurchaseContractList request='+nRequest);
   WriteLog('TBusWorkerBusinessWebchat.GetPurchaseContractList request='+nResponse);
 end;
 
@@ -669,7 +723,7 @@ var
     try
       for i := Low(nObj.items) to High(nObj.items) do
       begin
-        nStr := 'order_id=%s,fac_order_no=%s,ordernumber=%s,goodsID=%s,goodstype=%s,goodsname=%s,tracknumber=%s,data=%s,namepinyin=%s\n';
+        nStr := 'order_id=%s,fac_order_no=%s,ordernumber=%s,goodsID=%s,goodstype=%s,goodsname=%s,tracknumber=%s,data=%s,namepinyin=%s,toaddress=%s,idnumber=%s\n';
         nStr := Format(nStr,[nObj.items[i].FOrder_id,
           nObj.items[i].Ffac_order_no,
           nObj.items[i].FOrdernumber,
@@ -678,7 +732,10 @@ var
           nObj.items[i].FGoodsname,
           nObj.items[i].Ftracknumber,
           nobj.items[i].FData,
-          nobj.items[i].Fnamepinyin]);
+          nobj.items[i].Fnamepinyin],
+          nobj.items[i].Fnamepinyin,
+          nObj.items[i].Ftoaddress,
+          nObj.items[i].Fidnumber]);
         nStr := StringReplace(nStr, '\n', #13#10, [rfReplaceAll]);
         nlist.Add(nStr);
       end;
@@ -731,7 +788,7 @@ var
     try
       for i := Low(nObj.items) to High(nObj.items) do
       begin
-        nStr := 'order_id=%s,fac_order_no=%s,ordernumber=%s,goodsID=%s,goodstype=%s,goodsname=%s,tracknumber=%s,data=%s,namepinyin=%s\n';
+        nStr := 'order_id=%s,fac_order_no=%s,ordernumber=%s,goodsID=%s,goodstype=%s,goodsname=%s,tracknumber=%s,data=%s,namepinyin=%s,toaddress=%s,idnumber=%s\n';
         nStr := Format(nStr,[nObj.items[i].FOrder_id,
           nObj.items[i].Ffac_order_no,
           nObj.items[i].FOrdernumber,
@@ -740,7 +797,10 @@ var
           nObj.items[i].FGoodsname,
           nObj.items[i].Ftracknumber,
           nobj.items[i].FData,
-          nobj.items[i].Fnamepinyin]);
+          nobj.items[i].Fnamepinyin],
+          nobj.items[i].Fnamepinyin,
+          nObj.items[i].Ftoaddress,
+          nObj.items[i].Fidnumber]);
         nStr := StringReplace(nStr, '\n', #13#10, [rfReplaceAll]);
         nlist.Add(nStr);
       end;
@@ -1076,8 +1136,19 @@ begin
       if Assigned(nTmp) then
         items[nIdx].Fnamepinyin := nTmp.ValueAsString
       else
-        items[nIdx].Fnamepinyin := 'null';
+        items[nIdx].Fnamepinyin := '';
 
+      nTmp := nNodeTmp.FindNode('toaddress');
+      if Assigned(nTmp) then
+        items[nIdx].Ftoaddress := nTmp.ValueAsString
+      else
+        items[nIdx].Ftoaddress := '';
+
+      nTmp := nNodeTmp.FindNode('idnumber');
+      if Assigned(nTmp) then
+        items[nIdx].Fidnumber := nTmp.ValueAsString
+      else
+        items[nIdx].Fidnumber := '';
     end;
   end;
 end;

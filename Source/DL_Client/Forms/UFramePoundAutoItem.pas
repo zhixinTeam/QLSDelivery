@@ -559,6 +559,8 @@ begin
   begin
     if gPoundTunnelManager.ActivePort(FPoundTunnel.FID, OnPoundDataEvent, True) then
     begin
+      Sleep(700);
+      WriteLog('PoundValue: '+EditValue.Text+' STDvalue: '+floattostr(FPoundTunnel.FPort.FMinValue));
       if StrToFloat(EditValue.Text) > FPoundTunnel.FPort.FMinValue then
       begin
         gPoundTunnelManager.ClosePort(FPoundTunnel.FID);
@@ -580,7 +582,7 @@ begin
   //{$ENDIF}
 
   PlayVoice(EditTruck.Text+'刷卡成功请上磅，并熄火停车');
-  Sleep(500);
+
   FLastCardDone := 0;
 
   FIsSaveing := False;
@@ -1006,6 +1008,7 @@ function TfFrameAutoPoundItem.SavePoundData(var nHint:string): Boolean;
 var
   nStr,nNextStatus: string;
   nRestValue, nNetValue: Double;
+  nIfCheck:Boolean;
 begin
   Result := False;
   //init
@@ -1044,18 +1047,21 @@ begin
   begin
     with FBillItems[0] do
     begin
-      nRestValue := GetPurchRestValue(FRecID);
-      nNetValue := Abs(FUIData.FPData.FValue-FUIData.FMData.FValue);
-      if nRestValue-nNetValue < 0 then
+      nRestValue := GetPurchRestValue(FRecID,nIfCheck);
+      if nIfCheck then
       begin
-        nStr := '车辆[ %s ]订单量不足,详情如下:' + #13#10#13#10 +
-                '订单量: %.2f吨,' + #13#10 +
-                '装车量: %.2f吨,' + #13#10 +
-                '需补交量: %.2f吨';
-        nStr := Format(nStr, [FTruck, nRestValue, nNetValue, Abs(nRestValue-nNetValue)]);
-        nHint := nStr;
-        Result := True;
-        Exit;
+        nNetValue := Abs(FUIData.FPData.FValue-FUIData.FMData.FValue);
+        if nRestValue-nNetValue < 0 then
+        begin
+          nStr := '车辆[ %s ]订单量不足,详情如下:' + #13#10#13#10 +
+                  '订单量: %.2f吨,' + #13#10 +
+                  '装车量: %.2f吨,' + #13#10 +
+                  '需补交量: %.2f吨';
+          nStr := Format(nStr, [FTruck, nRestValue, nNetValue, Abs(nRestValue-nNetValue)]);
+          nHint := nStr;
+          Result := True;
+          Exit;
+        end;
       end;
     end;
     //xxxxx

@@ -31,7 +31,7 @@ inherited fFrameProvider: TfFrameProvider
     Height = 135
     object cxTextEdit1: TcxTextEdit [0]
       Left = 69
-      Top = 96
+      Top = 93
       Hint = 'T.P_Name'
       ParentFont = False
       TabOrder = 1
@@ -53,7 +53,7 @@ inherited fFrameProvider: TfFrameProvider
     end
     object cxTextEdit2: TcxTextEdit [2]
       Left = 257
-      Top = 96
+      Top = 93
       Hint = 'T.P_Memo'
       ParentFont = False
       TabOrder = 2
@@ -109,6 +109,14 @@ inherited fFrameProvider: TfFrameProvider
       Caption = #21516#27493#20379#24212#21830
       Visible = False
       OnClick = N1Click
+    end
+    object N2: TMenuItem
+      Caption = #20851#32852#24494#20449#21830#22478#36134#25143
+      OnClick = N2Click
+    end
+    object N3: TMenuItem
+      Caption = #21462#28040#21830#22478#36134#25143#20851#32852
+      OnClick = N3Click
     end
   end
 end

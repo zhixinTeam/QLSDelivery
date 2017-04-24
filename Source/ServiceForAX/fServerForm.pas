@@ -37,7 +37,7 @@ var
 
 implementation
 uses
-  USysBusiness, uDM;
+  USysBusiness, uDM, UMITConst, UMgrParam, UMgrDBConn;
 
 {$R *.dfm}
 procedure WriteLog(const nEvent: string);
@@ -51,6 +51,22 @@ begin
     end;
   end;
   gSysLoger.AddLog(TServerForm, 'WebService', nEvent);
+end;
+
+//填充数据库参数
+procedure FillAllDBParam;
+var nIdx: Integer;
+    nList: TStrings;
+begin
+  nList := TStringList.Create;
+  try
+    gParamManager.LoadParam(nList, ptDB);
+    for nIdx:=0 to nList.Count - 1 do
+      gDBConnManager.AddParam(gParamManager.GetDB(nList[nIdx])^);
+    //xxxxx
+  finally
+    nList.Free;
+  end;
 end;
 
 procedure TServerForm.FormCreate(Sender: TObject);
@@ -73,8 +89,17 @@ begin
     gSysLoger := TSysLoger.Create('.\Logs\');
   WriteLog('系统启动');
   if GetOnLineModel then ChkModel.Checked:=True else ChkModel.Checked:=False;
-  tmrRestart.Interval := 60*1000;
-  tmrRestart.Enabled := True;
+  {tmrRestart.Interval := 60*1000;
+  tmrRestart.Enabled := True;  }
+
+  {gParamManager := TParamManager.Create(gPath + 'Parameters.xml');
+  gDBConnManager := TDBConnManager.Create;
+  FillAllDBParam;
+  with gParamManager do
+  begin
+    gDBConnManager.DefaultConnection := ActiveParam.FDB.FID;
+    gDBConnManager.MaxConn := ActiveParam.FDB.FNumWorker;
+  end;}
 end;
 
 procedure TServerForm.FormDestroy(Sender: TObject);
@@ -84,7 +109,8 @@ end;
 
 procedure TServerForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  WriteLog('系统关闭');
+  //gDBConnManager.Disconnection();
+  Application.Terminate;
 end;
 
 

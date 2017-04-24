@@ -183,7 +183,7 @@ end;
 procedure TAXSyncThread.Execute;
 var nErr: Integer;
     nInit: Int64;
-    nSQL:string;
+    nModel: string;
 begin
   FNumAXSync    := 0;
   //init counter
@@ -222,26 +222,38 @@ begin
       FDBConn := gDBConnManager.GetConnection(gDBConnManager.DefaultConnection, nErr);
       if not Assigned(FDBConn) then Continue;
 
-      if GetOnLineModel <> sFlag_Yes then Exit;
+      nModel := GetOnLineModel;
 
       if FNumAXSync = 0 then
       begin
-        WriteLog('同步提货单到AX...');
-        nInit := GetTickCount;
-        DoNewBillSyncAX;
-        DoDelBillSyncAX;
-        DoEmptyBillSyncAX;
-        WriteLog('同步提货单到AX完毕,耗时: ' + IntToStr(GetTickCount - nInit));
+        if nModel = sFlag_Yes then
+        begin
+          WriteLog('同步提货单到AX...');
+          nInit := GetTickCount;
+          DoNewBillSyncAX;
+          DoDelBillSyncAX;
+          DoEmptyBillSyncAX;
+          WriteLog('同步提货单到AX完毕,耗时: ' + IntToStr(GetTickCount - nInit));
+        end else
+        begin
+          WriteLog('离线模式');
+        end;
       end;
 
       if FNumPoundSync = 0 then
       begin
-        WriteLog('同步磅单到AX...');
-        nInit := GetTickCount;
-        DoPoundSyncAX;
-        DoPurSyncAX;
-        //DoDuanSyncAX;
-        WriteLog('同步磅单到AX完毕,耗时: ' + IntToStr(GetTickCount - nInit));
+        if nModel = sFlag_Yes then
+        begin
+          WriteLog('同步磅单到AX...');
+          nInit := GetTickCount;
+          DoPoundSyncAX;
+          DoPurSyncAX;
+          //DoDuanSyncAX;
+          WriteLog('同步磅单到AX完毕,耗时: ' + IntToStr(GetTickCount - nInit));
+        end else
+        begin
+          WriteLog('离线模式');
+        end;
       end;
 
       {if FNumAXBASESync=0 then
@@ -292,11 +304,19 @@ var
 begin
   try
     FListA.Clear;
+    {$IFDEF GGJC}
+    nSQL := 'select L_ID From '+sTable_Bill+' where (L_EmptyOut<>''Y'') '+
+            'and ((L_FYAX <> ''1'') or (L_FYAX is null)) '+
+            'and (L_PDate is not null) '+
+            'and L_FYNUM<=3 and (L_ID not like ''YS%'') ';
+    {$ELSE}
     nSQL := 'select L_ID From %s where (L_EmptyOut<>''Y'') '+
             'and ((L_FYAX <> ''1'') or (L_FYAX is null)) '+
             'and (L_PDate is not null) '+
             'and L_FYNUM<=3 ';
     nSQL := Format(nSQL,[sTable_Bill]);
+    {$ENDIF}
+
     with gDBConnManager.WorkerQuery(FDBConn,nSql) do
     begin
       if RecordCount<1 then

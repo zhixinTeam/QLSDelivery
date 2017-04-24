@@ -1,8 +1,8 @@
 {*******************************************************************************
-  作者: dmzn@163.com 2014-09-01
-  描述: 开提货单
+  作者: lih 2017-04-07
+  描述: 祁连山开提货单
 *******************************************************************************}
-unit UFormBill;
+unit UFormQLSBill;
 
 {$I Link.Inc}
 interface
@@ -13,28 +13,20 @@ uses
   cxLookAndFeelPainters, cxContainer, cxEdit, ComCtrls, cxMaskEdit,
   cxDropDownEdit, cxListView, cxTextEdit, cxMCListBox, dxLayoutControl,
   StdCtrls, cxButtonEdit, dxSkinsCore, dxSkinsDefaultPainters,
-  dxSkinscxPCPainter, dxLayoutcxEditAdapters, cxCheckBox, cxLabel;
+  dxSkinscxPCPainter, dxLayoutcxEditAdapters, cxCheckBox, cxLabel, Menus,
+  cxButtons;
 
 type
-  TfFormBill = class(TfFormNormal)
+  TfFormQLSBill = class(TfFormNormal)
     dxGroup2: TdxLayoutGroup;
-    dxLayout1Item3: TdxLayoutItem;
-    ListInfo: TcxMCListBox;
-    dxLayout1Item4: TdxLayoutItem;
-    ListBill: TcxListView;
     EditValue: TcxTextEdit;
     dxLayout1Item8: TdxLayoutItem;
     EditTruck: TcxTextEdit;
     dxLayout1Item9: TdxLayoutItem;
-    BtnAdd: TButton;
-    dxLayout1Item10: TdxLayoutItem;
-    BtnDel: TButton;
-    dxLayout1Item11: TdxLayoutItem;
     EditLading: TcxComboBox;
     dxLayout1Item12: TdxLayoutItem;
     dxLayout1Group5: TdxLayoutGroup;
     dxLayout1Group8: TdxLayoutGroup;
-    dxLayout1Group7: TdxLayoutGroup;
     dxLayout1Group2: TdxLayoutGroup;
     chkIfHYprint: TcxCheckBox;
     dxLayout1Item13: TdxLayoutItem;
@@ -49,8 +41,6 @@ type
     dxLayout1Group3: TdxLayoutGroup;
     cxLabel1: TcxLabel;
     dxLayout1Item15: TdxLayoutItem;
-    cbxKw: TcxComboBox;
-    dxLayout1Item16: TdxLayoutItem;
     chkFenChe: TcxCheckBox;
     dxLayout1Item17: TdxLayoutItem;
     EditType: TcxComboBox;
@@ -58,21 +48,22 @@ type
     dxLayout1Group4: TdxLayoutGroup;
     EditHYCus: TComboBox;
     dxLayout1Item20: TdxLayoutItem;
+    EditID: TcxButtonEdit;
+    dxLayout1Item4: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure EditStockPropertiesChange(Sender: TObject);
-    procedure BtnAddClick(Sender: TObject);
-    procedure BtnDelClick(Sender: TObject);
     procedure BtnOKClick(Sender: TObject);
     procedure EditLadingKeyPress(Sender: TObject; var Key: Char);
     procedure cbxSampleIDPropertiesChange(Sender: TObject);
     procedure cbxCenterIDPropertiesEditValueChanged(Sender: TObject);
+    procedure EditIDKeyPress(Sender: TObject; var Key: Char);
+    procedure EditIDPropertiesButtonClick(Sender: TObject;
+      AButtonIndex: Integer);
   protected
     { Protected declarations }
     FBuDanFlag: string;
     //补单标记
     procedure LoadFormData;
-    procedure LoadStockList;
     //载入数据
   public
     { Public declarations }
@@ -89,37 +80,12 @@ uses
   ULibFun, DB, IniFiles, UMgrControl, UAdjustForm, UFormBase, UBusinessPacker,
   UDataModule, USysPopedom, USysBusiness, USysDB, USysGrid, USysConst;
 
-type
-  TCommonInfo = record
-    FZhiKa: string;
-    FCusID: string;
-    FMoney: Double;
-    FOnlyMoney: Boolean;
-    FIDList: string;
-    FShowPrice: Boolean;
-    FPriceChanged: Boolean;
-    FSalesType: string;  //订单类型（0：记账日志 1报价 2预定3销售订单 4退回物料 5总订单 6物料需求）
-  end;
-
-  TStockItem = record
-    FType: string;
-    FStockNO: string;
-    FStockName: string;
-    FPrice: Double;
-    FValue: Double;
-    FSelecte: Boolean;
-    FRecID: string;
-    FSampleID: string;
-  end;
-
 var
-  gInfo: TCommonInfo;
-  gStockList: array of TStockItem;
-  gSelect:Integer;
-  gStockName,gType:string;
+  gZhiKa,gRecID,gSalesType,gStockNo,gStockName,gPrice,gType:string;
+  gCusID,gCompanyID,gFYPlanStatus,gInventLocationId,gIDList:string;
   //全局使用
 
-class function TfFormBill.CreateForm(const nPopedom: string;
+class function TfFormQLSBill.CreateForm(const nPopedom: string;
   const nParam: Pointer): TWinControl;
 var nBool: Boolean;
     nP: PFormCommandParam;
@@ -133,35 +99,20 @@ begin
     FillChar(nP^, SizeOf(TFormCommandParam), #0);
   end else nP := nParam;
 
-  try
-    CreateBaseFormItem(cFI_FormGetZhika, nPopedom, nP);
-    if (nP.FCommand <> cCmd_ModalResult) or (nP.FParamA <> mrOK) then Exit;
-    gInfo.FZhiKa := nP.FParamB;
-    gSelect := np.FParamD;
-  finally
-    if not Assigned(nParam) then Dispose(nP);
-  end;
-
-  with TfFormBill.Create(Application) do
+  with TfFormQLSBill.Create(Application) do
   try
     {$IFDEF YDKP}
     dxLayout1Item5.Enabled:=True;
     dxLayout1Item5.Visible:=True;
-    dxLayout1Item16.Enabled:=True;
-    dxLayout1Item16.Visible:=True;
     cxLabel1.Visible:=True;
     {$ELSE}
       {$IFDEF PLKP}
       dxLayout1Item5.Enabled:=True;
       dxLayout1Item5.Visible:=True;
       cxLabel1.Visible:=True;
-      dxLayout1Item16.Enabled:=False;
-      dxLayout1Item16.Visible:=False;
       {$ELSE}
       dxLayout1Item5.Enabled:=False;
       dxLayout1Item5.Visible:=False;
-      dxLayout1Item16.Enabled:=False;
-      dxLayout1Item16.Visible:=False;
       cxLabel1.Visible:=False;
       {$ENDIF}
     {$ENDIF}
@@ -172,19 +123,14 @@ begin
     chkFenChe.Enabled:=False;
     chkFenChe.Visible:=False;
     {$ENDIF}
-    LoadFormData;
-    //try load data
 
-    if not BtnOK.Enabled then Exit;
-    gInfo.FShowPrice := gPopedomManager.HasPopedom(nPopedom, sPopedom_ViewPrice);
+    BtnOK.Enabled := False;
+    //gInfo.FShowPrice := gPopedomManager.HasPopedom(nPopedom, sPopedom_ViewPrice);
 
     Caption := '开提货单';
     nBool := not gPopedomManager.HasPopedom(nPopedom, sPopedom_Edit);
     EditLading.Properties.ReadOnly := nBool;
-
-    if nPopedom = 'MAIN_D04' then //补单
-         FBuDanFlag := sFlag_Yes
-    else FBuDanFlag := sFlag_No;
+    FBuDanFlag := sFlag_No;
 
     if Assigned(nParam) then
     with PFormCommandParam(nParam)^ do
@@ -193,7 +139,7 @@ begin
       FParamA := ShowModal;
 
       if FParamA = mrOK then
-           FParamB := gInfo.FIDList
+           FParamB := gIDList
       else FParamB := '';
     end else ShowModal;
   finally
@@ -201,24 +147,19 @@ begin
   end;
 end;
 
-class function TfFormBill.FormID: integer;
+class function TfFormQLSBill.FormID: integer;
 begin
-  Result := cFI_FormBill;
+  Result := cFI_FormQLSBill;
 end;
 
-procedure TfFormBill.FormCreate(Sender: TObject);
+procedure TfFormQLSBill.FormCreate(Sender: TObject);
 var nStr: string;
     nIni,myini: TIniFile;
 begin
   nIni := TIniFile.Create(gPath + sFormConfig);
   try
-    {nStr := nIni.ReadString(Name, 'FQLabel', '');
-    if nStr <> '' then
-      dxLayout1Item5.Caption := nStr; }
-    //xxxxx
-
-    LoadMCListBoxConfig(Name, ListInfo, nIni);
-    LoadcxListViewConfig(Name, ListBill, nIni);
+    //LoadMCListBoxConfig(Name, ListInfo, nIni);
+    //LoadcxListViewConfig(Name, ListBill, nIni);
   finally
     nIni.Free;
   end;
@@ -226,13 +167,13 @@ begin
   AdjustCtrlData(Self);
 end;
 
-procedure TfFormBill.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TfFormQLSBill.FormClose(Sender: TObject; var Action: TCloseAction);
 var nIni: TIniFile;
 begin
   nIni := TIniFile.Create(gPath + sFormConfig);
   try
-    SaveMCListBoxConfig(Name, ListInfo, nIni);
-    SavecxListViewConfig(Name, ListBill, nIni);
+    //SaveMCListBoxConfig(Name, ListInfo, nIni);
+    //SavecxListViewConfig(Name, ListBill, nIni);
   finally
     nIni.Free;
   end;
@@ -241,7 +182,7 @@ begin
 end;
 
 //Desc: 回车键
-procedure TfFormBill.EditLadingKeyPress(Sender: TObject; var Key: Char);
+procedure TfFormQLSBill.EditLadingKeyPress(Sender: TObject; var Key: Char);
 var nP: TFormCommandParam;
 begin
   if Key = Char(VK_RETURN) then
@@ -249,7 +190,7 @@ begin
     Key := #0;
 
     if Sender = EditStock then ActiveControl := EditValue else
-    if Sender = EditValue then ActiveControl := BtnAdd else
+    //if Sender = EditValue then ActiveControl := BtnAdd else
     if Sender = EditTruck then ActiveControl := EditStock else
 
     if Sender = EditLading then
@@ -271,180 +212,81 @@ end;
 
 //------------------------------------------------------------------------------
 //Desc: 载入界面数据
-procedure TfFormBill.LoadFormData;
+procedure TfFormQLSBill.LoadFormData;
 var nStr,nTmp: string;
-    nDB: TDataSet;
+    nDB,nDBSales,nDBLine: TDataSet;
     i,nIdx: integer;
-    nZcid: string;//合同编号
-    nNewPrice: Double;
 begin
   BtnOK.Enabled := False;
-  nDB := LoadZhiKaInfo(gInfo.FZhiKa, ListInfo, nStr);
-
+  nDB := LoadAXPlanInfo(Trim(EditID.Text),nStr);
   if Assigned(nDB) then
-  with gInfo do
+  with nDB do
   begin
-    if nDB.FieldByName('Z_TriangleTrade').AsString = '1' then
-    begin
-      FCusID := nDB.FieldByName('Z_OrgAccountNum').AsString;
-      EditHYCus.Text:= nDB.FieldByName('Z_OrgAccountName').AsString;
-      FPriceChanged := nDB.FieldByName('Z_TJStatus').AsString = sFlag_TJOver;
-      SetCtrlData(EditLading, nDB.FieldByName('Z_Lading').AsString);
-      FSalesType:=nDB.fieldByName('Z_SalesType').AsString; //0:记账日志类型不校验信用额度
-      GetCustomerExt(FCusID,EditHYCus);
-    end else
-    begin
-      FCusID := nDB.FieldByName('Z_Customer').AsString;
-      EditHYCus.Text:= nDB.FieldByName('C_Name').AsString;
-      FPriceChanged := nDB.FieldByName('Z_TJStatus').AsString = sFlag_TJOver;
-      SetCtrlData(EditLading, nDB.FieldByName('Z_Lading').AsString);
-      FSalesType:=nDB.fieldByName('Z_SalesType').AsString; //0:记账日志类型不校验信用额度
-      GetCustomerExt(FCusID,EditHYCus);
-    end;
-    //FMoney := GetZhikaValidMoney(gInfo.FZhiKa, gInfo.FOnlyMoney);
+    EditTruck.Text := FieldByName('AX_VEHICLEId').AsString;
+    EditHYCus.Text := FieldByName('AX_CUSTOMERNAME').AsString;
+    EditValue.Text := FieldByName('AX_PLANQTY').AsString;
+
+    gZhiKa := FieldByName('AX_SALESID').AsString;
+    gRecID := FieldByName('AX_SALESLINERECID').AsString;
+    gStockNo := FieldByName('AX_ITEMID').AsString;
+
+    gPrice := FieldByName('AX_ITEMPRICE').AsString;
+    gType := UpperCase(FieldByName('AX_ITEMTYPE').AsString);
+    gStockName := FieldByName('AX_ITEMNAME').AsString;
+
+    if gType = 'D' then
+      gStockName := gStockName + '袋装'
+    else
+      gStockName := gStockName + '散装';
+    EditStock.Text := gStockName;
+    gCusID := FieldByName('AX_CUSTOMERID').AsString;
+    gFYPlanStatus := FieldByName('AX_FYPlanStatus').AsString;
+    gInventLocationId := FieldByName('AX_InventLocationId').AsString;
+    GetCustomerExt(gCusID,EditHYCus);
   end else
   begin
     ShowMsg(nStr, sHint); Exit;
   end;
-  {if gInfo.FSalesType <> '0' then
-    BtnOK.Enabled := IsCustomerCreditValid(gInfo.FCusID)
-  else}
-    BtnOK.Enabled := True;
-  if not BtnOK.Enabled then Exit;
-  //to verify credit
 
-  SetLength(gStockList, 0);
-  nStr := 'Select D_Type,upper(D_StockNo) as D_StockNo1,* From %s Where D_Blocked=''0'' and D_ZID=''%s''';
-  nStr := Format(nStr, [sTable_ZhiKaDtl, gInfo.FZhiKa]);
-
-  with FDM.QueryTemp(nStr) do
-  if RecordCount > 0 then
+  nDBSales := LoadSalesInfo(gZhiKa,nStr);
+  if Assigned(nDBSales) then
+  with nDBSales do
   begin
-    nStr := '';
-    nIdx := 0;
-    SetLength(gStockList, RecordCount);
+    gSalesType := FieldByName('Z_SalesType').AsString; //0:记账日志类型不校验信用额度
+    gCompanyID := FieldByName('DataAreaID').AsString;
+  end else
+  begin
+    ShowMsg(nStr, sHint); Exit;
+  end;
 
-    First;  
-    while not Eof do
-    with gStockList[nIdx] do
+  nDBLine := LoadSaleLineInfo(gRecID,nStr);
+  if Assigned(nDBLine) then
+  with nDBSales do
+  begin
+    if FieldByName('D_Blocked').AsString = '1' then
     begin
-      FType := FieldByName('D_Type').AsString;
-      if FType = '0' then FType:='S';
-      FStockNO := FieldByName('D_StockNo1').AsString;
-      if FType='D' then
-        FStockName := FieldByName('D_StockName').AsString+'袋装'
-      else
-        FStockName := FieldByName('D_StockName').AsString+'散装';
-      FPrice := FieldByName('D_Price').AsFloat;
-        //FValue := 0;
-      FValue:= FieldByName('D_Value').AsFloat;
-      FSelecte := False;
-      FRecID := FieldByName('D_RECID').AsString;
-      {if gInfo.FPriceChanged then
-      begin
-        nTmp := '品种:[ %-8s ] 原价:[ %.2f ] 现价:[ %.2f ]' + #32#32;
-        nTmp := Format(nTmp, [FStockName, FieldByName('D_PPrice').AsFloat, FPrice]);
-        nStr := nStr + nTmp + #13#10;
-      end;}
-
-      Inc(nIdx);
-      Next;
+      nStr := '订单已停止';
+      ShowMsg(nStr,sHint);
+      Exit;
     end;
-    for i:=Low(gStockList) to High(gStockList) do
+    if FieldByName('D_Value').AsFloat < StrToFloat(EditValue.Text) then
     begin
-      if LoadAddTreaty(gStockList[i].FRecID,nNewPrice) then
-        gStockList[i].FPrice:=nNewPrice;
-      gStockList[i].FValue:=GetZhikaYL(gStockList[i].FRecID);
+      nStr := '订单剩余量不足';
+      ShowMsg(nStr,sHint);
+      Exit;
     end;
   end else
   begin
-    nStr := Format('纸卡[ %s ]没有可提的水泥品种,已终止.', [gInfo.FZhiKa]);
-    ShowDlg(nStr, sHint);
-    BtnOK.Enabled := False; Exit;
+    ShowMsg(nStr, sHint); Exit;
   end;
+  InitCenter(gStockNO,gType,cbxCenterID);
 
-  {if gInfo.FPriceChanged then
-  begin
-    nStr := '管理员已调整纸卡[ %s ]的价格,明细如下: ' + #13#10#13#10 +
-            AdjustHintToRead(nStr) + #13#10 +
-            '请询问客户是否接受新单价,接受点"是"按钮.' ;
-    nStr := Format(nStr, [gInfo.FZhiKa]);
-
-    BtnOK.Enabled := QueryDlg(nStr, sHint);
-    if not BtnOK.Enabled then Exit;
-
-    nStr := 'Update %s Set Z_TJStatus=Null Where Z_ID=''%s''';
-    nStr := Format(nStr, [sTable_ZhiKa, gInfo.FZhiKa]);
-    FDM.ExecuteSQL(nStr);
-  end; }
-
-  LoadStockList;
-  //load stock into window
-  
-  //EditType.ItemIndex := 0;
-  ActiveControl := EditTruck;
-end;
-
-//Desc: 刷新水泥列表到窗体
-procedure TfFormBill.LoadStockList;
-var nStr: string;
-    i,nIdx: integer;
-begin
-  AdjustCXComboBoxItem(EditStock, True);
-  nIdx := ListBill.ItemIndex;
-
-  ListBill.Items.BeginUpdate;
-  try
-    ListBill.Clear;
-    for i:=Low(gStockList) to High(gStockList) do
-    if gStockList[i].FSelecte then
-    begin
-      with ListBill.Items.Add do
-      begin
-        Caption := gStockList[i].FStockName;
-        SubItems.Add(EditTruck.Text);
-        SubItems.Add(FloatToStr(gStockList[i].FValue));
-
-        Data := Pointer(i);
-        ImageIndex := cItemIconIndex;
-      end;
-    end else
-    begin
-      nStr := Format('%d=%s', [i, gStockList[i].FStockName]);
-      EditStock.Properties.Items.Add(nStr);
-    end;
-  finally
-    ListBill.Items.EndUpdate;
-    if ListBill.Items.Count > nIdx then
-      ListBill.ItemIndex := nIdx;
-    //xxxxx
-
-    AdjustCXComboBoxItem(EditStock, False);
-    EditStock.ItemIndex := gSelect;
-  end;
+  BtnOK.Enabled := True;
+  ActiveControl := BtnOK;
 end;
 
 //Dessc: 选择品种
-procedure TfFormBill.EditStockPropertiesChange(Sender: TObject);
-var nInt: Int64;
-begin
-  dxGroup2.Caption := '提单明细';
-  if EditStock.ItemIndex < 0 then Exit;
-
-  with gStockList[StrToInt(GetCtrlData(EditStock))] do
-  if FPrice > 0 then
-  begin
-    //nInt := Float2PInt(gInfo.FMoney / FPrice, cPrecision, False);
-    nInt := Float2PInt(FValue, cPrecision, False);
-    EditValue.Text := FloatToStr(nInt / cPrecision);
-
-    if gInfo.FShowPrice then
-      dxGroup2.Caption := Format('提单明细 单价:%.2f元/吨', [FPrice]);
-    //xxxxx
-  end;
-end;
-
-function TfFormBill.OnVerifyCtrl(Sender: TObject; var nHint: string): Boolean;
+function TfFormQLSBill.OnVerifyCtrl(Sender: TObject; var nHint: string): Boolean;
 var nVal: Double;
 begin
   Result := True;
@@ -475,7 +317,7 @@ begin
     if not Result then Exit;
     if not OnVerifyCtrl(EditStock, nHint) then Exit;
 
-    with gStockList[StrToInt(GetCtrlData(EditStock))] do
+    {with gStockList[StrToInt(GetCtrlData(EditStock))] do
     if FPrice > 0 then
     begin
       nVal := StrToFloat(EditValue.Text);
@@ -497,78 +339,12 @@ begin
     begin
       Result := False;
       nHint := '单价[ 0 ]无效';
-    end;
-  end;
-end;
-
-//Desc: 添加
-procedure TfFormBill.BtnAddClick(Sender: TObject);
-var nIdx: Integer;
-    nSampleDate: string;
-    nLocationID: string;
-begin
-  if IsDataValid then
-  begin
-    nIdx := StrToInt(GetCtrlData(EditStock));
-    with gStockList[nIdx] do
-    begin
-      if (FType = sFlag_San) and (ListBill.Items.Count > 0) then
-      begin
-        ShowMsg('散装水泥不能混装', sHint);
-        ActiveControl := EditStock;
-        Exit;
-      end;
-      FValue := StrToFloat(EditValue.Text);
-      FValue := Float2Float(FValue, cPrecision, False);
-      InitCenter(FStockNO,FType,cbxCenterID);
-      gStockName:=FStockName;
-      gType:=FType;
-      {$IFDEF YDKP}
-      if pos('熟',FStockName)>0 then
-      begin
-        InitKuWei('熟料',cbxKw);
-      end else
-      if pos('袋',FStockName)>0 then
-      begin
-        InitKuWei('袋装',cbxKw);
-      end else
-      begin
-        InitKuWei('散装',cbxKw);
-      end;
-      {$ENDIF}
-      FSelecte := True;
-
-      EditTruck.Properties.ReadOnly := True;
-      //gInfo.FMoney := gInfo.FMoney - FPrice * FValue;
-    end;
-
-    LoadStockList;
-    ActiveControl := BtnOK;
-  end;
-end;
-
-//Desc: 删除
-procedure TfFormBill.BtnDelClick(Sender: TObject);
-var nIdx: integer;
-begin
-  if ListBill.ItemIndex > -1 then
-  begin
-    nIdx := Integer(ListBill.Items[ListBill.ItemIndex].Data);
-    with gStockList[nIdx] do
-    begin
-      FSelecte := False;
-      //gInfo.FMoney := gInfo.FMoney + FPrice * FValue;
-    end;
-
-    LoadStockList;
-    EditTruck.Properties.ReadOnly := ListBill.Items.Count > 0;
-    cbxCenterID.ItemIndex:=-1;
-    cbxSampleID.ItemIndex:=-1;
+    end; }
   end;
 end;
 
 //Desc: 保存
-procedure TfFormBill.BtnOKClick(Sender: TObject);
+procedure TfFormQLSBill.BtnOKClick(Sender: TObject);
 var nIdx: Integer;
     nPrint: Boolean;
     nList,nTmp,nStocks: TStrings;
@@ -577,12 +353,9 @@ var nIdx: Integer;
     FSumTon:Double;
     nStr,nCenterYL,nStockNo,nCenterID:string;
     nYL:Double;
+    FSampleID:string;
 begin
   FSumTon:=0.00;
-  if ListBill.Items.Count < 1 then
-  begin
-    ShowMsg('请先办理提货单', sHint); Exit;
-  end;
   if cbxCenterID.ItemIndex=-1 then
   begin
     ShowMsg('请选择生产线', sHint); Exit;
@@ -607,21 +380,23 @@ begin
     LoadSysDictItem(sFlag_PrintBill, nStocks);
     //需打印品种
 
-    for nIdx:=Low(gStockList) to High(gStockList) do
+    {for nIdx:=Low(gStockList) to High(gStockList) do
     with gStockList[nIdx],nTmp do
     begin
-      if not FSelecte then Continue;
+      if not FSelecte then Continue; }
       //xxxxx
-      Values['Type'] := FType;
-      Values['StockNO'] := FStockNO;
-      Values['StockName'] := FStockName;
-      Values['Price'] := FloatToStr(FPrice);
-      Values['Value'] := FloatToStr(FValue);
-      Values['RECID'] := FRecID;
+    with nTmp do
+    begin
+      Values['Type'] := gType;
+      Values['StockNO'] := gStockNO;
+      Values['StockName'] := Editstock.text;
+      Values['Price'] := gPrice;
+      Values['Value'] := EditValue.text;
+      Values['RECID'] := gRecID;
       {$IFDEF YDKP}//开票录入试样编号
       if cbxSampleID.Enabled=True then
       begin
-        if LoadNoSampleID(FStockNO) then
+        if LoadNoSampleID(gStockNO) then
         begin
           FSampleID:='';
         end else
@@ -732,84 +507,21 @@ begin
         end;
       end;
       {$ENDIF}
-      {$IFDEF QHSN}//开票录入试样编号
-      if cbxSampleID.Enabled=True then
-      begin
-        if LoadNoSampleID(FStockNO) then
-        begin
-          FSampleID:='';
-        end else
-        begin
-          if (Pos('熟料',FStockName)<=0) then
-          begin
-            FSampleID:='';
-          end else
-          begin
-            if cbxSampleID.ItemIndex < 0 then
-            begin
-              ShowMsg('请选择试样编号！',sHint);
-              Exit;
-            end;
-            FSampleID:=cbxSampleID.Text;
-          end;
-        end;
-      end else
-      begin
-        FSampleID:='';
-      end;
-      if FSampleID <> '' then
-      begin
-        FSumTon:=GetSumTonnage(FSampleID);
-        cxLabel1.Caption:=Floattostr(FSumTon);
-        if GetSampleTonnage(FSampleID, nBatQuaS, nBatQuaE) then
-        begin
-          if FSumTon-nBatQuaS>0 then
-          begin
-            ShowMsg('试样编号['+FSampleID+']已超量',sHint);
-            if UpdateSampleValid(FSampleID) then
-              InitSampleID(FStockName,FType,nCenterID,cbxSampleID);
-            Exit;
-          end;
-
-          nPlanW:=FValue;
-          FSumTon:=FSumTon+nPlanW;
-          if nBatQuaS-FSumTon<=nBatQuaE then    //到预警量
-          begin
-            nStr:='试样编号['+FSampleID+']已到预警量,是否继续保存？';
-            if not QueryDlg(nStr, sAsk) then
-            begin
-              if UpdateSampleValid(FSampleID) then
-              InitSampleID(FStockName,FType,nCenterID,cbxSampleID);
-              Exit;
-            end;
-          end;
-          if FSumTon-nBatQuaS>0 then
-          begin
-            ShowMsg('试样编号['+FSampleID+']已超量',sHint);
-            Exit;
-          end;
-        end else
-        begin
-          ShowMsg('试样编号['+FSampleID+']已失效',sHint);
-          Exit;
-        end;
-      end;
-      {$ENDIF}
       Values['SampleID'] := FSampleID;
       nStockNo:= Values['StockNO'];
 
       nList.Add(PackerEncodeStr(nTmp.Text));
       //new bill
       if (not nPrint) and (FBuDanFlag <> sFlag_Yes) then
-        nPrint := nStocks.IndexOf(FStockNO) >= 0;
+        nPrint := nStocks.IndexOf(gStockNO) >= 0;
       //xxxxx
     end;
 
     with nList do
     begin
       Values['Bills'] := PackerEncodeStr(nList.Text);
-      Values['LID'] := '';
-      Values['ZhiKa'] := gInfo.FZhiKa;
+      Values['LID'] := Trim(EditID.Text);
+      Values['ZhiKa'] := gZhiKa;
       Values['Truck'] := EditTruck.Text;
       Values['Lading'] := GetCtrlData(EditLading);
       //Values['VPListID']:=
@@ -820,13 +532,10 @@ begin
         Values['IfHYprt'] := 'Y'
       else
         Values['IfHYprt'] := 'N';
-      Values['SalesType'] := gInfo.FSalesType;
+      Values['SalesType'] := gSalesType;
       Values['CenterID']:= nCenterID;
       Values['JXSTHD'] := Trim(EditJXSTHD.Text);
       Values['Project'] := Trim(EditHYCus.Text);
-      Values['WebOrderID'] := '';
-      Values['ToAddr'] := '';
-      Values['IdNumber'] := '';
       {$IFDEF QHSN}
       if chkFenChe.Checked then
         Values['IfFenChe'] := 'Y'
@@ -835,24 +544,8 @@ begin
       {$ELSE}
       Values['IfFenChe'] := 'N';
       {$ENDIF}
-      {$IFDEF YDKP}
-      if cbxKw.Itemindex< 0 then
-      begin
-        ShowMsg('请选择库位号', sHint); Exit;
-      end;
-      nPos:=Pos('.',cbxKw.Text);
-      if (nPos>0) and (nPos<Length(cbxKw.Text)) then
-      begin
-        Values['KuWei']:= Copy(cbxKw.Text,1,nPos-1);
-        Values['LocationID']:= Copy(cbxKw.Text,nPos+1,Length(cbxKw.Text)-nPos);
-      end else
-      begin
-        ShowMsg('库位格式非法', sHint); Exit;
-      end;
-      {$ELSE}
       Values['KuWei'] := '';
       Values['LocationID']:= 'A';
-      {$ENDIF}
       {nCenterYL:=GetCenterSUM(nStockNo,Values['CenterID']);
       if nCenterYL <> '' then
       begin
@@ -867,33 +560,33 @@ begin
         end;
       end; }
     end; 
-    gInfo.FIDList := SaveBill(PackerEncodeStr(nList.Text));
+    gIDList := SaveBill(PackerEncodeStr(nList.Text));
     //call mit bus
-    if gInfo.FIDList = '' then Exit;
+    if gIDList = '' then Exit;
   finally
     nTmp.Free;
     nList.Free;
     nStocks.Free;
   end;
 
-  SaveCustomerExt(gInfo.FCusID,Trim(EditHYCus.Text));
+  SaveCustomerExt(gCusID,Trim(EditHYCus.Text));
   if FBuDanFlag <> sFlag_Yes then
-    SetBillCard(gInfo.FIDList, EditTruck.Text, True);
+    SetBillCard(gIDList, EditTruck.Text, True);
   //办理磁卡
   {$IFDEF PLKP}
   if nPrint then
-    PrintDaiBill(gInfo.FIDList, False);
+    PrintDaiBill(gIDList, False);
   {$ELSE}
   if PrintYesNo then
-    PrintDaiBill(gInfo.FIDList, False);
+    PrintDaiBill(gIDList, False);
   {$ENDIF}
   //print report
-  
+
   ModalResult := mrOk;
   ShowMsg('提货单保存成功', sHint);
 end;
 
-procedure TfFormBill.cbxSampleIDPropertiesChange(Sender: TObject);
+procedure TfFormQLSBill.cbxSampleIDPropertiesChange(Sender: TObject);
 begin
   {$IFDEF YDKP}
   if cbxSampleID.ItemIndex > -1 then chkIfHYprint.Checked:=True;
@@ -902,7 +595,7 @@ begin
     cxLabel1.Caption:=Floattostr(GetSumTonnage(cbxSampleID.Text));
 end;
 
-procedure TfFormBill.cbxCenterIDPropertiesEditValueChanged(
+procedure TfFormQLSBill.cbxCenterIDPropertiesEditValueChanged(
   Sender: TObject);
 var
   nPos:Integer;
@@ -946,6 +639,17 @@ begin
   {$ENDIF}
 end;
 
+procedure TfFormQLSBill.EditIDKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key = #13 then LoadFormData;
+end;
+
+procedure TfFormQLSBill.EditIDPropertiesButtonClick(Sender: TObject;
+  AButtonIndex: Integer);
+begin
+  LoadFormData;
+end;
+
 initialization
-  gControlManager.RegCtrl(TfFormBill, TfFormBill.FormID);
+  gControlManager.RegCtrl(TfFormQLSBill, TfFormQLSBill.FormID);
 end.

@@ -1,7 +1,7 @@
 // ************************************************************************ //
 // The types declared in this file were generated from data read from the
 // WSDL File described below:
-// WSDL     : http://101.200.195.224/wxplatform/ws/revicews?wsdl
+// WSDL     : http://www.hnzxtech.cn/wxplatform/ws/revicews?wsdl
 // Encoding : UTF-8
 // Version  : 1.0
 // (2016/9/27 11:51:33 - 1.33.2.5)
@@ -33,7 +33,7 @@ type
   // binding   : ReviceWSImplServiceSoapBinding
   // service   : ReviceWSImplService
   // port      : ReviceWSImplPort
-  // URL       : http://101.200.195.224/wxplatform/ws/revicews
+  // URL       : http://www.hnzxtech.cn/wxplatform/ws/revicews
   // ************************************************************************ //
   ReviceWS = interface(IInvokable)
   ['{D55EC9EA-5462-0127-93DF-231DF6B5573E}']
@@ -53,8 +53,8 @@ end;
 
 function GetReviceWS(UseWSDL: Boolean; Addr: string; HTTPRIO: THTTPRIO): ReviceWS;
 const
-  defWSDL = 'http://47.92.67.228/wxplatform/ws/revicews?wsdl'; //101.200.195.224
-  defURL  = 'http://47.92.67.228/wxplatform/ws/revicews';
+  defWSDL = 'http://hnzxtech.cn/wxplatform/ws/revicews?wsdl';
+  defURL  = 'http://hnzxtech.cn/wxplatform/ws/revicews';
   defSvc  = 'ReviceWSImplService';
   defPrt  = 'ReviceWSImplPort';
 var

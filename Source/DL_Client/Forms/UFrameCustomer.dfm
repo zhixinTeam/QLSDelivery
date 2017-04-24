@@ -152,6 +152,8 @@ inherited fFrameCustomer: TfFrameCustomer
     object N1: TMenuItem
       Tag = 10
       Caption = #38750#27491#24335#23458#25143
+      Enabled = False
+      Visible = False
       OnClick = N2Click
     end
     object N2: TMenuItem
@@ -164,12 +166,17 @@ inherited fFrameCustomer: TfFrameCustomer
     end
     object N4: TMenuItem
       Caption = #21516#27493#36828#31243#23458#25143
+      Enabled = False
       Visible = False
       OnClick = N4Click
     end
     object m_bindWechartAccount: TMenuItem
       Caption = #20851#32852#24494#20449#21830#22478#36134#25143
       OnClick = m_bindWechartAccountClick
+    end
+    object N5: TMenuItem
+      Caption = #21462#28040#24494#20449#36134#25143#20851#32852
+      OnClick = N5Click
     end
   end
 end

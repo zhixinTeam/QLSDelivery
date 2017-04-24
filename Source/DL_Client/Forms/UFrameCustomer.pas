@@ -37,6 +37,7 @@ type
     N3: TMenuItem;
     N4: TMenuItem;
     m_bindWechartAccount: TMenuItem;
+    N5: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnAddClick(Sender: TObject);
@@ -48,6 +49,7 @@ type
     procedure PMenu1Popup(Sender: TObject);
     procedure N4Click(Sender: TObject);
     procedure m_bindWechartAccountClick(Sender: TObject);
+    procedure N5Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -55,7 +57,7 @@ type
     {*查询SQL*}
 
     function AddMallUser(const nBindcustomerid,nCus_num,nCus_name:string):Boolean;
-    function DelMallUser(const nPhone,nCus_id:string):boolean;    
+    function DelMallUser(const nNamepinyin,nCus_id:string):boolean;    
   public
     { Public declarations }
     class function FrameID: integer; override;
@@ -76,8 +78,8 @@ end;
 //Desc: 数据查询SQL
 function TfFrameCustomer.InitFormDataSQL(const nWhere: string): string;
 begin
-  Result := 'Select cus.*,S_Name From $Cus cus' +
-            ' Left Join $Sale On S_ID=cus.C_SaleMan';
+  Result := 'Select cus.*,bind.* From $Cus cus' +
+            ' Left Join $Bind bind On bind.w_CID=cus.C_ID';
   //xxxxx
 
   if nWhere = '' then
@@ -85,7 +87,7 @@ begin
   else Result := Result + ' Where (' + nWhere + ')';
 
   Result := MacroValue(Result, [MI('$Cus', sTable_Customer),
-            MI('$Sale', sTable_Salesman), MI('$Yes', sFlag_Yes)]);
+            MI('$Bind', sTable_WeixinBind), MI('$Yes', sFlag_Yes)]);
   //xxxxx
 end;
 
@@ -251,7 +253,7 @@ begin
     if SyncRemoteCustomer then InitFormData(FWhere);
   finally
     CloseWaitForm;
-  end;
+  end; 
 end;
 
 procedure TfFrameCustomer.m_bindWechartAccountClick(Sender: TObject);
@@ -271,8 +273,14 @@ begin
 
   nCus_ID := SQLQuery.FieldByName('C_ID').AsString;
   nCusName := SQLQuery.FieldByName('C_Name').AsString;
+  nWechartAccount := SQLQuery.FieldByName('wcb_Namepinyin').AsString;
+  if nWechartAccount<>'' then
+  begin
+    ShowMsg('商城账户['+nWechartAccount+']已存在', sHint);
+    Exit;
+  end;
+  
   nParam.FCommand := cCmd_AddData;
-  nparam.FParamE := nCus_ID;
   CreateBaseFormItem(cFI_FormGetWechartAccount, PopedomItem, @nParam);
 
   if (nParam.FCommand = cCmd_ModalResult) and (nParam.FParamA = mrOK) then
@@ -285,17 +293,17 @@ begin
     nStr := 'Insert into %s (w_CID, w_CusName, wcb_Phone, wcb_Bindcustomerid, wcb_Namepinyin) '+
             'values (''%s'',''%s'',''%s'',''%s'',''%s'')';
     nStr := Format(nStr,[sTable_WeixinBind,nCus_ID,nCusName,nWechartPhone,nBindcustomerid,nWechartAccount]);
-    gSysLoger.AddLog(nStr);
-    
+    //gSysLoger.AddLog(nStr);
+
     FDM.ADOConn.BeginTrans;
     try
       FDM.ExecuteSQL(nStr);
       FDM.ADOConn.CommitTrans;
-      ShowMsg('客户 [ '+nCusName+' ] 开通商城用户成功！',sHint);
+      ShowMsg('客户 [ '+nCusName+' ] 关联商城用户成功！',sHint);
       InitFormData(FWhere);
     except
       FDM.ADOConn.RollbackTrans;
-      ShowMsg('开通商城用户失败', '未知错误');
+      ShowMsg('关联商城用户失败', '未知错误');
     end;
   end;
 end;
@@ -311,7 +319,8 @@ begin
             +'<DATA>'
             +'<head>'
             +'<Factory>%s</Factory>'
-            +'<Customer>%s</Customer>'
+            +'<Customer>%s</Customer>'   //销售需要这个传客户号
+            +'<Provider></Provider>'     //采购需要这个节点传供应商编号
             +'<type>add</type>'
             +'</head>'
             +'<Items>'
@@ -337,44 +346,71 @@ begin
   Result := True;
 end;
 
-function TfFrameCustomer.DelMallUser(const nPhone,
-  nCus_id: string): boolean;
+function TfFrameCustomer.DelMallUser(const nNamepinyin,nCus_id:string):boolean;
 var
-  nSql,nXmlStr,nData:string;
-  nDs:TDataSet;
+  nXmlStr:string;
+  nData:string;
 begin
-  Result := True;
-  //发送web请求删除商城账号
+  Result := False;
+  //发送http请求
   nXmlStr := '<?xml version="1.0" encoding="UTF-8"?>'
-            +'<DATA>'
-            +'<head>'
-            +'<Factory>%s</Factory>'
-            +'<Customer>%s</Customer>'
-            +'  <type>del</type>'
-            +'</head>'
-            +'<Items>'
-            +'	<Item>'
-            +'	  <clientID>null</clientID>'
-            +'	  <cash>0</cash>'
-            +'	  <clientnumber>%s</clientnumber>'
-            +'	</Item>'
-            +'</Items>'
-            +' <remark/>'
-            +'</DATA>';
-
-  nXmlStr := Format(nXmlStr,[gSysParam.FFactory,nPhone,nCus_id]);
+      +'<DATA>'
+      +'<head>'
+      +'<Factory>%s</Factory>'
+      +'<Customer>%s</Customer>'
+      +'<type>del</type>'
+      +'</head>'
+      +'<Items>'
+      +'<Item>'
+      +'<clientnumber>%s</clientnumber>'
+      +'</Item></Items><remark/></DATA>';
+  nXmlStr := Format(nXmlStr,[gSysParam.FFactory,nNamepinyin,nCus_id]);
   nXmlStr := PackerEncodeStr(nXmlStr);
-
   nData := edit_shopclients(nXmlStr);
   gSysLoger.AddLog(TfFrameCustomer,'DelMallUser',nData);
-  if nData='' then
+  if nData<>sFlag_Yes then
   begin
-    ShowMsg('手机号码[ '+nPhone+' ]删除商城用户失败！', sError);
-    Result := False;
+    ShowMsg('客户[ '+nCus_id+' ]取消商城账户关联 失败！', sError);
     Exit;
   end;
+  Result := True;
 end;
 
+procedure TfFrameCustomer.N5Click(Sender: TObject);
+var
+  nWechartAccount:string;
+  nStr:string;
+  nCus_ID,nCusName:string;
+begin
+  if cxView1.DataController.GetSelectedCount < 1 then
+  begin
+    ShowMsg('请选择要取消的记录', sHint);
+    Exit;
+  end;
+
+  nCus_ID := SQLQuery.FieldByName('C_ID').AsString;
+  nCusName := SQLQuery.FieldByName('C_Name').AsString;
+  nWechartAccount := SQLQuery.FieldByName('wcb_Namepinyin').AsString;
+  if nWechartAccount='' then
+  begin
+    ShowMsg('商城账户不已存在',sHint);
+    Exit;
+  end;
+
+  if not DelMallUser(nWechartAccount, nCus_ID) then Exit;
+  nStr := 'delete from %s where w_CID=''%s'' and wcb_Namepinyin=''%s'' ';
+  nStr := Format(nStr,[sTable_WeixinBind,nCus_ID,nWechartAccount]);
+  FDM.ADOConn.BeginTrans;
+  try
+    FDM.ExecuteSQL(nStr);
+    FDM.ADOConn.CommitTrans;
+    ShowMsg('客户 [ '+nCusName+' ] 取消商城账户关联 成功！',sHint);
+    InitFormData(FWhere);
+  except
+    FDM.ADOConn.RollbackTrans;
+    ShowMsg('取消商城账户关联 失败', '未知错误');
+  end;
+end;
 
 initialization
   gControlManager.RegCtrl(TfFrameCustomer, TfFrameCustomer.FrameID);

@@ -140,12 +140,16 @@ type
     //防伪码校验
     function GetWaitingForloading(var nData: string):Boolean;
     //工厂待装查询
+    function GetInOutFactoryTatol(var nData:string):Boolean;
+    //进出厂量查询（采购进厂量、销售出厂量）
     function GetBillSurplusTonnage(var nData:string):boolean;
     //网上订单可下单数量查询
     function GetOrderInfo(var nData:string):Boolean;
     //获取订单信息，用于网上下单
     function GetOrderList(var nData:string):Boolean;
     //获取订单信息，用于网上下单
+    function GetPurchaseContractList(var nData:string):Boolean;
+    //获取采购订单列表，用于网上下单
     function getCustomerInfo(var nData:string):Boolean;
     //获取客户注册信息
     function get_Bindfunc(var nData:string):Boolean;
@@ -159,7 +163,9 @@ type
     function get_shoporders(var nData:string):Boolean;
     //获取订单信息
     function get_shoporderbyno(var nData:string):Boolean;
-    //根据订单号获取订单信息
+    //根据订单号获取订单信息-销售
+    function get_shopPurchasebyNO(var nData:string):Boolean;
+    //根据货单号获取货单信息-原材料
     function complete_shoporders(var nData:string):Boolean;
     //修改订单状态
     {$ENDIF}
@@ -240,12 +246,8 @@ type
     //获取岗位交货单
     function SavePostBillItems(var nData: string): Boolean;
     //保存岗位交货单
-    function SaveBillSendMsgWx(LID:string):Boolean;
-    //开单发送微信消息
     function DelBillSendMsgWx(LID:string):Boolean;
     //删单发送微信消息
-    function TruckOutSendMsgWx(nList:TStrings):Boolean;
-    //出厂发送微信消息
   public
     constructor Create; override;
     destructor destroy; override;
@@ -299,7 +301,7 @@ type
 
 implementation
 uses
-  uFormCallWechatWebService,UMgrQueue,UDataModule,UHardBusiness;
+  UWorkerClientWebChat,UMgrQueue,UDataModule,UHardBusiness;
 
 class function TBusWorkerQueryField.FunctionName: string;
 begin
@@ -565,22 +567,29 @@ begin
    cBC_GetAXInVentSum      : Result := GetInVentSum(nData);
    cBC_SyncAXwmsLocation   : Result := SyncAXwmsLocation(nData);
    cBC_GetSalesOrdValue    : Result := GetSalesOrdValue(nData);
+
    cBC_ReadZhiKaInfo       : Result := ReadZhikaInfo(nData);//读取销售订单信息
    cBC_ReadStockPrice      : Result := ReadStockPrice(nData);//读取订单物料价格
    cBC_VerifPrintCode      : Result := CheckSecurityCodeValid(nData); //验证码查询
    cBC_WaitingForloading   : Result := GetWaitingForloading(nData); //待装车辆查询
+
    cBC_BillSurplusTonnage  : Result := GetBillSurplusTonnage(nData); //查询商城订单可用量
    cBC_GetOrderInfo        : Result := GetOrderInfo(nData); //查询订单信息
    cBC_GetOrderList        : Result := GetOrderList(nData); //查询订单列表
+   cBC_GetPurchaseContractList : Result := GetPurchaseContractList(nData); //查询采购合同列表
    
    cBC_WeChat_getCustomerInfo : Result := getCustomerInfo(nData);   //微信平台接口：获取客户注册信息
    cBC_WeChat_get_Bindfunc    : Result := get_Bindfunc(nData);   //微信平台接口：客户与微信账号绑定
    cBC_WeChat_send_event_msg  : Result := send_event_msg(nData);   //微信平台接口：发送消息
    cBC_WeChat_edit_shopclients : Result := edit_shopclients(nData);   //微信平台接口：新增商城用户
    cBC_WeChat_edit_shopgoods  : Result := edit_shopgoods(nData);   //微信平台接口：添加商品
+
    cBC_WeChat_get_shoporders  : Result := get_shoporders(nData);   //微信平台接口：获取订单信息
    cBC_WeChat_complete_shoporders  : Result := complete_shoporders(nData);   //微信平台接口：修改订单状态
-   cBC_WeChat_get_shoporderbyno : Result := get_shoporderbyno(nData);   //微信平台接口：根据订单号获取订单信息
+   cBC_WeChat_get_shoporderbyno : Result := get_shoporderbyno(nData);   //微信平台接口：根据订单号获取订单信息(销售)
+   cBC_WeChat_get_shopPurchasebyNO : Result := get_shopPurchasebyNO(nData);//微信平台接口：根据订单号获取订单信息(采购)
+
+   cBC_WeChat_InOutFactoryTotal : Result := GetInOutFactoryTatol(nData);//进出厂量查询（采购进厂量、销售出厂量）
    {$ENDIF}
    else
     begin
@@ -3172,6 +3181,7 @@ var nID,nIdx: Integer;
     nService: BPM2ERPServiceSoap;
     nMsg:Integer;
     nFYPlanStatus,nCenterId,nLocationId:string;
+    nLID:string;
 begin
   Result := False;
 
@@ -3187,6 +3197,8 @@ begin
       nData := Format(nData, [FIn.FData]);
       Exit;
     end;
+    if (Pos('YS',FieldByName('L_ID').AsString)>0) then Exit;
+
     nFYPlanStatus:='0';
     if FieldByName('L_InvCenterId').AsString='' then
     begin
@@ -3195,6 +3207,11 @@ begin
       WriteLog(nData);
       Exit;
     end;
+    {$IFDEF GGJC}
+    nLID := FieldByName('L_ID').AsString;
+    {$ELSE}
+    nLID := copy(FieldByName('L_ID').AsString,2,10);
+    {$ENDIF}
     nLocationId := FieldByName('L_InvLocationId').AsString;
     if nLocationId = '' then nLocationId := 'A';
     nStr:='<PRIMARY>'+
@@ -3202,7 +3219,7 @@ begin
              '<VEHICLEId>'+FieldByName('L_Truck').AsString+'</VEHICLEId>'+
              '<VENDPICKINGLISTID>S</VENDPICKINGLISTID>'+
              '<TRANSPORTER></TRANSPORTER>'+
-             '<TRANSPLANID>'+copy(FieldByName('L_ID').AsString,2,10)+'</TRANSPLANID>'+
+             '<TRANSPLANID>'+nLID+'</TRANSPLANID>'+
              '<SALESID>'+FieldByName('L_ZhiKa').AsString+'</SALESID>'+
              '<SALESLINERECID>'+FieldByName('L_LineRecID').AsString+'</SALESLINERECID>'+
              '<COMPANYID>'+gCompanyAct+'</COMPANYID>'+
@@ -3459,7 +3476,11 @@ begin
     if FieldByName('L_Type').AsString='D' then
       nNetValue:=FieldByName('L_MValue').AsFloat-FieldByName('L_PValue').AsFloat;
     nStr := '<PRIMARY>';
+    {$IFDEF GGJC}
+    nStr := nStr+'<TRANSPLANID>'+FieldByName('L_ID').AsString+'</TRANSPLANID>';
+    {$ELSE}
     nStr := nStr+'<TRANSPLANID>'+copy(FieldByName('L_ID').AsString,2,10)+'</TRANSPLANID>';
+    {$ENDIF}
     nStr := nStr+'<ITEMID>'+FieldByName('L_StockNo').AsString+'</ITEMID>';
     nStr := nStr+'<VehicleNum>'+FieldByName('L_Truck').AsString+'</VehicleNum>';
     nStr := nStr+'<VehicleType></VehicleType>';
@@ -4032,6 +4053,78 @@ begin
   end;
 end;
 
+//进出厂量查询（采购进厂量、销售出厂量） lih 2017-04-19
+function TWorkerBusinessCommander.GetInOutFactoryTatol(var nData:string):Boolean;
+var
+  nStr,nExtParam:string;
+  nType,nStartDate,nEndDate:string;
+  nPos:Integer;
+begin
+  Result := False;
+  nType := Trim(fin.FData);
+  nExtParam := Trim(FIn.FExtParam);
+  if (nType='') or (nExtParam='') then Exit;
+
+  nPos := Pos('and',nExtParam);
+  if nPos > 0 then
+  begin
+    nStartDate := Copy(nExtParam,1,nPos-1)+' 00:00:00';
+    nEndDate := Copy(nExtParam,nPos+3,Length(nExtParam)-nPos-2)+' 23:59:59';
+  end;
+
+  {if nType='S' then
+  begin
+    nStr := 'select L_StockName as StockName,'+
+            'Count(R_ID) as TruckCount,'+
+            'SUM(L_Value) as StockValue from %s '+
+            'where L_OutFact >=''%s'' and L_OutFact <=''%s'' '+
+            'and L_IfNeiDao=''N'' '+
+            'group by L_StockName '+
+            'union '+
+            'select ''内部倒运'' as StockName,'+
+            'Count(R_ID) as TruckCount,'+
+            'SUM(L_Value) as StockValue from %s '+
+            'where L_OutFact >=''%s'' and L_OutFact <=''%s'' '+
+            'and L_IfNeiDao=''N'' ';
+    nStr := Format(nStr,[sTable_Bill,nStartDate,nEndDate]);
+  end else
+  begin
+    nStr := 'select D_StockName as StockName,'+
+            'Count(R_ID) as TruckCount,'+
+            'SUM(D_Value) as StockValue from %s '+
+            'where D_OutFact >=''%s'' and D_OutFact <=''%s'' group by D_StockName ';
+    nStr := Format(nStr,[sTable_OrderDtl,nStartDate,nEndDate]);
+  end;}
+  nStr := 'EXEC SP_InOutFactoryTotal '''+nType+''','''+nStartDate+''','''+nEndDate+''' ';
+
+  //WriteLog(nStr);
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nData := '未查询到客户编号[ %s ]对应的订单信息.';
+      Exit;
+    end;
+
+    FListA.Clear;
+    FListB.Clear;
+    First;
+
+    while not Eof do
+    begin
+      FListB.Values['StockName'] := FieldByName('StockName').AsString;
+      FListB.Values['TruckCount'] := FieldByName('TruckCount').AsString;
+      FListB.Values['StockValue'] := FieldByName('StockValue').AsString;
+
+      FListA.Add(PackerEncodeStr(FListB.Text));
+      Next;
+    end;
+
+    FOut.FData := PackerEncodeStr(FListA.Text);
+    Result := True;
+  end;
+end;
+
 //Date: 2016-09-23
 //Parm:
 //Desc: 网上订单可下单数量查询
@@ -4222,7 +4315,7 @@ begin
       FListB.Values['XCB_SetDate']    := Date2Str(FieldByName('Z_Date').AsDateTime,True);
       FListB.Values['XCB_CardType']   := FieldByName('Z_SalesType').AsString;
       FListB.Values['XCB_SourceType'] := '';
-      FListB.Values['XCB_Option']     := '';
+      FListB.Values['XCB_Option']     := FieldByName('D_Memo').AsString;
       if FieldByName('Z_TriangleTrade').AsString ='1' then
       begin
         FListB.Values['XCB_Client']     := FieldByName('Z_OrgAccountNum').AsString;
@@ -4273,7 +4366,155 @@ begin
   end;
 end;
 
+//获取采购订单列表，用于网上下单
+function TWorkerBusinessCommander.GetPurchaseContractList(var nData:string):Boolean;
+var nStr:string;
+    nProID:string;
+begin
+  Result := False;
+  nProID := Trim(FIn.FData);
+  if nProID = '' then Exit;
+  nStr := 'Select *,(B_Value-IsNull(B_SentValue,0)-IsNull(B_FreezeValue,0)) As B_MaxValue From %s a, %s b ' +
+          'Where a.B_ID=b.M_ID ' +
+          'And ((B_BStatus=''Y'') or (B_BStatus=''1'') or ((M_PurchType=''0'') and (B_BStatus=''0''))) '+
+          'and B_Blocked=''0'' and M_ProID = ''%s'' ';
+  nStr := Format(nStr , [sTable_OrderBase,sTable_OrderBaseMain, nProID]);
+  
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nData := Format('未查询到供应商[ %s ]对应的订单信息.', [FIn.FData]);
+      Exit;
+    end;
+
+    FListA.Clear;
+    FListB.Clear;
+    First;
+    while not Eof do
+    try
+      FListB.Values['pcId'] := FieldByName('M_ID').AsString+';'+FieldByName('B_RecID').AsString;
+      FListB.Values['provider_code'] := FieldByName('M_ProID').AsString;
+      FListB.Values['provider_name'] := FieldByName('M_ProName').AsString;
+      FListB.Values['con_code'] := FieldByName('B_RecID').AsString;
+      FListB.Values['con_materiel_Code'] := FieldByName('B_StockNo').AsString;
+      FListB.Values['con_materiel_name'] := FieldByName('B_StockName').AsString;
+      FListB.Values['con_price'] := FieldByName('B_RestValue').AsString; //订单剩余量
+      FListB.Values['con_quantity'] := FieldByName('B_Value').AsString;
+      FListB.Values['con_finished_quantity'] := FieldByName('B_SentValue').AsString;
+      FListB.Values['con_date'] := DateTime2Str(FieldByName('B_Date').AsDateTime);
+      FListB.Values['con_remark'] := FieldByName('B_Memo').AsString;
+      FListA.Add(PackerEncodeStr(FListB.Text));
+
+    finally
+      Next;
+    end;
+  end;  
+
+  FOut.FData := PackerEncodeStr(FListA.Text);
+  Result := True;
+end;
+
 //获取客户注册信息
+function TWorkerBusinessCommander.getCustomerInfo(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessWebchat, FIn.FData, '', @nOut,
+            cBC_WeChat_getCustomerInfo);
+  if Result then
+       FOut.FData := nOut.FData
+  else nData := nOut.FData;
+end;
+
+//客户与微信账号绑定
+function TWorkerBusinessCommander.get_Bindfunc(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessWebchat, FIn.FData, '', @nOut,
+            cBC_WeChat_get_Bindfunc);
+  if Result then
+       FOut.FData := sFlag_Yes
+  else nData := nOut.FData;
+end;
+
+//发送消息
+function TWorkerBusinessCommander.send_event_msg(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessWebchat, FIn.FData, '', @nOut,
+            cBC_WeChat_send_event_msg);
+  if Result then
+       FOut.FData := sFlag_Yes
+  else nData := nOut.FData;
+end;
+
+//新增商城用户
+function TWorkerBusinessCommander.edit_shopclients(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessWebchat, FIn.FData, '', @nOut,
+            cBC_WeChat_edit_shopclients);
+  if Result then
+       FOut.FData := sFlag_Yes
+  else nData := nOut.FData;
+end;
+
+//添加商品
+function TWorkerBusinessCommander.edit_shopgoods(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessWebchat, FIn.FData, '', @nOut,
+            cBC_WeChat_edit_shopgoods);
+  if Result then
+       FOut.FData := sFlag_Yes
+  else nData := nOut.FData;
+end;
+
+//获取订单信息
+function TWorkerBusinessCommander.get_shoporders(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessWebchat, FIn.FData, '', @nOut,
+            cBC_WeChat_get_shoporders);
+  if Result then
+       FOut.FData := nOut.FData
+  else nData := nOut.FData;
+end;
+
+//根据订单号获取订单信息
+function TWorkerBusinessCommander.get_shoporderbyno(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessWebchat, FIn.FData, '', @nOut,
+            cBC_WeChat_get_shoporderbyNO);
+  if Result then
+       FOut.FData := nOut.FData
+  else nData := nOut.FData;
+end;
+
+//根据货单号获取货单信息-原材料
+function TWorkerBusinessCommander.get_shopPurchasebyNO(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessWebchat, FIn.FData, '', @nOut,
+            cBC_WeChat_get_shopPurchasebyNO);
+  if Result then
+       FOut.FData := nOut.FData
+  else nData := nOut.FData;
+end;
+
+//修改订单状态
+function TWorkerBusinessCommander.complete_shoporders(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallRemoteWorker(sCLI_BusinessWebchat, FIn.FData, '', @nOut,
+            cBC_WeChat_complete_shoporders);
+  if Result then
+       FOut.FData := sFlag_Yes
+  else nData := nOut.FData;
+end;
+
+{//获取客户注册信息
 function TWorkerBusinessCommander.getCustomerInfo(var nData:string):Boolean;
 var
   frmCall:TFrmCallWechatWebService;
@@ -4385,6 +4626,22 @@ begin
   end;
 end;
 
+//根据货单号获取货单信息-原材料
+function TWorkerBusinessCommander.get_shopPurchasebyNO(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_get_shopPurchasebyNO,fin.FData);
+    nData := fin.FData;
+    FOut.FData := fin.FData;
+  finally
+    frmCall.Free;
+  end;
+end;
+
 //修改订单状态
 function TWorkerBusinessCommander.complete_shoporders(var nData:string):Boolean;
 var
@@ -4399,26 +4656,26 @@ begin
   finally
     frmCall.Free;
   end;
-end;
+end;}
 
 function TWorkerBusinessCommander.GetSampleID(var nData: string):Boolean;//获取试样编号
 var
   nStr:string;
   nIdx:Integer;
 begin
-  result:=False;
+  Result := True;
   SetLength(FHuaYan, 0);
-  FOut.FData := '试样编号使用完毕.';
+  FOut.FData := '';
   {$IFDEF QHSN}
   nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
           '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL from %s a,%s b '+
           'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_CenterID=''%s'' '+
-          'and R_BatValid=''%s''';
+          'and R_BatValid=''%s'' order by a.R_ID';
   nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, FIn.FExtParam, sFlag_Yes]);
   {$ELSE}
   nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
           '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL from %s a,%s b '+
-          'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_BatValid=''%s''';
+          'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_BatValid=''%s'' order by a.R_ID';
   nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, sFlag_Yes]);
   {$ENDIF}
 
@@ -4437,20 +4694,23 @@ begin
       Inc(nIdx);
       Next;
     end;
+  end;
 
-    for nIdx := Low(FHuaYan) to High(FHuaYan) do
+  for nIdx := Low(FHuaYan) to High(FHuaYan) do
+  begin
+    if FHuaYan[nIdx].FValue <= FHuaYan[nIdx].FZLVal then
     begin
-      if FHuaYan[nIdx].FValue <= FHuaYan[nIdx].FZLVal then
-      begin
-        nStr := 'update %s set R_BatValid=''%s'' where R_SerialNo=''%s'' ';
-        nStr := Format(nStr,[sTable_StockRecord, sFlag_Yes, FHuaYan[nIdx].FReriNo]);
-        gDBConnManager.WorkerExec(FDBConn,nStr);
-      end else
-      begin
-        FOut.FData:=FHuaYan[nIdx].FReriNo;
-        Result:=True;
-        Exit;
-      end;
+      nStr := 'update %s set R_BatValid=''%s'',R_TotalValue=(%.2f) where R_SerialNo=''%s'' ';
+      nStr := Format(nStr,[sTable_StockRecord, sFlag_Yes, FHuaYan[nIdx].FZLVal, FHuaYan[nIdx].FReriNo]);
+      gDBConnManager.WorkerExec(FDBConn,nStr);
+    end else
+    begin
+      nStr := 'update %s set R_TotalValue=(%.2f) where R_SerialNo=''%s'' ';
+      nStr := Format(nStr,[sTable_StockRecord, FHuaYan[nIdx].FZLVal, FHuaYan[nIdx].FReriNo]);
+      gDBConnManager.WorkerExec(FDBConn,nStr);
+      FOut.FData:=FHuaYan[nIdx].FReriNo;
+      Result:=True;
+      Exit;
     end;
   end;
 end;
@@ -4965,99 +5225,8 @@ begin
     Result:=True;
     nRemMoney := StrToFloat(nOut.FExtParam);
     WriteLog('SAX Money: '+nOut.FExtParam);
-    
-    if nOut.FData=sFlag_No then nMsg:='['+nOrgCusID+']资金余额不足.';
-  end;
-end;
 
-//by lih 2016-06-06
-//开单发送微信消息
-function TWorkerBusinessBills.SaveBillSendMsgWx(LID:string):Boolean;
-var
-  nSql,nStr: string;
-  nRID:string;
-  wxservice:ReviceWS;
-  nMsg:WideString;
-  nhead:TXmlNode;
-  errcode,errmsg:string;
-begin
-  Result:=False;
-  try
-    nSql := 'Select a.R_ID,b.C_Factory,b.C_ToUser,a.L_ID,a.L_Card,a.L_Truck,a.L_StockNo,' +
-            'a.L_StockName,a.L_CusID,a.L_CusName,a.L_CusAccount,a.L_MDate,a.L_MMan,' +
-            'a.L_TransID,a.L_TransName,a.L_Searial,a.L_OutFact,a.L_OutMan From '+sTable_Bill+' a,'+sTable_Customer+' b ' +
-            'Where a.L_CusID=b.C_ID and b.C_IsBind=''1'' and '''+LID+''' like ''%''+a.L_ID+''%'' ';
-    //nSql := Format(nSql, [sTable_Bill,sTable_Customer,LID]);
-    {$IFDEF DEBUG}
-    WriteLog(nSql);
-    {$ENDIF}
-    with gDBConnManager.WorkerQuery(FDBConn, nSql) do
-    if RecordCount > 0 then
-    begin
-      First;
-      while not Eof do
-      begin
-        nStr:='<?xml version="1.0" encoding="UTF-8"?>'+
-              '<DATA>'+
-              '<head>'+
-              '<Factory>'+Fields[1].AsString+'</Factory>'+
-              '<ToUser>'+Fields[2].AsString+'</ToUser>'+
-              '<MsgType>1</MsgType>'+
-              '</head>'+
-              '<Items>'+
-                '<Item>'+
-                '<BillID>'+Fields[3].AsString+'</BillID>'+
-                '<Card>'+Fields[4].AsString+'</Card>'+
-                '<Truck>'+Fields[5].AsString+'</Truck>'+
-                '<StockNo>'+Fields[6].AsString+'</StockNo>'+
-                '<StockName>'+Fields[7].AsString+'</StockName>'+
-                '<CusID>'+Fields[8].AsString+'</CusID>'+
-                '<CusName>'+Fields[9].AsString+'</CusName>'+
-                '<CusAccount>'+Fields[10].AsString+'</CusAccount>'+
-                '<MakeDate>'+Fields[11].AsString+'</MakeDate>'+
-                '<MakeMan>'+Fields[12].AsString+'</MakeMan>'+
-                '<TransID>'+Fields[13].AsString+'</TransID>'+
-                '<TransName>'+Fields[14].AsString+'</TransName>'+
-                '<Searial>'+Fields[15].AsString+'</Searial>'+
-                '<OutFact>'+Fields[16].AsString+'</OutFact>'+
-                '<OutMan>'+Fields[17].AsString+'</OutMan>'+
-                '</Item>'+
-              '</Items>'+
-               '<remark/>'+
-              '</DATA>';
-        {$IFDEF DEBUG}
-        WriteLog(nStr);
-        {$ENDIF}
-        wxservice:=GetReviceWS(true,'',nil);
-        nMsg:=wxservice.mainfuncs('send_event_msg',nStr);
-        {$IFDEF DEBUG}
-        WriteLog(nMsg);
-        {$ENDIF}
-        FPacker.XMLBuilder.ReadFromString(nMsg);
-        with FPacker.XMLBuilder do
-        begin
-          nhead:=Root.FindNode('head');
-          if Assigned(nhead) then
-          begin
-            errcode:=nhead.NodebyName('errcode').ValueAsString;
-            errmsg:=nhead.NodebyName('errmsg').ValueAsString;
-            if errcode='0' then nRID:=nRID+'R_ID='+Fields[0].AsString+' or ';
-          end;
-        end;
-        Next;
-      end;
-    end;
-    nRID:=Trim(nRID);
-    nRID:=Copy(nRID,1,length(nRID)-2);
-    nSql:='update %s set L_NewSendWx=''Y'' where %s';
-    nSql:=Format(nSql,[sTable_Bill,nRID]);
-    gDBConnManager.WorkerExec(FDBConn,nSql);
-    Result:=True;
-  except
-    on e:Exception do
-    begin
-      WriteLog(e.Message);
-    end;
+    if nOut.FData=sFlag_No then nMsg:='['+nOrgCusID+']资金余额不足.';
   end;
 end;
 
@@ -5071,6 +5240,7 @@ var nStr,nSQL,nFixMoney: string;
     nBxz: Boolean;
     nAxMoney,nSendValue: Double;
     nAxMsg,nOnLineModel: string;
+    nWebOrderID: string;
 begin
   Result := False;
   nBxz:= True; //默认强制信用额度
@@ -5209,11 +5379,22 @@ begin
       FListC.Values['Object'] := sFlag_BillNo;
       //to get serial no
 
-      if not TWorkerBusinessCommander.CallMe(cBC_GetSerialNO,
+      {$IFDEF GGJC}
+      if Length(FListA.Values['L_ID']) > 8 then
+        nOut.FData := FListA.Values['L_ID']
+      else
+      begin
+        if not TWorkerBusinessCommander.CallMe(cBC_GetSerialNO,
             FListC.Text, sFlag_Yes, @nOut) then
         raise Exception.Create(nOut.FData);
+      end;
+      {$ELSE}
+      if not TWorkerBusinessCommander.CallMe(cBC_GetSerialNO,
+          FListC.Text, sFlag_Yes, @nOut) then
+      raise Exception.Create(nOut.FData);
       //xxxxx
-
+      {$ENDIF}
+      
       FOut.FData := FOut.FData + nOut.FData + ',';
       //combine bill
       FListC.Text := PackerDecodeStr(FListB[nIdx]);
@@ -5264,7 +5445,9 @@ begin
               SF('L_IfNeiDao', FListA.Values['IfNeiDao']),
               SF('L_TriaTrade', FListA.Values['TriaTrade']),
 
-              SF('L_ContQuota', FListA.Values['ContQuota'])
+              SF('L_ContQuota', FListA.Values['ContQuota']),
+              SF('L_ToAddr', FListA.Values['ToAddr']),
+              SF('L_IdNumber', FListA.Values['IdNumber'])
               ], sTable_Bill, '', True);
       gDBConnManager.WorkerExec(FDBConn, nStr);
 
@@ -5384,14 +5567,15 @@ begin
     FDBConn.FConn.RollbackTrans;
     raise;
   end;
-  //发送微信消息
-  FDBConn.FConn.BeginTrans;
-  try
-    SendMsgToWebMall(nOut.FData,cSendWeChatMsgType_AddBill);
-    FDBConn.FConn.CommitTrans;
-  except
-     FDBConn.FConn.RollbackTrans;
-    raise;
+  if gSysParam.FGPWSURL <> '' then
+  begin
+    {$IFNDEF PLKP}
+    nWebOrderID := FListA.Values['WebOrderID'];
+    //修改商城订单状态
+    ModifyWebOrderStatus(nOut.FData,c_WeChatStatusCreateCard,nWebOrderID);
+    {$ENDIF}
+    //发送微信消息
+    SendMsgToWebMall(nOut.FData,cSendWeChatMsgType_AddBill,sFlag_Sale);
   end;
 end;
 
@@ -5680,7 +5864,7 @@ begin
 end;
 
 //by lih 2016-06-06
-//开单发送微信消息
+//删单发送微信消息
 function TWorkerBusinessBills.DelBillSendMsgWx(LID:string):Boolean;
 var
   nSql,nStr: string;
@@ -5958,10 +6142,11 @@ begin
     FDBConn.FConn.RollbackTrans;
     raise;
   end;
-  {if Result then
+  if gSysParam.FGPWSURL <> '' then
   begin
-    if DelBillSendMsgWx(FIn.FData) then nData:=FIn.FData+'删单发送微信消息成功！';
-  end;}
+    //修改商城订单状态
+    ModifyWebOrderStatus(FIn.FData,2);
+  end;
 end;
 
 //Date: 2014-09-17
@@ -6174,9 +6359,13 @@ begin
     FDBConn.FConn.RollbackTrans;
     raise;
   end;
-  //更新微信订单状态
-  nLid := Copy(nLid,2,Length(nLid)-2);
-  ModifyWebOrderStatus(nLid,'0');
+  if gSysParam.FGPWSURL <> '' then
+  begin
+    {$IFDEF PLKP}
+    nLid := Copy(nLid,2,Length(nLid)-2);
+    ModifyWebOrderStatus(nLid,c_WeChatStatusCreateCard,'');
+    {$ENDIF}
+  end;
 end;
 
 //Date: 2014-09-17
@@ -6340,99 +6529,6 @@ begin
 
   FOut.FData := CombineBillItmes(nBills);
   Result := True;
-end;
-
-//by lih 2016-06-07
-//出厂发送微信消息
-function TWorkerBusinessBills.TruckOutSendMsgWx(nList:TStrings):Boolean;
-var
-  nSql,nStr: string;
-  nRID:string;
-  wxservice:ReviceWS;
-  nMsg:WideString;
-  nhead:TXmlNode;
-  errcode,errmsg:string;
-  i:Integer;
-begin
-  Result:=False;
-  try
-    for i:= 0 to nList.Count-1 do
-    begin
-      nSql := 'Select a.R_ID,b.C_Factory,b.C_ToUser,a.L_ID,a.L_Card,a.L_Truck,a.L_StockNo,' +
-              'a.L_StockName,a.L_CusID,a.L_CusName,a.L_CusAccount,a.L_MDate,a.L_MMan,' +
-              'a.L_TransID,a.L_TransName,a.L_Searial,a.L_OutFact,a.L_OutMan From %s a,%s b ' +
-              'Where a.L_CusID=b.C_ID and b.C_IsBind=''1'' and a.L_ID =%s ';
-      nSql := Format(nSql, [sTable_Bill,sTable_Customer,nList[i]]);
-      {$IFDEF DEBUG}
-      WriteLog(nSql);
-      {$ENDIF}
-      with gDBConnManager.WorkerQuery(FDBConn, nSql) do
-      if RecordCount > 0 then
-      begin
-        nStr:='<?xml version="1.0" encoding="UTF-8"?>'+
-              '<DATA>'+
-              '<head>'+
-              '<Factory>'+Fields[1].AsString+'</Factory>'+
-              '<ToUser>'+Fields[2].AsString+'</ToUser>'+
-              '<MsgType>2</MsgType>'+
-              '</head>'+
-              '<Items>'+
-                '<Item>'+
-                '<BillID>'+Fields[3].AsString+'</BillID>'+
-                '<Card>'+Fields[4].AsString+'</Card>'+
-                '<Truck>'+Fields[5].AsString+'</Truck>'+
-                '<StockNo>'+Fields[6].AsString+'</StockNo>'+
-                '<StockName>'+Fields[7].AsString+'</StockName>'+
-                '<CusID>'+Fields[8].AsString+'</CusID>'+
-                '<CusName>'+Fields[9].AsString+'</CusName>'+
-                '<CusAccount>'+Fields[10].AsString+'</CusAccount>'+
-                '<MakeDate>'+Fields[11].AsString+'</MakeDate>'+
-                '<MakeMan>'+Fields[12].AsString+'</MakeMan>'+
-                '<TransID>'+Fields[13].AsString+'</TransID>'+
-                '<TransName>'+Fields[14].AsString+'</TransName>'+
-                '<Searial>'+Fields[15].AsString+'</Searial>'+
-                '<OutFact>'+Fields[16].AsString+'</OutFact>'+
-                '<OutMan>'+Fields[17].AsString+'</OutMan>'+
-                '</Item>'+
-              '</Items>'+
-               '<remark/>'+
-              '</DATA>';
-        {$IFDEF DEBUG}
-        WriteLog(nStr);
-        {$ENDIF}
-        wxservice:=GetReviceWS(true,'',nil);
-        nMsg:=wxservice.mainfuncs('send_event_msg',nStr);
-        {$IFDEF DEBUG}
-        WriteLog(nMsg);
-        {$ENDIF}
-        FPacker.XMLBuilder.ReadFromString(nMsg);
-        with FPacker.XMLBuilder do
-        begin
-          nhead:=Root.FindNode('head');
-          if Assigned(nhead) then
-          begin
-            errcode:=nhead.NodebyName('errcode').ValueAsString;
-            errmsg:=nhead.NodebyName('errmsg').ValueAsString;
-            if errcode='0' then
-            begin
-              nRID:=nRID+'R_ID='+Fields[0].AsString+' or ';
-            end;
-          end;
-        end;
-      end;
-    end;
-    nRID:=Trim(nRID);
-    nRID:=Copy(nRID,1,length(nRID)-2);
-    nSql:='update %s set L_OutSendWx=''Y'' where %s';
-    nSql:=Format(nSql,[sTable_Bill,nRID]);
-    gDBConnManager.WorkerExec(FDBConn,nSql);
-    Result:=True;
-  except
-    on e:Exception do
-    begin
-      WriteLog(e.Message);
-    end;
-  end;
 end;
 
 //Date: 2014-09-18
@@ -6652,6 +6748,13 @@ begin
         WriteLog(nOut.FData);
         raise Exception.Create(nOut.FData);
       end;
+      if nOut.FData='' then
+      begin
+        nData := '岗位[ %s ]试样编号使用完毕.';
+        nData := Format(nData, [PostTypeToStr(FIn.FExtParam)]);
+        WriteLog(nData);
+        Exit;
+      end;
 
       nReiNo:=nOut.FData;  //获取式样编号
       WriteLog('['+FID+']GetSampleID: '+nReiNo);
@@ -6698,6 +6801,13 @@ begin
       begin
         WriteLog(nOut.FData);
         raise Exception.Create(nOut.FData);
+      end;
+      if nOut.FData='' then
+      begin
+        nData := '岗位[ %s ]试样编号使用完毕.';
+        nData := Format(nData, [PostTypeToStr(FIn.FExtParam)]);
+        WriteLog(nData);
+        Exit;
       end;
 
       nReiNo:=nOut.FData; //获取式样编号
@@ -7322,10 +7432,6 @@ begin
     {$ENDIF}
   end;
 
-  {if FIn.FExtParam = sFlag_TruckOut then
-  begin
-    if TruckOutSendMsgWx(FListB) then nData:='出厂发送微信成功！';
-  end; }
 end;
 //------------------------------------------------------------------------------
 class function TWorkerBusinessOrders.FunctionName: string;
@@ -7672,6 +7778,13 @@ begin
   except
     FDBConn.FConn.RollbackTrans;
     raise;
+  end;
+  if gSysParam.FGPWSURL <> '' then
+  begin
+    //修改商城订单状态
+    ModifyWebOrderStatus(nOut.FData,c_WeChatStatusCreateCard);
+    //发送微信消息
+    SendMsgToWebMall(nOut.FData,cSendWeChatMsgType_AddBill,sFlag_Provide);
   end;
 end;
 
@@ -8217,6 +8330,9 @@ begin
         FNextStatus := sFlag_TruckBFM;
       end;
       //现场不发货直接过重
+      {$IFDEF GLPURCH}
+      if (pos('熟料',FStockName)>0) then FNextStatus := sFlag_TruckBFM;
+      {$ENDIF}
 
       nSQL := MakeSQLByStr([
             SF('P_ID', nOut.FData),

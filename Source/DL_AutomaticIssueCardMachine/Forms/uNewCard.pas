@@ -1,5 +1,6 @@
 unit uNewCard;
 
+{$I Link.Inc}
 interface
 
 uses
@@ -70,6 +71,11 @@ type
     dxLayout1Group3: TdxLayoutGroup;
     LabInfo: TcxLabel;
     dxLayout1Item3: TdxLayoutItem;
+    EditToaddr: TcxTextEdit;
+    dxLayout1Item4: TdxLayoutItem;
+    EditIdNo: TcxTextEdit;
+    dxLayout1Item6: TdxLayoutItem;
+    dxLayout1Group4: TdxLayoutGroup;
     procedure BtnExitClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
@@ -148,7 +154,7 @@ begin
   end;
   FWorkshopList.Free;
   FreeAndNil(FDR);
-  fFormMain.Timer2.Enabled := True;
+  fFormMain.TimerInsertCard.Enabled := True;
 end;
 
 procedure TfFormNewCard.FormShow(Sender: TObject);
@@ -280,6 +286,8 @@ begin
       FWebOrderItems[i].Ftracknumber := nListB.Values['tracknumber'];
       FWebOrderItems[i].FYunTianOrderId := nListB.Values['fac_order_no'];
       gSysParam.FUserID := nListB.Values['namepinyin'];
+      FWebOrderItems[i].Ftoaddress := nListB.Values['toaddress'];
+      FWebOrderItems[i].Fidnumber := nListB.Values['idnumber'];
       AddListViewItem(FWebOrderItems[i]);
     end;
   finally
@@ -288,7 +296,6 @@ begin
   end;
   FGetBatchCode := True;
   LoadSingleOrder;
-  ShowMsg(gSysParam.FUserID,sHint);
 end;
 
 function TfFormNewCard.CheckYunTianOrderInfo(const nOrderId: string;
@@ -421,15 +428,20 @@ begin
     LabInfo.Caption := nHint;
     Exit;
   end;
+  if gSysParam.FUserID = '' then gSysParam.FUserID := 'AICM';
   nCenterID := 'SL1';
-  nSampleID := GetSamplelNo(FCardData.Values['XCB_CementName'],nCenterID);
+  nSampleID := '';
+
+  //青海不需要开票获取试样编号
+  {nSampleID := GetSamplelNo(FCardData.Values['XCB_CementName'],nCenterID);
   if nSampleID = '' then
   begin
-    ShowMsg('试样编号使用完毕，请联系工作人员。',sHint);
+    nHint := '试样编号使用完毕，请联系工作人员。';
+    ShowMsg(nHint,sHint);
     LabInfo.Caption := nHint;
     Exit;
-  end;
-
+  end;}
+  
   nHint := FCardData.Values['XCB_ID'];
   if not ReadStockPrice(nHint) then
   begin
@@ -473,11 +485,16 @@ begin
       Values['IsVIP'] := Copy(GetCtrlData(EditType),1,1);
       Values['BuDan'] := sFlag_No;
 
-      Values['CenterID']:= nCenterID;
+      Values['CenterID'] := nCenterID;
       if PrintFH.Checked  then
         Values['IfHYprt'] := sFlag_Yes
       else
         Values['IfHYprt'] := sFlag_No;
+      Values['LID'] := '';
+      Values['Project'] := EditCName.Text;
+      Values['WebOrderID'] := FWebOrderID;
+      Values['ToAddr'] := EditToaddr.Text;
+      Values['IdNumber'] := EditIdNo.Text;
     end;
     nBillData := PackerEncodeStr(nList.Text);
     FNewBillID := SaveBill(nBillData);
@@ -502,7 +519,8 @@ begin
     SetBillCard(FNewBillID, EditTruck.Text,nNewCardNo, True);
   end;
 
-  if nPrint then
+  //if nPrint then  //平凉使用
+  if PrintYesNo then
     PrintBillReport(FNewBillID, False);
   //print report
 
@@ -671,6 +689,8 @@ begin
   EditMax.Text  := nZhiKaYL;
   EditValue.Text := nOrderItem.FData;
   EditTruck.Text := nOrderItem.Ftracknumber;
+  EditToaddr.Text := nOrderItem.Ftoaddress;
+  EditIdNo.Text := nOrderItem.Fidnumber;
   BtnOK.Enabled := not nRepeat;
 end;
 

@@ -9,7 +9,7 @@ interface
 uses
   Windows, DB, Classes, Controls, SysUtils, UBusinessPacker, UBusinessWorker,
   UBusinessConst, ULibFun, UAdjustForm, USysLoger, uDM, USysDB, NativeXml,
-  fServerForm, UMgrDBConn;
+  fServerForm, UMITConst, UMgrParam, UMgrDBConn;
 
 procedure WriteLog(const nEvent: string);
 function CallBusinessCommand(const nCmd: Integer; const nData,nExt: string;
@@ -2526,6 +2526,13 @@ var nStr, nLID, nCustAcc, nContQuota: string;
     nIdx: Integer;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
+    nDBConn: PDBWorker;
+    nErrNum: Integer;
+    nPLANQTY,nVEHICLEId,nITEMID,nITEMNAME,nITEMTYPE,nITEMPRICE :string;
+    nCUSTOMERID,nCUSTOMERNAME,nTRANSPORTER,nTRANSPLANID :string;
+    nSALESID,nSALESLINERECID,nCOMPANYID,nDestinationcode :string;
+    nWMSLocationId,nFYPlanStatus,nInventLocationId :string;
+    nxtDInventCenterId :string;
 begin
   nXML := TNativeXml.Create;
   try
@@ -2536,10 +2543,151 @@ begin
       Result:=False;
       Exit;
     end;
+
+    nTmp := nNode.NodeByName('PLANQTY');
+    if Assigned(nTmp) then
+      nPLANQTY:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('VEHICLEId');
+    if Assigned(nTmp) then
+      nVEHICLEId:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('ITEMID');
+    if Assigned(nTmp) then
+      nITEMID:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('ITEMNAME');
+    if Assigned(nTmp) then
+      nITEMNAME:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('ITEMTYPE');
+    if Assigned(nTmp) then
+      nITEMTYPE:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('ITEMPRICE');
+    if Assigned(nTmp) then
+      nITEMPRICE:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('CUSTOMERID');
+    if Assigned(nTmp) then
+      nCUSTOMERID:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('CUSTOMERNAME');
+    if Assigned(nTmp) then
+      nCUSTOMERNAME:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('TRANSPORTER');
+    if Assigned(nTmp) then
+      nTRANSPORTER:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('TRANSPLANID');
+    if Assigned(nTmp) then
+      nTRANSPLANID:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('SALESID');
+    if Assigned(nTmp) then
+      nSALESID:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('SALESLINERECID');
+    if Assigned(nTmp) then
+      nSALESLINERECID:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('COMPANYID');
+    if Assigned(nTmp) then
+      nCOMPANYID:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('Destinationcode');
+    if Assigned(nTmp) then
+      nDestinationcode:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('WMSLocationId');
+    if Assigned(nTmp) then
+      nWMSLocationId:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('FYPlanStatus');
+    if Assigned(nTmp) then
+      nFYPlanStatus:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('InventLocationId');
+    if Assigned(nTmp) then
+      nInventLocationId:= nTmp.ValueAsString;
+
+    nTmp := nNode.NodeByName('xtDInventCenterId');
+    if Assigned(nTmp) then
+      nxtDInventCenterId:= nTmp.ValueAsString;
+
+    nStr := 'Insert into %s (AX_PLANQTY,AX_VEHICLEId,AX_ITEMID,AX_ITEMNAME,'+
+                           'AX_ITEMTYPE,AX_ITEMPRICE,AX_CUSTOMERID,AX_CUSTOMERNAME,'+
+                           'AX_TRANSPORTER,AX_TRANSPLANID,AX_SALESID,AX_SALESLINERECID,'+
+                           'AX_COMPANYID,AX_Destinationcode,AX_WMSLocationId,AX_FYPlanStatus,'+
+                           'AX_InventLocationId,AX_xtDInventCenterId) '+
+                           'values '+
+                           '(''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'')';
+    nStr := Format(nStr,[sTable_AxPlanInfo, nPLANQTY,nVEHICLEId,nITEMID,nITEMNAME,nITEMTYPE,nITEMPRICE,
+                        nCUSTOMERID,nCUSTOMERNAME,nTRANSPORTER,nTRANSPLANID,nSALESID,nSALESLINERECID,
+                        nCOMPANYID,nDestinationcode,nWMSLocationId,nFYPlanStatus,nInventLocationId,
+                        nxtDInventCenterId]);
+    WriteLog(nStr);
+    with DM do
+    try
+      ADOCLoc.BeginTrans;
+      with qryLoc do
+      begin
+        Close;
+        SQL.Text:=nStr;
+        ExecSQL;
+        ADOCLoc.CommitTrans;
+        Result:= True;
+      end;
+    except
+      if ADOCLoc.InTransaction then
+          ADOCLoc.RollbackTrans;
+      WriteLog('GetThInfo Insert Error: RollbackTrans');
+    end;
+
+    {nDBConn := nil;
+    with gParamManager.ActiveParam^ do
+    Try
+      nDBConn := gDBConnManager.GetConnection(FDB.FID, nErrNum);
+      if not Assigned(nDBConn) then
+      begin
+        WriteLog('连接数据库失败(DBConn Is Null).');
+        Exit;
+      end;
+
+      if not nDBConn.FConn.Connected then
+        nDBConn.FConn.Connected := True;  
+      //conn db
+
+      nStr := 'Insert into %s (AX_PLANQTY,AX_VEHICLEId,AX_ITEMID,AX_ITEMNAME,'+
+                           'AX_ITEMTYPE,AX_ITEMPRICE,AX_CUSTOMERID,AX_CUSTOMERNAME,'+
+                           'AX_TRANSPORTER,AX_TRANSPLANID,AX_SALESID,AX_SALESLINERECID,'+
+                           'AX_COMPANYID,AX_Destinationcode,AX_WMSLocationId,AX_FYPlanStatus,'+
+                           'AX_InventLocationId,AX_xtDInventCenterId) '+
+                           'values '+
+                           '(''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'','+
+                           '''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'','+
+                           '''%s'',''%s'',''%s'')';
+      nStr := Format(nStr,[sTable_AxPlanInfo, nPLANQTY,nVEHICLEId,nITEMID,nITEMNAME,nITEMTYPE,nITEMPRICE,
+                          nCUSTOMERID,nCUSTOMERNAME,nTRANSPORTER,nTRANSPLANID,nSALESID,nSALESLINERECID,
+                          nCOMPANYID,nDestinationcode,nWMSLocationId,nFYPlanStatus,nInventLocationId,
+                          nxtDInventCenterId]);
+      WriteLog(nStr);
+      try
+        nDBConn.FConn.BeginTrans;
+        gDBConnManager.WorkerExec(nDBConn,nStr);
+        nDBConn.FConn.CommitTrans;
+      except
+        if nDBConn.FConn.InTransaction then
+          nDBConn.FConn.RollbackTrans;
+        raise;
+      end;
+    finally
+      gDBConnManager.ReleaseConnection(nDBConn);
+    end;}
   finally
     nXML.Free;
   end;
-  Result:= True;
 end;
 
 //获取采购单信息

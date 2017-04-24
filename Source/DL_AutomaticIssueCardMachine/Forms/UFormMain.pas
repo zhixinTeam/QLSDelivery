@@ -20,23 +20,29 @@ type
     LabelNum: TcxLabel;
     LabelHint: TcxLabel;
     ComPort1: TComPort;
-    Timer1: TTimer;
+    TimerReadCard: TTimer;
     Panel1: TPanel;
     LabelTruck: TcxLabel;
     LabelDec: TcxLabel;
     LabelTon: TcxLabel;
     LabelBill: TcxLabel;
     LabelOrder: TcxLabel;
-    imgCard: TImage;
-    Timer2: TTimer;
+    TimerInsertCard: TTimer;
     imgPrint: TImage;
     PanelBottom: TPanel;
+    PanelBCenter: TPanel;
+    PanelBRight: TPanel;
+    PanelBLeft: TPanel;
+    imgCard: TImage;
+    Image3: TImage;
+    imgPurchaseCard: TImage;
+    LabelCus: TcxLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure ComPort1RxChar(Sender: TObject; Count: Integer);
-    procedure Timer1Timer(Sender: TObject);
+    procedure TimerReadCardTimer(Sender: TObject);
     procedure LabelTruckDblClick(Sender: TObject);
-    procedure Timer2Timer(Sender: TObject);
+    procedure TimerInsertCardTimer(Sender: TObject);
     procedure imgPrintClick(Sender: TObject);
     procedure imgCardClick(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -55,7 +61,7 @@ type
     FHotKey: Cardinal;
 
     FHYDan,FStockName:string;
-    FDefaultPrinterName:string;
+    FHyDanPrinterName,FDefaultPrinterName:string;
     FReadCardThread:TReadCardThread;
     procedure ActionComPort(const nStop: Boolean);
     //串口处理
@@ -66,7 +72,7 @@ type
     FCursorShow:Boolean;
     FCardType:TCardType;
     procedure QueryCard(const nCard: string);
-    //查询卡信息      
+    //查询卡信息
   end;
 
 var
@@ -78,8 +84,9 @@ implementation
 
 uses
   IniFiles, ULibFun, CPortTypes, USysLoger, USysDB, USmallFunc, UDataModule,
-  UFormConn, uNewCard,USysConst,UClientWorker,UMITPacker,USysModule,USysBusiness,
-  UDataReport,UFormInputbox;
+  UFormConn,USysConst,UClientWorker,UMITPacker,USysModule,USysBusiness, uNewCard,
+  UDataReport,UFormInputbox, UCardTypeSelect,UFormBarcodePrint, uZXNewPurchaseCard,
+  UFormBase;
 
 type
   TReaderType = (ptT800, pt8142);
@@ -131,7 +138,7 @@ begin
   gSysLoger := TSysLoger.Create(gPath + 'Logs\');
   gSysLoger.LogSync := False;
   ShowConnectDBSetupForm(ConnCallBack);
-  ShowCursor(True);
+//  ShowCursor(False);
 
   FDM.ADOConn.Close;
   FDM.ADOConn.ConnectionString := BuildConnectDBStr;
@@ -154,20 +161,21 @@ begin
     ShowMsg(nStr,sHint);
   end;
   FSzttceApi.ParentWnd := Self.Handle;
-  //Timer2.Enabled := True;
+  TimerInsertcard.Enabled := True;
 
-  {FHotKeyMgr := THotKeyManager.Create(Self);
+  FHotKeyMgr := THotKeyManager.Create(Self);
   FHotKeyMgr.OnHotKeyPressed := DoHotKeyHotKeyPressed;
 
   FHotKey := TextToHotKey('Ctrl + Alt + D', False);
-  FHotKeyMgr.AddHotKey(FHotKey);}
+  FHotKeyMgr.AddHotKey(FHotKey);
   FCursorShow := False;
   if not Assigned(FDR) then
   begin
     FDR := TFDR.Create(Application);
   end;  
   imgPrint.Visible := False;
-  imgCard.Visible := gSysParam.FCanCreateCard;  
+  imgCard.Visible := gSysParam.FCanCreateCard;
+  imgPurchaseCard.Visible := not gSysParam.FCanCreateCard;
 end;
 
 procedure TfFormMain.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -177,7 +185,7 @@ begin
   except
   end;
   FSzttceApi.Free;
-  //FHotKeyMgr.Free;
+  FHotKeyMgr.Free;
 end;
 
 procedure TfFormMain.LabelTruckDblClick(Sender: TObject);
@@ -245,15 +253,15 @@ begin
   end;
 end;
 
-procedure TfFormMain.Timer1Timer(Sender: TObject);
+procedure TfFormMain.TimerReadCardTimer(Sender: TObject);
 begin
   if FTimeCounter <= 0 then
   begin
-    Timer1.Enabled := False;
+    TimerReadCard.Enabled := False;
     FHYDan := '';
     FStockName := '';
     LabelDec.Caption := '';
-    imgPrint.Visible := False;
+//    imgPrint.Visible := False;
 
     LabelBill.Caption := '交货单号:';
     LabelTruck.Caption := '车牌号码:';
@@ -261,9 +269,10 @@ begin
     LabelStock.Caption := '品种名称:';
     LabelNum.Caption := '开放道数:';
     LabelTon.Caption := '提货数量:';
+    LabelCus.Caption := '客户名称:';
     LabelHint.Caption := '请您刷卡';
     if FCardType=ctttce then FSzttceApi.ResetMachine;
-    Timer2.Enabled := True;
+    TimerInsertCard.Enabled := True;
   end else
   begin
     LabelDec.Caption := IntToStr(FTimeCounter) + ' ';
@@ -310,14 +319,14 @@ begin
 
   if (nCard = FLastCard) and (GetTickCount - FLastQuery < 8 * 1000) then
   begin
-    Timer2.Enabled := True;
+    TimerInsertCard.Enabled := True;
     LabelDec.Caption := '请不要频繁读卡';
     Exit;
   end;
 
   try
     FTimeCounter := 10;
-    Timer1.Enabled := True;
+    TimerReadCard.Enabled := True;
 
     nStr := 'Select * From %s Where L_Card=''%s''';
     nStr := Format(nStr, [sTable_Bill, nCard]);
@@ -365,7 +374,8 @@ begin
       LabelTruck.Caption := '车牌号码: ' + FieldByName('L_Truck').AsString;
       LabelStock.Caption := '品种名称: ' + FieldByName('L_StockName').AsString;
       LabelTon.Caption := '提货数量: ' + FieldByName('L_Value').AsString + '吨';
-      imgPrint.Visible := True;
+      LabelCus.Caption := '客户名称:' + FieldByName('L_CusName').AsString;
+//      imgPrint.Visible := True;
     end;
 
     //--------------------------------------------------------------------------
@@ -490,34 +500,12 @@ begin
   FDM.ADOConn.Connected := False;
 end;
 
-procedure TfFormMain.Timer2Timer(Sender: TObject);
-//var
-//  nCard,nStr: string;
+procedure TfFormMain.TimerInsertCardTimer(Sender: TObject);
 begin
   FReadCardThread := TReadCardThread.Create(True);
   FReadCardThread.FreeOnTerminate := True;
   FReadCardThread.Resume;
   WaitForSingleObject(FReadCardThread.Handle,INFINITE);
-//  FReadCardThread.Resume;
-//  nCard := '';
-//  Application.ProcessMessages;
-//  if not FSzttceApi.IsInsertedCard then
-//  begin
-//    nStr := '读取卡号失败：[Errorcode=%d,ErrorMsg=%s]';
-//    nStr := Format(nStr,[FSzttceApi.ErrorCode,FSzttceApi.ErrorMsg]);
-//    Exit;
-//  end;
-//  Timer2.Enabled := False;
-//
-//  if not FSzttceApi.ReadCardSerialNo(nCard) then
-//  begin
-//    nStr := '读取卡号失败：[Errorcode=%d,ErrorMsg=%s],请稍后重试';
-//    nStr := Format(nStr,[FSzttceApi.ErrorCode,FSzttceApi.ErrorMsg]);
-//    ShowMsg(nStr,sHint);
-//    Timer2.Enabled := True;
-//    Exit;
-//  end;
-//  QueryCard(nCard);
 end;
 
 procedure TfFormMain.DoHotKeyHotKeyPressed(HotKey: Cardinal; Index: Word);
@@ -530,46 +518,75 @@ begin
 end;
 
 procedure TfFormMain.imgPrintClick(Sender: TObject);
+var
+  nP: TFormCommandParam;
+  nHyDan,nStockname:string;
 begin
-  if FHYDan='' then
+  CreateBaseFormItem(cFI_FormBarCodePrint, '', @nP);
+  if (nP.FCommand = cCmd_ModalResult) and (nP.FParamA = mrOK) then
   begin
-    ShowMsg('当前品种无需打印化验单。',sHint);
-    Exit;
-  end;
-  
-  if not Assigned(FDR) then
-  begin
-    FDR := TFDR.Create(Application);
-  end;  
+    nHyDan := nP.FParamB;
+    nStockname := nP.FParamC;
+    if nHyDan='' then
+    begin
+      ShowMsg('当前品种无需打印化验单。',sHint);
+      Exit;
+    end;
 
-  if FHYDan<>'' then
-  begin
-    imgPrint.Visible := False;
-    FDefaultPrinterName := FDR.Report1.PrintOptions.Printer;
-    PrintHuaYanReport(FHYDan, FStockName, False);
+    if not Assigned(FDR) then
+    begin
+      FDR := TFDR.Create(Application);
+    end;
+
+    if PrintHuaYanReport(nHYDan, nStockName, False) then
+    begin
+      ShowMsg('打印成功，请在下方出纸口取走您的化验单',sHint);
+    end
+    else begin
+      ShowMsg('打印失败，请联系开票员补打',sHint);
+    end;
   end;
 end;
 
 procedure TfFormMain.imgCardClick(Sender: TObject);
 begin
-  {if not Timer2.Enabled then
+  if not TimerInsertCard.Enabled then
   begin
     ShowMsg('系统正在读卡，请稍候...',sHint);
     Exit;
-  end;  }
-  if not Assigned(fFormNewCard) then
-  begin
-    fFormNewCard := TfFormNewCard.Create(nil);
-    fFormNewCard.SzttceApi := FSzttceApi;
-    fFormNewCard.SetControlsClear;
   end;
-  fFormNewCard.BringToFront;
-  fFormNewCard.Left := self.Left;
-  fFormNewCard.Top := self.Top;
-  fFormNewCard.Width := self.Width;
-  fFormNewCard.Height := self.Height;
-  fFormNewCard.Show;
-  Timer2.Enabled := False;
+
+  if Sender=imgCard then
+  begin
+    if not Assigned(fFormNewCard) then
+    begin
+      fFormNewCard := TfFormNewCard.Create(nil);
+      fFormNewCard.SzttceApi := FSzttceApi;
+      fFormNewCard.SetControlsClear;
+    end;
+    fFormNewCard.BringToFront;
+    fFormNewCard.Left := self.Left;
+    fFormNewCard.Top := self.Top;
+    fFormNewCard.Width := self.Width;
+    fFormNewCard.Height := self.Height;
+    fFormNewCard.Show;
+  end
+  else if Sender=imgPurchaseCard then
+  begin
+   if not Assigned(fFormNewPurchaseCard) then
+    begin
+      fFormNewPurchaseCard := TfFormNewPurchaseCard.Create(nil);
+      fFormNewPurchaseCard.SzttceApi := FSzttceApi;
+      fFormNewPurchaseCard.SetControlsClear;
+    end;
+    fFormNewPurchaseCard.BringToFront;
+    fFormNewPurchaseCard.Left := self.Left;
+    fFormNewPurchaseCard.Top := self.Top;
+    fFormNewPurchaseCard.Width := self.Width;
+    fFormNewPurchaseCard.Height := self.Height;
+    fFormNewPurchaseCard.Show;
+  end;
+  TimerInsertCard.Enabled := False;
 end;
 
 procedure TfFormMain.FormResize(Sender: TObject);
@@ -590,7 +607,7 @@ begin
     nTop := nIni.ReadInteger('screen','top',0);
     nWidth := nIni.ReadInteger('screen','width',1024);
     nHeight := nIni.ReadInteger('screen','height',768);
-    nItemHeigth := nHeight div 8;
+    nItemHeigth := nHeight div 9;
 
     LabelTruck.Height := nItemHeigth;
     LabelDec.Height := nItemHeigth;
@@ -600,9 +617,12 @@ begin
     LabelStock.Height := nItemHeigth;
     LabelNum.Height := nItemHeigth;
     LabelHint.Height := nItemHeigth;
+    LabelCus.Height := nItemHeigth;
     imgCard.Height := nItemHeigth;
+    imgPurchaseCard.Height := nItemHeigth;
     imgPrint.Height := nItemHeigth;
     imgCard.Top := LabelHint.Top;
+    imgPurchaseCard.Top := LabelHint.Top;
     imgPrint.Top := LabelHint.Top;
 
     Self.Left := nLeft;

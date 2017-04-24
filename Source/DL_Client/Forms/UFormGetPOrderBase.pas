@@ -31,6 +31,8 @@ type
 
     FRestValue: string;
     FRecID: string;
+
+    FPurchType: string;
   end;
   TOrderBaseParams = array of TOrderBaseParam;
 
@@ -190,6 +192,7 @@ begin
       FArea     := FieldByName('B_Area').AsString;
       FProject  := FieldByName('B_Project').AsString;
       FRecID    := FieldByName('B_RecID').AsString;
+      FPurchType:= FieldByName('M_PurchType').AsString;
       {if FieldByName('B_Value').AsFloat>0 then
         FRestValue:= Format('%.2f', [FieldByName('B_MaxValue').AsFloat])
       else}
@@ -254,6 +257,7 @@ begin
         Values['SQ_Project']  := FProject;
         Values['SQ_RestValue']:= FRestValue;
         Values['SQ_RecID']    := FRecID;
+        Values['SQ_PurchType']:= FPurchType;
         Break;
       end;  
     end;  
@@ -271,7 +275,7 @@ begin
     if ListQuery.ItemIndex > -1 then
     begin
       GetResult;
-      if StrToFloat(FResults.Values['SQ_RestValue'])<=0  then
+      if (StrToFloat(FResults.Values['SQ_RestValue'])<=0) and (FResults.Values['SQ_PurchType']<>'0')  then
       begin
         ShowMsg('订单剩余量不足',sHint);
         Exit;
@@ -286,7 +290,7 @@ begin
   if ListQuery.ItemIndex > -1 then
   begin
     GetResult;
-    if StrToFloat(FResults.Values['SQ_RestValue'])<=0 then
+    if (StrToFloat(FResults.Values['SQ_RestValue'])<=0) and (FResults.Values['SQ_PurchType']<>'0')  then
     begin
       ShowMsg('订单剩余量不足',sHint);
       Exit;
@@ -300,7 +304,7 @@ begin
   if ListQuery.ItemIndex > -1 then
   begin
     GetResult;
-    if StrToFloat(FResults.Values['SQ_RestValue'])<=0 then
+    if (StrToFloat(FResults.Values['SQ_RestValue'])<=0) and (FResults.Values['SQ_PurchType']<>'0')  then
     begin
       ShowMsg('订单剩余量不足',sHint);
       Exit;

@@ -1,6 +1,6 @@
 inherited fFormAXBaseLoad: TfFormAXBaseLoad
   Top = 287
-  Caption = 'AX'#22522#30784#34920#25968#25454#19979#36733
+  Caption = #37319#36141#22522#30784#25968#25454#19979#36733
   ClientHeight = 321
   ClientWidth = 333
   OnClose = FormClose

@@ -173,7 +173,9 @@ const
   cFI_FormTransBase     = $1093;                     //短倒办理
 
   cFI_FormSPrice        = $1094;                     //销售单价
-  cFI_FormWeixinBind    = $1095;                     //微信账号绑定  
+  cFI_FormWeixinBind    = $1095;                     //微信账号绑定
+
+  cFI_FormBarCodePrint  = $1096;                     //扫码打印化验单  
 
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
@@ -234,6 +236,7 @@ type
     FCanCreateCard:Boolean;                          //是否允许自助办卡
     FSanZhuangACIM:Boolean;                          //散装是否允许自助办卡
     FAutoClose_Mintue:Integer;                       //用户自助办卡窗口自动关闭时间
+    FWebOrderLength:Integer;                         //微信商城订单长度
   end;
   //系统参数
 
@@ -259,8 +262,23 @@ type
     FData:string;
     Ftracknumber:string;
     FYunTianOrderId:string;//云天系统订单号
+    Ftoaddress:string;
+    Fidnumber:string;
   end;
   //网上商城订单明细
+
+  PMallPurchaseItem = ^stMallPurchaseItem;
+  stMallPurchaseItem = record
+    FOrder_id:string; //商城ID
+    FProvID:string; //供应商ID
+    FProvName:string; //供应商名称
+    FGoodsID:string;  //物料编号
+    FGoodsname:string; //物料名称
+    FData:string; //数量
+    Ftracknumber:string; //车牌号
+    Fpurchasecontract_no:string;//合同编号
+  end;
+  //网上商城供货单明细
 
 //------------------------------------------------------------------------------
 var

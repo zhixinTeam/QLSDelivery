@@ -225,6 +225,7 @@ procedure TfFormSiteConfirm.GetBillsInfo(const nCardNo: string);
 var nStr,nHint: string;
     nIdx,nInt: Integer;
     nFID, nTruck:string;
+    nEmptyOut :string;
 begin
   nFID:='';
   if GetLadingBills(nCardNo, sFlag_TruckFH, gBills) then
@@ -250,6 +251,7 @@ begin
       nHint := nHint + nStr;
       nFID:=FID;
       nTruck:=FTruck;
+      nEmptyOut:=FYSValid;
     end;
 
     if (nHint <> '') and (nInt = 0) then
@@ -277,6 +279,7 @@ begin
           nHint := nHint + nStr;
           nFID:=FID;
           nTruck:=FTruck;
+          nEmptyOut:=FYSValid;
         end;
 
         if (nHint <> '') and (nInt = 0) then
@@ -299,7 +302,6 @@ begin
           end;
           Exit;
         end;
-        ShowFormData;
       end else
       begin
         nHint := '车辆['+nTruck+']当前不能装车,详情如下: ' + #13#10#13#10 +
@@ -320,6 +322,12 @@ begin
         end;
         Exit;
       end;
+    end;
+    if nEmptyOut = sFlag_Yes then
+    begin
+      nHint :='车辆['+nTruck+']已办理空车出厂，禁止装车！';
+      ShowMsg(nHint,sHint);
+      Exit;
     end;
     ShowFormData;
     cbxWorkSet.Text:=GetWorkOrder;
