@@ -59,15 +59,15 @@ begin
 end;
 
 procedure TRemService_Invoker.Invoke_DL2WRZSINFO(const __Instance:IInterface; const __Message:IROMessage; const __Transport:IROTransport; out __oResponseOptions:TROResponseOptions);
-{ function DL2WRZSINFO(const BusinessType: Widestring; const XMLPrimaryKey: Widestring): Integer; }
+{ function DL2WRZSINFO(const BusinessType: Widestring; const XMLPrimaryKey: Variant): Integer; }
 var
   BusinessType: Widestring;
-  XMLPrimaryKey: Widestring;
+  XMLPrimaryKey: Variant;
   lResult: Integer;
 begin
   try
     __Message.Read('BusinessType', TypeInfo(Widestring), BusinessType, []);
-    __Message.Read('XMLPrimaryKey', TypeInfo(Widestring), XMLPrimaryKey, []);
+    __Message.Read('XMLPrimaryKey', TypeInfo(Variant), XMLPrimaryKey, []);
 
     lResult := (__Instance as IRemService).DL2WRZSINFO(BusinessType, XMLPrimaryKey);
 

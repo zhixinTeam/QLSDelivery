@@ -87,10 +87,4 @@ object ServerForm: TServerForm
     Left = 120
     Top = 8
   end
-  object Timer1: TTimer
-    Interval = 2000
-    OnTimer = Timer1Timer
-    Left = 167
-    Top = 9
-  end
 end

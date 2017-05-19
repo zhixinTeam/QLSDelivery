@@ -27,16 +27,4 @@ object DM: TDM
     Left = 96
     Top = 64
   end
-  object qryExec: TADOQuery
-    Connection = ADOCLoc
-    Parameters = <>
-    Left = 152
-    Top = 10
-  end
-  object qryMsgList: TADOQuery
-    Connection = ADOCLoc
-    Parameters = <>
-    Left = 198
-    Top = 11
-  end
 end

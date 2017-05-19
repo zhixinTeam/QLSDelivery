@@ -19,17 +19,14 @@ type
     ApplicationEvents1: TApplicationEvents;
     BtnConn: TButton;
     tmrRestart: TTimer;
-    Timer1: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure ChkModelClick(Sender: TObject);
     procedure ApplicationEvents1Exception(Sender: TObject; E: Exception);
     procedure tmrRestartTimer(Sender: TObject);
-    procedure Timer1Timer(Sender: TObject);
   private
     { Private declarations }
-    procedure UpdateAxData;
   public
     { Public declarations }
     gTime:string;
@@ -37,11 +34,10 @@ type
 
 var
   ServerForm: TServerForm;
-  ReStart:Boolean;
 
 implementation
 uses
-  USysBusiness, uDM, UMITConst, UMgrParam, UMgrDBConn, USysDB;
+  USysBusiness, uDM, UMITConst, UMgrParam, UMgrDBConn;
 
 {$R *.dfm}
 procedure WriteLog(const nEvent: string);
@@ -93,12 +89,17 @@ begin
     gSysLoger := TSysLoger.Create('.\Logs\');
   WriteLog('ÏµÍ³Æô¶¯');
   if GetOnLineModel then ChkModel.Checked:=True else ChkModel.Checked:=False;
-  tmrRestart.Interval := 60*1000;
-  tmrRestart.Enabled := True;
-  ReStart := False;
+  {tmrRestart.Interval := 60*1000;
+  tmrRestart.Enabled := True;  }
 
-  Timer1.Interval := 10*1000;
-  Timer1.Enabled := True;
+  {gParamManager := TParamManager.Create(gPath + 'Parameters.xml');
+  gDBConnManager := TDBConnManager.Create;
+  FillAllDBParam;
+  with gParamManager do
+  begin
+    gDBConnManager.DefaultConnection := ActiveParam.FDB.FID;
+    gDBConnManager.MaxConn := ActiveParam.FDB.FNumWorker;
+  end;}
 end;
 
 procedure TServerForm.FormDestroy(Sender: TObject);
@@ -110,8 +111,6 @@ procedure TServerForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   //gDBConnManager.Disconnection();
   Application.Terminate;
-  if ReStart then
-    ShellExecute(Self.Handle, 'open', PChar(Application.ExeName), nil, nil, SW_SHOWNORMAL);
 end;
 
 
@@ -164,166 +163,7 @@ end;
 procedure TServerForm.tmrRestartTimer(Sender: TObject);
 begin
   if FormatDateTime('hh:mm',Now)=gTime then
-  begin
-    ReStart := True;
-    Close;
-  end;
-end;
-
-procedure TServerForm.UpdateAxData;
-var
-  nStr: string;
-  nXTProcessId,nRecid,nCompanyId:string;
-  nResult:Boolean;
-begin
-  with DM do
-  begin
-    ADOCLoc.Close;
-    ADOCLoc.ConnectionString:=LocalDBConn;
-    ADOCLoc.Connected:=True;
-    nStr:= 'select top 1 * from %s';
-    nStr:= Format(nStr,[sTable_AxMsgList]);
-    with qryExec do
-    begin
-      Close;
-      sql.Text:=nStr;
-      Open;
-      if RecordCount < 1 then
-      begin
-        //WriteLog('UpdateAxData Result: No AxMsg');
-        Exit;
-      end;
-      nXTProcessId:= FieldByName('AX_ProcessId').AsString;
-      nRecid:= FieldByName('AX_Recid').AsString;
-      nCompanyId:= FieldByName('AX_CompanyId').AsString;
-    end;
-  end;
-  if nXTProcessId='EDS_0001' then
-  begin
-    nResult:= GetAXSalesOrder(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EDS_0002' then
-  begin
-    nResult:=  GetAXSalesOrdLine(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EDS_0003' then
-  begin
-    nResult:= GetAXSupAgreement(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EDS_0004' then
-  begin
-    nResult:= GetAXCreLimCust(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EDS_0005' then
-  begin
-    nResult:= GetAXCreLimCusCont(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EDS_0008' then
-  begin
-    nResult:= GetAXSalesContract(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EDS_0009' then
-  begin
-    nResult:= GetAXVehicleNo(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EDS_0010' then
-  begin
-    nResult:= GetAXSalesContLine(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EPS_0001' then
-  begin
-    nResult:= GetAXPurOrder(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EPS_0002' then
-  begin
-    nResult:= GetAXPurOrdLine(nRecid,nCompanyId);
-  end else
-  {if nXTProcessId='EDP_0004' then
-  begin
-      nResult:=0;
-  end else
-  if nXTProcessId='EDP_0005' then
-  begin
-      nResult:=0;
-  end else
-  if nXTProcessId='EDB_0003' then
-  begin
-      nResult:=0;
-  end else
-  if nXTProcessId='EDB_0004' then
-  begin
-      nResult:=0;
-  end else
-  if nXTProcessId='EDB_0005' then
-  begin
-      nResult:=0;
-  end else}
-  if nXTProcessId='EDB_0006' then
-  begin
-    nResult:= GetAXCustomer(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EDB_0007' then
-  begin
-    nResult:= GetAXProviders(nRecid,nCompanyId);
-  end else
-  if nXTProcessId='EDB_0008' then
-  begin
-    nResult:= GetAXMaterails(nRecid,nCompanyId);
-  end;{ else
-  if nXTProcessId='EWS_0001' then
-  begin
-    if UpdateYKAmount(nRecid,nCompanyId) then
-      Result:=0
-    else
-      Result:=-1;
-  end else
-  if nXTProcessId='EDS_0011' then
-  begin
-    if GetThInfo(nRecid,nCompanyId) then
-      Result:=0
-    else
-      Result:=-1;
-  end else
-  if nXTProcessId='EPS_0003' then
-  begin
-    if GetPurchInfo(nRecid,nCompanyId) then
-      Result:=0
-    else
-      Result:=-1;
-  end; }
-  if nResult then
-  with DM do
-  try
-    ADOCLoc.Close;
-    ADOCLoc.ConnectionString:=LocalDBConn;
-    ADOCLoc.Connected:=True;
-    ADOCLoc.BeginTrans;
-    nStr := 'delete from %s where AX_Recid=''%s'' and AX_ProcessId = ''%s'' ';
-    nStr := Format(nStr,[sTable_AxMsgList,nRecid,nXTProcessId]);
-    qryExec.SQL.Text:=nStr;
-    qryExec.ExecSQL;
-    qryExec.Close;
-    ADOCLoc.CommitTrans;
-  except
-    if ADOCLoc.InTransaction then
-      ADOCLoc.RollbackTrans;
-    WriteLog('UpdateAxData Delete Error: RollbackTrans');
-  end;
-end;
-
-
-procedure TServerForm.Timer1Timer(Sender: TObject);
-var
-  nInit:Integer;
-begin
-  Timer1.Enabled:=False;
-  nInit:=GetTickCount;
-  try
-    UpdateAxData;
-  finally
-    Timer1.Enabled:=True;
-    WriteLog('UpdateAxData: '+IntToStr(GetTickCount-nInit)+'ms');
-  end;
+    ShellExecute(Self.Handle, 'open', PChar(Application.ExeName), nil, nil, SW_SHOWNORMAL);
 end;
 
 end.
