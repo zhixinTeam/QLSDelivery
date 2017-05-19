@@ -1100,10 +1100,12 @@ procedure TfFrameAutoPoundItem.OnPoundData(const nValue: Double);
 var nVal: Int64;
     nRet: Boolean;
     nStr: string;
+    nResValue: Double;
 begin
   FLastBT := GetTickCount;
   EditValue.Text := Format('%.2f', [nValue]);
-  if nValue < FEmptyPoundWeight then //空磅
+  nResValue := StrToFloat(EditValue.Text);
+  if nResValue < FEmptyPoundWeight then //空磅
   begin
     //WriteLog(FloatToStr(nValue)+'  EmptyPoundWeight: '+Floattostr(FEmptyPoundWeight));
     if FEmptyPoundInit = 0 then
@@ -1147,9 +1149,9 @@ begin
 
   if FPoundTunnel.FPort.FMaxValue>0 then
   begin
-    if nValue>FPoundTunnel.FPort.FMaxValue then
+    if nResValue>FPoundTunnel.FPort.FMaxValue then
     begin
-      WriteLog(FUIData.FTruck+'超重值: '+FormatFloat('0.00',nValue));
+      WriteLog(FUIData.FTruck+'超重值: '+FormatFloat('0.00',nResValue));
       PlayVoice(FUIData.FTruck+'已超载,请到更高吨位磅称重.');
       FIsWeighting:= False;
 
@@ -1164,12 +1166,12 @@ begin
   begin
     if FInnerData.FPData.FValue > 0 then
     begin
-      if nValue <= FInnerData.FPData.FValue then
+      if nResValue <= FInnerData.FPData.FValue then
       begin
         FUIData.FPData := FInnerData.FMData;
         FUIData.FMData := FInnerData.FPData;
 
-        FUIData.FPData.FValue := nValue;
+        FUIData.FPData.FValue := nResValue;
         FUIData.FNextStatus := sFlag_TruckBFP;
         //切换为称皮重
       end else
@@ -1177,18 +1179,18 @@ begin
         FUIData.FPData := FInnerData.FPData;
         FUIData.FMData := FInnerData.FMData;
 
-        FUIData.FMData.FValue := nValue;
+        FUIData.FMData.FValue := nResValue;
         FUIData.FNextStatus := sFlag_TruckBFM;
         //切换为称毛重
       end;
-    end else FUIData.FPData.FValue := nValue;
+    end else FUIData.FPData.FValue := nResValue;
   end else
   if FBillItems[0].FNextStatus = sFlag_TruckBFP then
-       FUIData.FPData.FValue := nValue
-  else FUIData.FMData.FValue := nValue;
+       FUIData.FPData.FValue := nResValue
+  else FUIData.FMData.FValue := nResValue;
 
   SetUIData(False);
-  AddSample(nValue);
+  AddSample(nResValue);
   if not IsValidSamaple then Exit;
   //样本验证不通过
 

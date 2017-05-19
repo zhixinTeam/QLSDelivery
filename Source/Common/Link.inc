@@ -36,7 +36,7 @@
 {$IFDEF COM_MIT}
   {$DEFINE DBPool}
   //启用数据库支持
-  {.$DEFINE ChannelPool}
+  {$DEFINE ChannelPool}
   //启用通道支持
   {.$DEFINE AutoChannel}
   //启用通道平衡
@@ -65,13 +65,13 @@
   //古浪采购
   {.$DEFINE YDKP} 
   //永登、夏河、定西开票
-  {$DEFINE PLKP} 
+  {.$DEFINE PLKP} 
   //平凉开票
-  {$DEFINE XHPZ} 
+  {.$DEFINE XHPZ} 
   //夏河、定西、平凉皮重
   {.$DEFINE ZXKP} 
   //漳县
-  {.$DEFINE GGJC} 
+  {$DEFINE GGJC} 
   //甘谷、兰州商砼自动进厂
   {.$DEFINE CXSY} 
   //成县试样编号

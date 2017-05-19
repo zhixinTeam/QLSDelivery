@@ -611,6 +611,11 @@ var nVal: Double;
 begin
   if not IsNumber(EditValue.Text, True) then Exit;
   nVal := StrToFloat(EditValue.Text);
+  if nVal < 0.05 then
+  begin
+    ShowMsg('重量异常，禁止保存。',sHint);
+    Exit;
+  end;
 
   if (Length(FBillItems) > 0) and (FCardUsed <> sFlag_Provide) then
   begin

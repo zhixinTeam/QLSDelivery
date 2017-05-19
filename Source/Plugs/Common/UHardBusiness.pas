@@ -1587,23 +1587,7 @@ end;
 //Parm: 主机;卡号
 //Desc: 对nHost.nCard新到卡号作出动作
 procedure WhenReaderCardIn(const nCard: string; const nHost: PReaderHost);
-//var
-  //nErrNum: Integer;
-  //nDBConn: PDBWorker;
 begin
-  {nDBConn := nil;
-  with gParamManager.ActiveParam^ do
-  Try
-    nDBConn := gDBConnManager.GetConnection(FDB.FID, nErrNum);
-    if not Assigned(nDBConn) then
-    begin
-      WriteHardHelperLog('连接HM数据库失败(DBConn Is Null).');
-      Exit;
-    end;
-  finally
-    gDBConnManager.ReleaseConnection(nDBConn);
-  end;}
-
   if nHost.FType = rtOnce then
   begin
     if nHost.FFun = rfIn then

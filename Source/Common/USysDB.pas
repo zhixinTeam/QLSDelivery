@@ -286,6 +286,7 @@ ResourceString
   sTable_Truck        = 'S_Truck';                   //车辆表
   sTable_ZTLines      = 'S_ZTLines';                 //装车道
   sTable_ZTTrucks     = 'S_ZTTrucks';                //车辆队列
+  sTable_YSLines      = 'S_YSLines';                 //验收通道
 
   sTable_Provider     = 'P_Provider';                //客户表
   sTable_Materails    = 'P_Materails';               //物料表
@@ -344,7 +345,7 @@ ResourceString
   sTable_CompanyArea     = 'Sys_CompanyArea';        //销售区域
   sTable_STInOutFact     = 'L_STInOutFact';          //商砼车进出表
   sTable_AxPlanInfo      = 'E_AxPlanInfo';           //提货信息表
-
+  sTable_AxMsgList       = 'E_AxMsgList';            //AX消息队列表
 
   sTable_K3_SyncItem  = 'DL_SyncItem';               //数据同步项
   sTable_K3_Customer  = 'T_Organization';            //组织结构(客户)
@@ -362,7 +363,8 @@ ResourceString
   sTable_AX_InvCenGroup = 'xtTInventCenterItemGroup';//物料组生产线
   sTable_AX_WMSLocation = 'WMSLocation';//库位信息表
   //----------------------------------------------------------------------------
-  sTable_AX_Sales     = 'SALESTABLE';                //销售订单
+  //sTable_AX_Sales     = 'SALESTABLE';                //销售订单
+  sTable_AX_Sales     = 'SalesTalbeView';                //销售订单
   sTable_AX_SalLine   = 'SALESLINE';                 //销售订单行
   sTable_AX_SupAgre   = 'XTADDTreatyRefSL';          //补充协议
   sTable_AX_CreLimLog = 'XT_CUSTPRESTIGEQUOTALOG';   //信用额度增减(客户)
@@ -1341,6 +1343,25 @@ ResourceString
    *.T_HKBills: 合卡交货单列表
   -----------------------------------------------------------------------------}
 
+  sSQL_NewYSLines = 'Create Table $Table(R_ID $Inc, Y_ID varChar(15),' +
+       'Y_Name varChar(32), Y_StockNo varChar(20), Y_Stock varChar(80),' +
+       'Y_StockType Char(1), Y_PeerWeight Integer,' +
+       'Y_QueueMax Integer, Y_VIPLine Char(1), Y_Valid Char(1), Y_Index Integer)';
+  {-----------------------------------------------------------------------------
+   验收通道配置: YSLines
+   *.R_ID: 记录号
+   *.Z_ID: 编号
+   *.Z_Name: 名称
+   *.Z_StockNo: 品种编号
+   *.Z_Stock: 品名
+   *.Z_StockType: 类型(袋,散)
+   *.Z_PeerWeight: 袋重
+   *.Z_QueueMax: 队列大小
+   *.Z_VIPLine: VIP通道
+   *.Z_Valid: 是否有效
+   *.Z_Index: 顺序索引
+  -----------------------------------------------------------------------------}
+
   sSQL_NewDataTemp = 'Create Table $Table(T_SysID varChar(15))';
   {-----------------------------------------------------------------------------
    临时数据表: DataTemp
@@ -1956,6 +1977,15 @@ ResourceString
    *.AX_InventLocationId：仓库
    *.AX_xtDInventCenterId：生产线
   -----------------------------------------------------------------------------}
+  sSQL_NewAxMsgList = 'Create Table $Table(R_ID $Inc, AX_ProcessId varChar(30), ' +
+       'AX_Recid varChar(30), AX_CompanyId varChar(30), AX_Status varChar(10))';
+  {-----------------------------------------------------------------------------
+   AX消息队列表：E_AxMsgList
+   *.AX_ProcessId: 业务ID
+   *.AX_Recid: 行ID
+   *.AX_CompanyId：账套
+   *.AX_Status: 状态
+  -----------------------------------------------------------------------------}
 
 //------------------------------------------------------------------------------
 // 数据查询
@@ -2089,6 +2119,7 @@ begin
   AddSysTableItem(sTable_Truck, sSQL_NewTruck,'');
   AddSysTableItem(sTable_ZTLines, sSQL_NewZTLines,'');
   AddSysTableItem(sTable_ZTTrucks, sSQL_NewZTTrucks,'');
+  
   AddSysTableItem(sTable_PoundLog, sSQL_NewPoundLog,'');
   AddSysTableItem(sTable_PoundBak, sSQL_NewPoundLog,'');
   AddSysTableItem(sTable_Picture, sSQL_NewPicture,'');
@@ -2133,6 +2164,8 @@ begin
   AddSysTableItem(sTable_WebOrderMatch,sSQL_NewWebOrderMatch,'');
 
   AddSysTableItem(sTable_AxPlanInfo, sSQL_NewAxPlanInfo,'');
+  AddSysTableItem(sTable_AxMsgList, sSQL_NewAxMsgList,'');
+  AddSysTableItem(sTable_YSLines, sSQL_NewYSLines, '');
 
 end;
 

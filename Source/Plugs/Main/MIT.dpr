@@ -13,6 +13,7 @@ uses
   UMITConst,
   SrvConnection_Impl in '..\Common\SrvConnection_Impl.pas',
   SrvBusiness_Impl in '..\Common\SrvBusiness_Impl.pas',
+  SrvAxmsg_Impl  in '..\Common\SrvAxmsg_Impl.pas',
   UROModule in '..\Forms\UROModule.pas' {ROModule: TDataModule},
   UDataModule in '..\Forms\UDataModule.pas' {FDM: TDataModule},
   UFormMain in '..\Forms\UFormMain.pas' {fFormMain},

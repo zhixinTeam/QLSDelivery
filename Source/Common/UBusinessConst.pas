@@ -102,8 +102,6 @@ const
   cBC_GetPurOrder             = $0104;   //获取采购订单
   cBC_GetPurOrdLine           = $0105;   //获取采购订单行
   cBC_SyncFYBillAX            = $0106;   //同步提货单到AX
-  cBC_SyncVehNoAX             = $0107;   //同步车号到AX
-  cBC_SyncAXCement            = $0108;   //远程同步水泥类型
   cBC_GetTprGem               = $0109;   //在线获取信用额度（客户）
   cBC_GetTprGemCont           = $0110;   //在线获取信用额度（客户-合同）
   cBC_SyncDelSBillAX          = $0111;   //同步删除提货单
@@ -129,11 +127,17 @@ const
   cBC_GetSalesContLine        = $0131;   //获取销售合同行
   cBC_GetVehicleNo            = $0132;   //获取车号
   cBC_GetSalesOrdValue        = $0133;   //获取订单行余量
+  cBC_SyncVehNoAX             = $0134;   //同步车号到AX
+  cBC_SyncAXCement            = $0135;   //远程同步水泥类型
 
   cBC_VerifPrintCode          = $0091;   //验证喷码信息
   cBC_WaitingForloading       = $0092;   //工厂待装查询
   cBC_BillSurplusTonnage      = $0093;   //网上订单可下单数量查询
   cBC_GetOrderInfo            = $0094;   //获取订单信息，用于网上商城下单
+
+  cBC_GetOrderList            = $0103;   //获取订单列表，用于网上商城下单
+  cBC_GetPurchaseContractList = $0107;   //获取采购订单列表，用于网上商城下单
+
   cBC_WeChat_getCustomerInfo  = $0095;   //微信平台接口：获取客户注册信息
   cBC_WeChat_get_Bindfunc     = $0096;   //微信平台接口：客户与微信账号绑定
   cBC_WeChat_send_event_msg   = $0097;   //微信平台接口：发送消息
@@ -142,7 +146,9 @@ const
   cBC_WeChat_get_shoporders   = $0100;   //微信平台接口：获取订单信息
   cBC_WeChat_complete_shoporders   = $0101;   //微信平台接口：修改订单状态
   cBC_WeChat_get_shoporderbyNO   = $0102;   //微信平台接口：根据订单号获取订单信息
-  cBC_GetOrderList            = $0103;   //获取订单列表，用于网上商城下单
+  
+  cBC_WeChat_get_shopPurchasebyNO   = $0108;   //微信平台接口：根据订单号获取订单信息
+  cBC_WeChat_InOutFactoryTotal  = $0200;   //进出厂量查询（采购进厂量、销售出厂量）
 
 type
   PWorkerQueryFieldData = ^TWorkerQueryFieldData;
@@ -172,6 +178,7 @@ type
   TLadingBillItem = record
     FID         : string;          //交货单号
     FZhiKa      : string;          //纸卡编号
+    FProject    : string;          //项目编号
     FCusID      : string;          //客户编号
     FCusName    : string;          //客户名称
     FTruck      : string;          //车牌号码
@@ -186,6 +193,7 @@ type
     FIsVIP      : string;          //通道类型
     FStatus     : string;          //当前状态
     FNextStatus : string;          //下一状态
+    FLineGroup  : string;          //车间分组
 
     FPData      : TPoundStationData; //称皮
     FMData      : TPoundStationData; //称毛
@@ -193,6 +201,7 @@ type
     FPModel     : string;          //称重模式
     FPType      : string;          //业务类型
     FPoundID    : string;          //称重记录
+    FHKRecord   : string;          //合单记录
     FSelected   : Boolean;         //选中状态
 
     FYSValid    : string;          //验收结果，Y验收成功；N拒收；
@@ -257,23 +266,23 @@ resourcestring
   {*business mit function name*}
   sBus_ServiceStatus          = 'Bus_ServiceStatus';    //服务状态
   sBus_GetQueryField          = 'Bus_GetQueryField';    //查询的字段
+  sBus_BusinessWebchat        = 'Bus_BusinessWebchat';  //Web平台服务
 
   sBus_BusinessSaleBill       = 'Bus_BusinessSaleBill'; //交货单相关
   sBus_BusinessCommand        = 'Bus_BusinessCommand';  //业务指令
   sBus_HardwareCommand        = 'Bus_HardwareCommand';  //硬件指令
-  sBus_BusinessPurchaseOrder  = 'Bus_BusinessPurchaseOrder'; //采购单相关
   sBus_BusinessDuanDao        = 'Bus_BusinessDuanDao';  //短倒业务相关
+  sBus_BusinessPurchaseOrder  = 'Bus_BusinessPurchaseOrder'; //采购单相关
 
   {*client function name*}
   sCLI_ServiceStatus          = 'CLI_ServiceStatus';    //服务状态
   sCLI_GetQueryField          = 'CLI_GetQueryField';    //查询的字段
-  sBus_BusinessWebchat        = 'Bus_BusinessWebchat';  //Web平台服务
-
   sCLI_BusinessSaleBill       = 'CLI_BusinessSaleBill'; //交货单业务
   sCLI_BusinessCommand        = 'CLI_BusinessCommand';  //业务指令
   sCLI_HardwareCommand        = 'CLI_HardwareCommand';  //硬件指令
-  sCLI_BusinessPurchaseOrder  = 'CLI_BusinessPurchaseOrder'; //采购单相关
   sCLI_BusinessDuanDao        = 'CLI_BusinessDuanDao';  //短倒业务相关
+  sCLI_BusinessPurchaseOrder  = 'CLI_BusinessPurchaseOrder'; //采购单相关
+  sCLI_BusinessWebchat        = 'CLI_BusinessWebchat';  //Web平台服务
 
 implementation
 
@@ -302,6 +311,7 @@ begin
       begin
         FID         := Values['ID'];
         FZhiKa      := Values['ZhiKa'];
+        FProject    := Values['Project'];
         FCusID      := Values['CusID'];
         FCusName    := Values['CusName'];
         FTruck      := Values['Truck'];
@@ -405,6 +415,7 @@ begin
       begin
         Values['ID']         := FID;
         Values['ZhiKa']      := FZhiKa;
+        Values['Project']    := FProject;
         Values['CusID']      := FCusID;
         Values['CusName']    := FCusName;
         Values['Truck']      := FTruck;
@@ -507,5 +518,7 @@ begin
 end;
 
 end.
+
+
 
 

@@ -308,7 +308,7 @@ begin
     nSQL := 'select L_ID From '+sTable_Bill+' where (L_EmptyOut<>''Y'') '+
             'and ((L_FYAX <> ''1'') or (L_FYAX is null)) '+
             'and (L_PDate is not null) '+
-            'and L_FYNUM<=3 and (L_ID not like ''YS%'') ';
+            'and L_FYNUM<=3 ';
     {$ELSE}
     nSQL := 'select L_ID From %s where (L_EmptyOut<>''Y'') '+
             'and ((L_FYAX <> ''1'') or (L_FYAX is null)) '+

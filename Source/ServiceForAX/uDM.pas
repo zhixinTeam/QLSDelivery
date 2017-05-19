@@ -11,6 +11,8 @@ type
     ADOCRem: TADOConnection;
     qryLoc: TADOQuery;
     qryRem: TADOQuery;
+    qryExec: TADOQuery;
+    qryMsgList: TADOQuery;
     procedure DataModuleCreate(Sender: TObject);
   private
     { Private declarations }
@@ -73,8 +75,10 @@ begin
                  'User ID='+LocDB.DBUser+';'+
                  'Initial Catalog='+LocDB.DBCatalog+';'+
                  'Data Source='+LocDB.DBSource;
+  ADOCRem.Close;
   ADOCRem.ConnectionString:=RemDBConn;
   ADOCRem.Connected:=True;
+  ADOCLoc.Close;
   ADOCLoc.ConnectionString:=LocalDBConn;
   ADOCLoc.Connected:=True;
 end;

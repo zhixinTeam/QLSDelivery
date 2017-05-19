@@ -101,7 +101,7 @@ DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=Bus_MIT_1
-HostApplication=E:\QLS2012\QLShan\Bin\Bus_MIT\MIT.exe
+HostApplication=E:\ProjectCode\QLSDelivery\trunk\Bin\Bus_MIT\MIT.exe
 Launcher=
 UseLauncher=0
 DebugCWD=

@@ -245,6 +245,7 @@ inherited fFormAXBaseLoad: TfFormAXBaseLoad
     Left = 151
     Top = 244
     Caption = ' '#24211#20301#20449#24687
+    Enabled = False
     ParentFont = False
     Style.BorderColor = clWindowFrame
     Style.BorderStyle = ebsSingle

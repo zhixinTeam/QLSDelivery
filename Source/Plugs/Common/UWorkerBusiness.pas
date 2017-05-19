@@ -1933,7 +1933,7 @@ function TWorkerBusinessCommander.GetCustNo(var nData: string):Boolean;
 var nStr: string;
 begin
   Result := False;
-  nStr := 'Select Z_OrgAccountNum,Z_CompanyId From $ZK Where Z_ID=''$ZID''';
+  nStr := 'Select Z_OrgAccountNum,Z_CompanyId,DataAreaID From $ZK Where Z_ID=''$ZID''';
   nStr := MacroValue(nStr, [MI('$ZK', sTable_ZhiKa), MI('$ZID', FIn.FData)]);
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
@@ -1945,7 +1945,10 @@ begin
       Exit;
     end;
     FOut.FData := FieldByName('Z_OrgAccountNum').AsString;
-    FOut.FExtParam := FieldByName('Z_CompanyId').AsString;
+    if FieldByName('Z_CompanyId').AsString <> '' then
+      FOut.FExtParam := FieldByName('Z_CompanyId').AsString
+    else
+      FOut.FExtParam := FieldByName('DataAreaID').AsString;
     Result:=True;
   end;
 end;
@@ -3197,7 +3200,7 @@ begin
       nData := Format(nData, [FIn.FData]);
       Exit;
     end;
-    if (Pos('YS',FieldByName('L_ID').AsString)>0) then Exit;
+    //if (Pos('YS',FieldByName('L_ID').AsString)>0) then Exit;
 
     nFYPlanStatus:='0';
     if FieldByName('L_InvCenterId').AsString='' then
@@ -5009,7 +5012,22 @@ begin
       Inc(nIdx);
       Next;
     end;
-  end; 
+  end;
+
+  nStr := 'Select * From %s Where O_CType = ''G'' and O_Truck=''%s'' ';
+  nStr := Format(nStr, [sTable_Order, nTruck]);
+  //车辆办理采购长期卡
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    if FieldByName('O_Card').AsString <> '' then
+    begin
+      nStr := '车辆[ %s ]已经办理[ %s ]采购长期卡，请先到采购制卡处注销采购卡！.';
+      nData := Format(nStr, [nTruck, FieldByName('O_StockName').AsString]);
+      Exit;
+    end;
+  end;
 
   TWorkerBusinessCommander.CallMe(cBC_SaveTruckInfo, nTruck, '', @nOut);
   //保存车牌号
@@ -5380,8 +5398,8 @@ begin
       //to get serial no
 
       {$IFDEF GGJC}
-      if Length(FListA.Values['L_ID']) > 8 then
-        nOut.FData := FListA.Values['L_ID']
+      if Length(FListA.Values['LID']) > 8 then
+        nOut.FData := FListA.Values['LID']
       else
       begin
         if not TWorkerBusinessCommander.CallMe(cBC_GetSerialNO,
@@ -6731,6 +6749,7 @@ begin
            FNextStatus := sFlag_TruckBFM
       else FNextStatus := sFlag_TruckOut;
 
+      {$IFDEF QHSN}
       nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
               'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
       nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
@@ -6741,7 +6760,6 @@ begin
         FKw:= FieldByName('Z_Name').AsString;
       end;
       
-      {$IFDEF QHSN}
       if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
         FStockName, FCenterID, @nOut) then
       begin
@@ -6785,6 +6803,7 @@ begin
     for nIdx:=Low(nBills) to High(nBills) do
     with nBills[nIdx] do
     begin
+      {$IFDEF QHSN}
       nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
               'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
       nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
@@ -6794,8 +6813,7 @@ begin
         FCenterID:= FieldByName('Z_CenterID').AsString;
         FKw:= FieldByName('Z_Name').AsString;
       end;
-
-      {$IFDEF QHSN}
+      
       if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
         FStockName, FCenterID, @nOut) then
       begin
@@ -6883,14 +6901,17 @@ begin
                     nBills[0].FZhiKa, '', @nOut) then
               begin
                 nData := nOut.FData;
+                WriteLog(nData);
                 Exit;
               end;
               nTriCusID:= nOut.FData;
               nCompanyId:= nOut.FExtParam;
+              if nCompanyId = '' then nCompanyId := gCompanyAct;
               if not TWorkerBusinessCommander.CallMe(cBC_GetAXMaCredLmt, //是否强制信用额度
                       nTriCusID, nCompanyId, @nOut) then
               begin
                 nData := nOut.FData;
+                WriteLog(nData);
                 Result:= True;
                 Exit;
               end;
@@ -6910,6 +6931,7 @@ begin
             end else
             begin
               nData:='离线模式，获取三角贸易客户信息失败';
+              WriteLog(nData);
               Result:=True;
               Exit;
             end;
@@ -8511,7 +8533,7 @@ begin
       end;
 
       //if FYSValid <> sFlag_NO then  //验收成功，调整已收货量
-      begin
+      {begin
         nSQL := 'Update $OrderBase Set B_SentValue=B_SentValue+$Val, ' +
                 'B_RestValue=B_Value-B_SentValue-$Val '+
                 'Where B_ID = (select O_BID From $Order Where O_ID=''$ID'')';
@@ -8520,15 +8542,22 @@ begin
                 MI('$Val', FloatToStr(nVal))]);
         FListA.Add(nSQL);
         //调整已收货；
-      end;
+      end;}
+      nSQL := 'Update $OrderBase Set B_SentValue=B_SentValue+$Val, ' +
+              'B_RestValue=B_Value-B_SentValue-$Val '+
+              'Where B_RecID = ''$RID'' ';
+      nSQL := MacroValue(nSQL, [MI('$OrderBase', sTable_OrderBase),
+              MI('$RID', FRecID), MI('$Val', FloatToStr(nVal))]);
+      FListA.Add(nSQL);
+      //调整已收货；
 
-      nSQL := 'Update $OrderBase Set B_FreezeValue=B_FreezeValue-$KDVal ' +
+      {nSQL := 'Update $OrderBase Set B_FreezeValue=B_FreezeValue-$KDVal ' +
               'Where B_ID = (select O_BID From $Order Where O_ID=''$ID'''+
               ' And O_CType= ''L'') and B_Value>0';
       nSQL := MacroValue(nSQL, [MI('$OrderBase', sTable_OrderBase),
               MI('$Order', sTable_Order),MI('$ID', FZhiKa),
               MI('$KDVal', FloatToStr(FValue))]);
-      FListA.Add(nSQL);
+      FListA.Add(nSQL);}
       //调整冻结量
       
       nSQL := 'Select P_ID From %s Where P_Order=''%s'' ';

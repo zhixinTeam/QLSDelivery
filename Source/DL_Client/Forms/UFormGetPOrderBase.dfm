@@ -62,6 +62,10 @@ inherited fFormGetPOrderBase: TfFormGetPOrderBase
         item
           Caption = #35746#21333#21097#20313
           Width = 90
+        end
+        item
+          Caption = #35746#21333#34892
+          Width = 100
         end>
       HideSelection = False
       ParentFont = False

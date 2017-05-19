@@ -209,6 +209,7 @@ begin
         SubItems.Add(FStockName);
         SubItems.Add(FProvName);
         SubItems.Add(FRestValue);
+        SubItems.Add(FRecID);
         ImageIndex := cItemIconIndex;
       end;
 
@@ -244,7 +245,8 @@ begin
     for nIdx:=Low(FOrderItems) to High(FOrderItems) do
     with FOrderItems[nIdx], FResults do
     begin
-      if CompareText(FID, Caption)=0 then
+      //if CompareText(FID, Caption)=0 then
+      if CompareText(FRecID, SubItems[3])=0 then
       begin
         Values['SQ_ID']       := FID;
         Values['SQ_ProID']    := FProvID;

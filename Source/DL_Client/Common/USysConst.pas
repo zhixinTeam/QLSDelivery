@@ -179,9 +179,11 @@ const
   cFI_FrameTransferDetailQuery = $1104;              //短倒查询
   cFI_FormTransfer      = $1105;                     //短倒制卡
   cFI_FrameWXBind       = $1106;                     //微信账号绑定
-  cFI_FormGetWechartAccount    = $1107;                     //客户注册信息
-  cFI_FormAXBaseLoadS    = $1108;                     //销售基础数据下载
-  cFI_FormAXBaseLoadP    = $1109;                     //采购基础数据下载
+  cFI_FormGetWechartAccount    = $1107;              //客户注册信息
+  cFI_FormAXBaseLoadS    = $1108;                    //销售基础数据下载
+  cFI_FormAXBaseLoadP    = $1109;                    //采购基础数据下载
+  cFI_FrameYSLines       = $1110;                    //采购验收通道
+  cFI_FormYSLine         = $1111;                    //采购验收通道设置
 
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
@@ -392,10 +394,11 @@ begin
   AddMenuModuleItem('MAIN_M09', cFI_FrameOrderBase);
   AddMenuModuleItem('MAIN_M10', cFI_FrameDeduct);
   AddMenuModuleItem('MAIN_M11', cFI_FrameLSCard);
+  AddMenuModuleItem('MAIN_M12', cFI_FrameYSLines);
 
   AddMenuModuleItem('MAIN_W01', cFI_FrameWXAccount);
   AddMenuModuleItem('MAIN_W02', cFI_FrameWXSendLog);
-  AddMenuModuleItem('MAIN_W03', cFI_FrameWXBind); 
+  AddMenuModuleItem('MAIN_W03', cFI_FrameWXBind);
   AddMenuModuleItem('MAIN_S01', cFI_FormAXBaseLoad,mtForm);
   AddMenuModuleItem('MAIN_S02', cFI_FrameUpInfo);
   AddMenuModuleItem('MAIN_S03', cFI_FrameUpPurchase);
