@@ -4933,6 +4933,20 @@ begin
   nTruck := FListA.Values['Truck'];
   if not VerifyTruckNO(nTruck, nData) then Exit;
 
+  if Length(FListA.Values['LID']) > 8 then
+  begin
+    nStr := 'Select Count(*) From %s Where L_ID=''%s''';
+    nStr := Format(nStr, [sTable_Bill, FListA.Values['LID']]);
+
+    with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+    if Fields[0].AsInteger > 0 then
+    begin
+      nData := '单据号[ %s ]已存在,不能重复开单.';
+      nData := Format(nData, [FListA.Values['LID']]);
+      Exit;
+    end;
+  end;
+
   //----------------------------------------------------------------------------
   SetLength(FStockItems, 0);
   SetLength(FMatchItems, 0);
@@ -5264,6 +5278,7 @@ begin
   nBxz:= True; //默认强制信用额度
   FListA.Text := PackerDecodeStr(FIn.FData);
   if not VerifyBeforSave(nData) then Exit;
+
   nOnLineModel:=GetOnLineModel; //获取是否在线模式
   if FListA.Values['SalesType'] = '0' then
   begin
