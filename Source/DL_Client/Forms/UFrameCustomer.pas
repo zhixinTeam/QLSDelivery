@@ -38,6 +38,10 @@ type
     N4: TMenuItem;
     m_bindWechartAccount: TMenuItem;
     N5: TMenuItem;
+    N6: TMenuItem;
+    N7: TMenuItem;
+    N8: TMenuItem;
+    N9: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnAddClick(Sender: TObject);
@@ -50,6 +54,9 @@ type
     procedure N4Click(Sender: TObject);
     procedure m_bindWechartAccountClick(Sender: TObject);
     procedure N5Click(Sender: TObject);
+    procedure N7Click(Sender: TObject);
+    procedure N8Click(Sender: TObject);
+    procedure N9Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -78,7 +85,8 @@ end;
 //Desc: 数据查询SQL
 function TfFrameCustomer.InitFormDataSQL(const nWhere: string): string;
 begin
-  Result := 'Select cus.*,bind.* From $Cus cus' +
+  Result := 'Select cus.*,sd.S_CusID,bind.* From $Cus cus' +
+            ' Left Join $SD sd On sd.S_CusID=cus.C_ID ' +
             ' Left Join $Bind bind On bind.w_CID=cus.C_ID';
   //xxxxx
 
@@ -87,6 +95,7 @@ begin
   else Result := Result + ' Where (' + nWhere + ')';
 
   Result := MacroValue(Result, [MI('$Cus', sTable_Customer),
+            MI('$SD', sTable_CusShadow),
             MI('$Bind', sTable_WeixinBind), MI('$Yes', sFlag_Yes)]);
   //xxxxx
 end;
@@ -232,6 +241,10 @@ begin
   N3.Visible := False;
   N4.Visible := False;
   {$ENDIF}
+
+  N7.Enabled := BtnEdit.Enabled;
+  N8.Enabled := BtnEdit.Enabled;
+  //影子客户设置
 end;
 
 
@@ -410,6 +423,60 @@ begin
     FDM.ADOConn.RollbackTrans;
     ShowMsg('取消商城账户关联 失败', '未知错误');
   end;
+end;
+
+//------------------------------------------------------------------------------
+//Desc: 设置影子客户
+procedure TfFrameCustomer.N7Click(Sender: TObject);
+var nStr: string;
+begin
+  if cxView1.DataController.GetSelectedCount < 1 then
+  begin
+    ShowMsg('请选择要设置的客户', sHint);
+    Exit;
+  end;
+
+  if SQLQuery.FieldByName('S_CusID').AsString = '' then
+  begin
+    nStr := 'Insert Into %s(S_CusID) Values(''%s'')';
+    nStr := Format(nStr, [sTable_CusShadow,
+            SQLQuery.FieldByName('C_ID').AsString]);
+    FDM.ExecuteSQL(nStr);
+  end;
+
+  ShowMsg('设置成功', sHint);
+end;
+
+//Desc: 取消影子客户
+procedure TfFrameCustomer.N8Click(Sender: TObject);
+var nStr: string;
+begin
+  if cxView1.DataController.GetSelectedCount < 1 then
+  begin
+    ShowMsg('请选择要取消的客户', sHint);
+    Exit;
+  end;
+
+  if SQLQuery.FieldByName('S_CusID').AsString <> '' then
+  begin
+    nStr := 'Delete From %s Where S_CusID=''%s''';
+    nStr := Format(nStr, [sTable_CusShadow,
+            SQLQuery.FieldByName('C_ID').AsString]);
+    //xxxxx
+    
+    FDM.ExecuteSQL(nStr);
+    InitFormData(FWhere);
+  end;
+
+  ShowMsg('取消成功', sHint);
+end;
+
+procedure TfFrameCustomer.N9Click(Sender: TObject);
+var nStr: string;
+begin
+  FWhere := 'S_CusID Is Not Null';
+  FWhere := Format(FWhere, [sTable_CusShadow]);
+  InitFormData(FWhere);
 end;
 
 initialization

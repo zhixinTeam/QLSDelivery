@@ -488,9 +488,13 @@ var nStr: string;
 begin
   Result := False;
   try
-    nStr := 'select a.*,b.*,c.* from %s a,%s b,%s c '+
-            'where a.P_ID=b.R_PID and b.R_SerialNo=c.L_HYDan and c.L_ID= ''%s'' ';
-    nStr := Format(nStr,[sTable_StockParam, sTable_StockRecord, sTable_Bill, nBill]);
+      nStr := 'select a.*,b.*,c.* from $Bill c ' +
+              ' left join $SR b on b.R_SerialNo=c.L_HYDan ' +
+              ' left join $SP a on a.P_ID=b.R_PID ' +
+              'where c.L_ID= ''$ID''';
+      nStr := MacroValue(nStr, [MI('$Bill', sTable_Bill), MI('$ID', nBill),
+              MI('$SR', sTable_StockRecord), MI('$SP', sTable_StockParam)]);
+      //xxxxx
 
     nDS := FDM.SQLQuery(nStr, FDM.SQLQuery2);
     if not Assigned(nDS) then Exit;

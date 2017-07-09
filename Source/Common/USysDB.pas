@@ -68,6 +68,7 @@ ResourceString
   sPopedom_Print      = 'F';                         //打印
   sPopedom_Export     = 'G';                         //导出
   sPopedom_ViewPrice  = 'H';                         //查看单价
+  sPopedom_FullReport = 'I';                         //原始报表
 
   {*数据库标识*}
   sFlag_DB_K3         = 'King_K3';                   //金蝶数据库
@@ -179,6 +180,7 @@ ResourceString
   sFlag_PayCredit     = 'Pay_Credit';                //回款冲信用
   sFlag_HYValue       = 'HYMaxValue';                //化验批次量
   sFlag_SaleManDept   = 'SaleManDepartment';         //业务员部门编号
+  sFlag_ShadowWeight  = 'ShadowWeight';              //影子重量
   
   sFlag_PDaiWuChaZ    = 'PoundDaiWuChaZ';            //袋装正误差 10t-150t
   sFlag_PDaiWuChaF    = 'PoundDaiWuChaF';            //袋装负误差 10t-150t
@@ -267,6 +269,7 @@ ResourceString
 
   sTable_Customer     = 'S_Customer';                //客户信息
   sTable_CustomerExt  = 'S_CustomerExt';             //客户扩展
+  sTable_CusShadow    = 'S_CusShadow';               //影子客户
   sTable_Salesman     = 'S_Salesman';                //业务人员
   sTable_SaleContract = 'S_Contract';                //销售合同
   sTable_SContractExt = 'S_ContractExt';             //合同扩展
@@ -377,8 +380,7 @@ ResourceString
   sTable_AX_CompArea  = 'XT_COMPACTAREA';            //销售区域
   sTable_AX_InventSum = 'XTInventSUM';               //生产线余量
 
-
-
+const
   {*新建表*}
   sSQL_NewSysDict = 'Create Table $Table(D_ID $Inc, D_Name varChar(15),' +
        'D_Desc varChar(30), D_Value varChar(50), D_Memo varChar(20),' +
@@ -572,6 +574,13 @@ ResourceString
    *.E_CustExtName: 客户扩展名称
    *.E_CustExtPY: 客户扩展拼音
    *.E_Memo: 备注信息
+  -----------------------------------------------------------------------------}
+
+  sSQL_NewCusShadow = 'Create Table $Table(R_ID $Inc, S_CusID varChar(15))';
+  {-----------------------------------------------------------------------------
+   影子客户: CusShadow
+   *.R_ID: 记录号
+   *.S_CusID: 客户编号
   -----------------------------------------------------------------------------}
 
   sSQL_NewCusAccount = 'Create Table $Table(R_ID $Inc, A_CID varChar(15),' +
@@ -1121,7 +1130,7 @@ ResourceString
        'D_YLine varChar(15), D_YLineName varChar(32), ' +
        'D_DelMan varChar(32), D_DelDate DateTime, D_YSResult Char(1), ' +
        'D_OutFact DateTime, D_OutMan varChar(32), D_Memo varChar(500),'+
-       'D_BDAX Char(1) not null default((0)),D_BDNUM int not null default((0))),'+
+       'D_BDAX Char(1) not null default((0)),D_BDNUM int not null default((0)),'+
        'D_RecID bigint not null default ((0)))';
   {-----------------------------------------------------------------------------
    采购订单明细表: OrderDetail
@@ -1857,7 +1866,7 @@ ResourceString
    *.D_Date: 操作日期
   -----------------------------------------------------------------------------}
   sSQL_NewZTWorkSet = 'Create Table $Table(R_ID $Inc, Z_WorkOrder varchar(20),' +
-       'Z_StartTime time(7), Z_EndTime time(7), Z_Date datetime)';
+       'Z_StartTime datetime, Z_EndTime datetime, Z_Date datetime)';
   {-----------------------------------------------------------------------------
    栈台班别设置表：S_ZTWorkSet
    *.Z_WorkOrder: 班别
@@ -2088,6 +2097,7 @@ begin
 
   AddSysTableItem(sTable_Customer, sSQL_NewCustomer,'');
   AddSysTableItem(sTable_CustomerExt, sSQL_NewCustomerExt,'');
+  AddSysTableItem(sTable_CusShadow, sSQL_NewCusShadow,'');
   AddSysTableItem(sTable_Salesman, sSQL_NewSalesMan,'');
   AddSysTableItem(sTable_SaleContract, sSQL_NewSaleContract,'');
   AddSysTableItem(sTable_SContractExt, sSQL_NewSContractExt,'');
