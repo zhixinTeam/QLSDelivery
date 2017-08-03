@@ -61,8 +61,8 @@
   //状态栏显示
   {$DEFINE HYRFID201}
   //华益读头
-  {.$DEFINE GLPURCH} 
-  //古浪采购
+  {$DEFINE GLPURCH} 
+  //古浪
   {.$DEFINE YDKP} 
   //永登、夏河、定西开票
   {.$DEFINE PLKP} 
@@ -71,7 +71,7 @@
   //夏河、定西、平凉皮重
   {.$DEFINE ZXKP} 
   //漳县
-  {$DEFINE GGJC} 
+  {.$DEFINE GGJC} 
   //甘谷、兰州商砼自动进厂
   {.$DEFINE CXSY} 
   //成县试样编号

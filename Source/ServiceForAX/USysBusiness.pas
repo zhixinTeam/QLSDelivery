@@ -14,24 +14,24 @@ uses
 procedure WriteLog(const nEvent: string);
 function CallBusinessCommand(const nCmd: Integer; const nData,nExt: string;
   const nOut: PWorkerBusinessCommand; const nWarn: Boolean = True): Boolean;
-function GetAXSalesOrder(const XMLPrimaryKey: Widestring): Boolean;//获取销售订单
-function GetAXSalesOrdLine(const XMLPrimaryKey: Widestring): Boolean;//获取销售订单行
-function GetAXSupAgreement(const XMLPrimaryKey: Widestring): Boolean;//获取补充协议
-function GetAXCreLimCust(const XMLPrimaryKey: Widestring): Boolean;//获取信用额度增减（客户）
-function GetAXCreLimCusCont(const XMLPrimaryKey: Widestring): Boolean;//获取信用额度增减（客户-合同）
-function GetAXSalesContract(const XMLPrimaryKey: Widestring): Boolean;//获取销售合同
-function GetAXSalesContLine(const XMLPrimaryKey: Widestring): Boolean;//获取销售合同行
-function GetAXVehicleNo(const XMLPrimaryKey: Widestring): Boolean;//获取车号
-function GetAXPurOrder(const XMLPrimaryKey: Widestring): Boolean;//获取采购订单
-function GetAXPurOrdLine(const XMLPrimaryKey: Widestring): Boolean;//获取采购订单行
+function GetAXSalesOrder(const nRecid,nCompanyId: Widestring): Boolean;//获取销售订单
+function GetAXSalesOrdLine(const nRecid,nCompanyId: Widestring): Boolean;//获取销售订单行
+function GetAXSupAgreement(const nRecid,nCompanyId: Widestring): Boolean;//获取补充协议
+function GetAXCreLimCust(const nRecid,nCompanyId: Widestring): Boolean;//获取信用额度增减（客户）
+function GetAXCreLimCusCont(const nRecid,nCompanyId: Widestring): Boolean;//获取信用额度增减（客户-合同）
+function GetAXSalesContract(const nRecid,nCompanyId: Widestring): Boolean;//获取销售合同
+function GetAXSalesContLine(const nRecid,nCompanyId: Widestring): Boolean;//获取销售合同行
+function GetAXVehicleNo(const nRecid,nCompanyId: Widestring): Boolean;//获取车号
+function GetAXPurOrder(const nRecid,nCompanyId: Widestring): Boolean;//获取采购订单
+function GetAXPurOrdLine(const nRecid,nCompanyId: Widestring): Boolean;//获取采购订单行
 function CalCreLimCust(const nCustAcc, nDataAreaID, nRecId: string): Boolean;//计算信用额度（客户）
 function CalCreLimCusCont(const nCustAcc, nDataAreaID, nContractId, nRecId :string): Boolean;//计算信用额度（客户-合同）
 function LoadAXCustomer(const nCusID,nDataAreaID:string):Boolean;//下载三角贸易客户信息
 function LoadAXSalesContract(const nContactId,nDataAreaID:string):Boolean;//下载三角贸易合同信息
 function LoadAXSalesContLine(const nContactId,nDataAreaID:string):Boolean;//下载三角贸易合同行信息
-function GetAXCustomer(const XMLPrimaryKey: Widestring):Boolean;//获取客户信息
-function GetAXMaterails(const XMLPrimaryKey: Widestring):Boolean;//获取物料信息
-function GetAXProviders(const XMLPrimaryKey: Widestring):Boolean;//获取供应商信息
+function GetAXCustomer(const nRecid,nCompanyId: Widestring):Boolean;//获取客户信息
+function GetAXMaterails(const nRecid,nCompanyId: Widestring):Boolean;//获取物料信息
+function GetAXProviders(const nRecid,nCompanyId: Widestring):Boolean;//获取供应商信息
 function SetOnLineModel(nModel:Boolean):Boolean;//设置在线模式
 function GetOnLineModel:Boolean;//获取在线模式
 function GetAXTPRESTIGEMANAGE(const nCustAcc, nDataAreaID: string): Boolean;//在线获取信用额度（客户）
@@ -41,6 +41,7 @@ function GetAXTPRESTIGEMBYCONT(const nCustAcc, nDataAreaID, nContractId :string)
 function UpdateYKAmount(const XMLPrimaryKey: Widestring): Boolean;//更新预扣金额
 function GetThInfo(const XMLPrimaryKey: Widestring):Boolean; //获取提货单信息
 function GetPurchInfo(const XMLPrimaryKey: Widestring):Boolean; //获取采购单信息
+function AnalysisXML(const nXMLPrimary: WideString):Boolean; //解析XML
 
 implementation
 
@@ -90,15 +91,15 @@ end;
 
 //Date: 2016-06-29
 //获取AX销售订单
-function GetAXSalesOrder(const XMLPrimaryKey: Widestring): Boolean;
+function GetAXSalesOrder(const nRecid,nCompanyId: Widestring): Boolean;
 var nStr: string;
     nIdx: Integer;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nSalesId,nRecid,nDataAreaID,nInnerOrderQY,nOperation:string;
+    //nSalesId,nRecid,nDataAreaID,nInnerOrderQY,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -106,11 +107,6 @@ begin
     begin
       Result:=False;
       Exit;
-    end;
-    try
-      nSalesId:= nNode.NodeByName('SalesId').ValueAsString;   //订单ID
-    except
-      nSalesId:= '';
     end;
     try
       nRecid:= nNode.NodeByName('Recid').ValueAsString;       //行ID
@@ -144,15 +140,18 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end;}
   with DM do
   begin
     FListA:=TStringList.Create;
     try
       FListA.Clear;
       try
-        nStr := 'Select * From %s Where SalesId=''%s'' and DataAreaID=''%s'' and Recid=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_Sales, nSalesId, nDataAreaID, nRecid]);
+        nStr := 'Select * From %s Where DataAreaID=''%s'' and Recid=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_Sales, nCompanyId, nRecid]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -162,7 +161,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的销售订单不存在.';
-            nStr := Format(nStr, [nSalesId]);
+            nStr := Format(nStr, [nRecid]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -188,12 +187,17 @@ begin
             Values['Z_Date']:= FormatDateTime('yyyy-mm-dd hh:mm:ss',Now);
             Values['Z_Lading']:= FieldByName('XTFreightNew').AsString;
             Values['Z_CompanyId']:= FieldByName('InterCompanyCompanyId').AsString;
+            Values['Z_OrgXSQYBM']:= FieldByName('innerQYBM').AsString;
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where Z_ID=''%s'' and DataAreaID=''%s'' ';
-          nStr := Format(nStr, [sTable_ZhiKa, nSalesId, nDataAreaID]);
+          nStr := Format(nStr, [sTable_ZhiKa, Values['Z_ID'], nCompanyId]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -214,9 +218,9 @@ begin
                   ''',Z_KHSBM='''+Values['Z_KHSBM']+
                   ''',Z_Lading='''+Values['Z_Lading']+
                   ''',Z_CompanyId='''+Values['Z_CompanyId']+
-                  ''',Z_OrgXSQYBM='''+nInnerOrderQY+
+                  ''',Z_OrgXSQYBM='''+Values['Z_OrgXSQYBM']+
                   ''' where Z_ID=''%s'' and DataAreaID=''%s'' ';
-            nStr := Format(nStr, [sTable_ZhiKa, nSalesId, nDataAreaID]);
+            nStr := Format(nStr, [sTable_ZhiKa, Values['Z_ID'], nCompanyId]);
           end else
           begin
             nStr:= 'Insert into %s (Z_ID,Z_Name,Z_CID,Z_Customer,Z_ValidDays,'+
@@ -231,7 +235,7 @@ begin
                    Values['Z_IntComOriSalesId']+''','''+Values['Z_Date']+''','''+
                    Values['Z_Lading']+''','''+Values['Z_CompanyId']+''','''+
                    Values['Z_XSQYBM']+''','''+Values['Z_KHSBM']+''','''+
-                   nInnerOrderQY+''','''+nDataAreaID+''')';
+                   Values['Z_OrgXSQYBM']+''','''+nCompanyId+''')';
             nStr := Format(nStr, [sTable_ZhiKa]);
           end;
           WriteLog(nStr);
@@ -248,20 +252,19 @@ begin
       end;
     finally
       FListA.Free;
-      qryRem.Active:=False;
     end;
   end;
 end;
 
-function GetAXSalesOrdLine(const XMLPrimaryKey: Widestring): Boolean;//获取销售订单行
+function GetAXSalesOrdLine(const nRecid,nCompanyId: Widestring): Boolean;//获取销售订单行
 var nStr: string;
     nIdx: Integer;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nSalesId,nDataAreaID,nRecid,nOperation:string;
+    //nSalesId,nDataAreaID,nRecid,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -302,15 +305,18 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end;}
   with DM do
   begin
     FListA:=TStringList.Create;
     try
       FListA.Clear;
       try
-        nStr := 'Select * From %s Where SalesId=''%s'' and DataAreaID=''%s'' and Recid=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_SalLine, nSalesId, nDataAreaID, nRecid]);
+        nStr := 'Select * From %s Where DataAreaID=''%s'' and Recid=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_SalLine, nCompanyId, nRecid]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -320,7 +326,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的销售订单行不存在.';
-            nStr := Format(nStr, [nSalesId]);
+            nStr := Format(nStr, [nRecid]);
             Result := True;
             Exit;
           end;
@@ -343,10 +349,14 @@ begin
             Values['D_TotalValue']:= FieldByName('SalesQty').AsString;
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where D_ZID=''%s'' and DataAreaID=''%s'' and D_RECID=''%s'' ';
-          nStr := Format(nStr, [sTable_ZhiKaDtl, nSalesId, nDataAreaID, nRecid]);
+          nStr := Format(nStr, [sTable_ZhiKaDtl, Values['D_ZID'], nCompanyId, nRecid]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -361,7 +371,7 @@ begin
                   ''',D_Blocked='''+Values['D_Blocked']+
                   ''',D_Memo='''+Values['D_Memo']+
                   ''' where D_ZID=''%s'' and DataAreaID=''%s'' and D_RECID=''%s'' ';
-            nStr := Format(nStr, [sTable_ZhiKaDtl, nSalesId, nDataAreaID, nRecid]);
+            nStr := Format(nStr, [sTable_ZhiKaDtl, Values['D_ZID'], nCompanyId, nRecid]);
           end else
           begin
             nStr:= 'Insert into %s (D_ZID,D_Type,D_StockNo,D_StockName,'+
@@ -373,7 +383,7 @@ begin
                    Values['D_Price']+''','''+Values['D_Value']+''','''+
                    Values['D_TotalValue']+''','''+
                    Values['D_Blocked']+''','''+Values['D_Memo']+''','''+
-                   nDataAreaID+''','''+nRecid+''')';
+                   nCompanyId+''','''+nRecid+''')';
             nStr := Format(nStr, [sTable_ZhiKaDtl]);
           end;
           WriteLog(nStr);
@@ -390,19 +400,18 @@ begin
       end;
     finally
       FListA.Free;
-      qryRem.Active:=False;
     end;
   end;
 end;
 
-function GetAXSupAgreement(const XMLPrimaryKey: Widestring): Boolean;//获取补充协议
+function GetAXSupAgreement(const nRecid,nCompanyId: Widestring): Boolean;//获取补充协议
 var nStr: string;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nXTEadjustBillNum,nRefRecid,nDataAreaID,nRecId,nOperation:string;
+    //nXTEadjustBillNum,nRefRecid,nDataAreaID,nRecId,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -449,15 +458,18 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end;}
   with DM do
   begin
     FListA:=TStringList.Create;
     try
       FListA.Clear;
       try
-        nStr := 'Select * From %s Where XTEadjustBillNum=''%s'' and RefRecid=''%s'' and DataAreaID=''%s'' and RecId=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_SupAgre, nXTEadjustBillNum, nRefRecid, nDataAreaID, nRecId]);
+        nStr := 'Select * From %s Where DataAreaID=''%s'' and RecId=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_SupAgre, nCompanyId, nRecId]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -467,13 +479,15 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的补充协议不存在.';
-            nStr := Format(nStr, [nXTEadjustBillNum]);
+            nStr := Format(nStr, [nRecId]);
             Result := True;
             WriteLog(nStr);
             Exit;
           end;
           with FListA do
           begin
+            Values['A_XTEadjustBillNum']:= FieldByName('XTEadjustBillNum').AsString;
+            Values['RefRecid']:= FieldByName('RefRecid').AsString;
             Values['A_SalesId']:= FieldByName('SalesId').AsString;
             Values['A_ItemId']:= UpperCase(FieldByName('ItemId').AsString);
             Values['A_SalesNewAmount']:= FieldByName('SalesNewAmount').AsString;
@@ -482,10 +496,14 @@ begin
             Values['A_Date']:=FormatDateTime('yyyy-mm-dd hh:mm:ss',Now);
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
-          nStr:='select * from %s where A_XTEadjustBillNum=''%s'' and RefRecid=''%s'' and DataAreaID=''%s'' ';
-          nStr := Format(nStr, [sTable_AddTreaty, nXTEadjustBillNum, nRefRecid, nDataAreaID]);
+          nStr:='select * from %s where Recid=''%s'' and DataAreaID=''%s'' ';
+          nStr := Format(nStr, [sTable_AddTreaty, nRecid, nCompanyId]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -497,17 +515,17 @@ begin
                   ''',A_TakeEffectDate='''+Values['A_TakeEffectDate']+
                   ''',A_TakeEffectTime='''+Values['A_TakeEffectTime']+
                   ''',A_Date='''+Values['A_Date']+
-                  ''' where A_XTEadjustBillNum=''%s'' and RefRecid=''%s'' and DataAreaID=''%s'' ';
-            nStr := Format(nStr, [sTable_AddTreaty, nXTEadjustBillNum, nRefRecid, nDataAreaID]);
+                  ''' where Recid=''%s'' and DataAreaID=''%s'' ';
+            nStr := Format(nStr, [sTable_AddTreaty, nRecid, nCompanyId]);
           end else
           begin
             nStr:= 'Insert into %s (A_XTEadjustBillNum,A_SalesId,A_ItemId,'+
                    'A_SalesNewAmount,A_TakeEffectDate,A_TakeEffectTime,'+
                    'RefRecid,Recid,DataAreaID,A_Date) '+
-                   'values ('''+nXTEadjustBillNum+''','''+Values['A_SalesId']+''','''+
+                   'values ('''+ Values['A_XTEadjustBillNum']+''','''+Values['A_SalesId']+''','''+
                    Values['A_ItemId']+''','''+Values['A_SalesNewAmount']+''','''+
                    Values['A_TakeEffectDate']+''','''+Values['A_TakeEffectTime']+''','''+
-                   nRefRecid+''','''+nRecId+''','''+nDataAreaID+''','''+Values['A_Date']+''')';
+                   Values['RefRecid']+''','''+nRecId+''','''+nCompanyId+''','''+Values['A_Date']+''')';
             nStr := Format(nStr, [sTable_AddTreaty]);
           end;
           WriteLog(nStr);
@@ -528,14 +546,14 @@ begin
   end;
 end;
 
-function GetAXCreLimCust(const XMLPrimaryKey: Widestring): Boolean;//获取信用额度增减（客户）
+function GetAXCreLimCust(const nRecid,nCompanyId: Widestring): Boolean;//获取信用额度增减（客户）
 var nStr: string;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nCustAcc,nDataAreaID,nRecId,nOperation:string;
+    //nCustAcc,nDataAreaID,nRecId,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -576,15 +594,18 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end;}
   with DM do
   begin
     FListA:=TStringList.Create;
     try
       FListA.Clear;
       try
-        nStr := 'Select * From %s Where CustAccount=''%s'' and DataAreaID=''%s'' and RecId=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_CreLimLog, nCustAcc, nDataAreaID, nRecId]);
+        nStr := 'Select * From %s Where DataAreaID=''%s'' and RecId=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_CreLimLog, nCompanyId, nRecId]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -594,7 +615,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的信用额度增减记录不存在.';
-            nStr := Format(nStr, [nCustAcc]);
+            nStr := Format(nStr, [nRecId]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -614,10 +635,14 @@ begin
             Values['C_TransPlanID']:= FieldByName('CMT_TransPlanID').AsString;
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
-          nStr:='select * from %s where C_CusID=''%s'' and DataAreaID=''%s'' and RecID=''%s'' ';
-          nStr := Format(nStr, [sTable_CustPresLog, nCustAcc, nDataAreaID, nRecId]);
+          nStr:='select * from %s where DataAreaID=''%s'' and RecID=''%s'' ';
+          nStr := Format(nStr, [sTable_CustPresLog, nCompanyId, nRecId]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -633,7 +658,7 @@ begin
                    Values['C_Createdby']+''','''+
                    Values['C_YKAmount']+''','''+Values['C_TransPlanID']+''','''+
                    Values['C_Createdate']+''','''+
-                   nDataAreaID+''','''+nRecId+''')';
+                   nCompanyId+''','''+nRecId+''')';
             nStr := Format(nStr, [sTable_CustPresLog]);
             WriteLog(nStr);
             Close;
@@ -642,7 +667,7 @@ begin
           end;
           Result:=True;
           //if GetAXTPRESTIGEMANAGE(nCustAcc, nDataAreaID) then  WriteLog('['+nCustAcc+']在线获取信用额度（客户）成功');
-          if CalCreLimCust(nCustAcc, nDataAreaID, nRecId) then  WriteLog('['+nCustAcc+']计算信用额度（客户）成功');
+          if CalCreLimCust(Values['C_CusID'], nCompanyId, nRecId) then  WriteLog('['+Values['C_CusID']+']计算信用额度（客户）成功');
         end;
       except
         on e:Exception do
@@ -670,6 +695,9 @@ begin
         nStr := 'Select * From %s '+
                 'where CustAccount=''%s'' and DataAreaID=''%s'' ';
         nStr := Format(nStr, [sTable_AX_TPRESTIGEMANAGE, nCustAcc, nDataAreaID]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -696,6 +724,10 @@ begin
             Values['C_Date']:= FormatDateTime('yyyy-mm-dd hh:mm:ss',Now);
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where C_CusID=''%s'' and DataAreaID=''%s'' ';
@@ -760,6 +792,9 @@ var nStr,nLID: string;
 begin
   FListA:=TStringList.Create;
   try
+    DM.ADOCLoc.Close;
+    DM.ADOCLoc.ConnectionString:=LocalDBConn;
+    DM.ADOCLoc.Connected:=True;
     with DM.qryLoc do
     begin
       try
@@ -834,14 +869,14 @@ begin
   end;
 end;
 
-function GetAXCreLimCusCont(const XMLPrimaryKey: Widestring): Boolean;//获取信用额度增减（客户-合同）
+function GetAXCreLimCusCont(const nRecid,nCompanyId: Widestring): Boolean;//获取信用额度增减（客户-合同）
 var nStr: string;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nCustAcc,nDataAreaID,nContractId,nRecId,nOperation:string;
+    //nCustAcc,nDataAreaID,nContractId,nRecId,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -891,15 +926,18 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end;}
   with DM do
   begin
     FListA:=TStringList.Create;
     try
       FListA.Clear;
       try
-        nStr := 'Select * From %s Where CustAccount=''%s'' and DataAreaID=''%s'' and CMT_ContractId=''%s'' and RecId=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_ContCreLimLog, nCustAcc, nDataAreaID, nContractId, nRecId]);
+        nStr := 'Select * From %s Where DataAreaID=''%s'' and RecId=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_ContCreLimLog, nCompanyId, nRecId]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -909,7 +947,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的信用额度增减记录(合同)不存在.';
-            nStr := Format(nStr, [nCustAcc]);
+            nStr := Format(nStr, [nRecId]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -931,10 +969,14 @@ begin
             Values['C_TransPlanID']:= FieldByName('CMT_TransPlanID').AsString;
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
-          nStr:='select * from %s where C_CusID=''%s'' and DataAreaID=''%s'' and C_ContractId=''%s'' and RecId=''%s'' ';
-          nStr := Format(nStr, [sTable_ContPresLog, nCustAcc, nDataAreaID, nContractId, nRecId]);
+          nStr:='select * from %s where DataAreaID=''%s'' and RecId=''%s'' ';
+          nStr := Format(nStr, [sTable_ContPresLog, nCompanyId, nRecId]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -948,7 +990,7 @@ begin
                    Values['C_SubTmp']+''','''+Values['C_SubPrest']+''','''+
                    Values['C_Createdby']+''','''+Values['C_Createdate']+''','''+
                    Values['C_YKAmount']+''','''+Values['C_TransPlanID']+''','''+
-                   Values['C_ContractId']+''','''+nDataAreaID+''','''+nRecId+''')';
+                   Values['C_ContractId']+''','''+nCompanyId+''','''+nRecId+''')';
             nStr := Format(nStr, [sTable_ContPresLog]);
             WriteLog(nStr);
             Close;
@@ -958,8 +1000,8 @@ begin
           Result:=True;
           {if GetAXTPRESTIGEMBYCONT(nCustAcc, nDataAreaID, nContractId) then
             WriteLog('['+nCustAcc+','+nContractId+']在线获取信用额度（客户-合同）成功'); }
-          if CalCreLimCusCont(nCustAcc, nDataAreaID, nContractId, nRecId) then
-            WriteLog('['+nCustAcc+','+nContractId+']计算信用额度（客户-合同）成功');
+          if CalCreLimCusCont(Values['C_CusID'], nCompanyId, Values['C_ContractId'], nRecId) then
+            WriteLog('['+Values['C_CusID']+','+Values['C_ContractId']+']计算信用额度（客户-合同）成功');
         end;
       except
         on e:Exception do
@@ -987,6 +1029,9 @@ begin
         nStr := 'Select * From %s '+
                 'where CustAccount=''%s'' and CMT_ContractId=''%s'' and DataAreaID=''%s'' ';
         nStr := Format(nStr, [sTable_AX_TPRESTIGEMBYCONT, nCustAcc, nContractId, nDataAreaID]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -1013,6 +1058,10 @@ begin
             Values['C_Date']:= FormatDateTime('yyyy-mm-dd hh:mm:ss',Now);
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where C_CusID=''%s'' and C_ContractId=''%s'' and DataAreaID=''%s'' ';
@@ -1078,6 +1127,9 @@ var nStr,nLID: string;
 begin
   FListA:=TStringList.Create;
   try
+    DM.ADOCLoc.Close;
+    DM.ADOCLoc.ConnectionString:=LocalDBConn;
+    DM.ADOCLoc.Connected:=True;
     with DM.qryLoc do
     begin
       try
@@ -1152,14 +1204,14 @@ begin
   end;
 end;
 
-function GetAXSalesContract(const XMLPrimaryKey: Widestring): Boolean;//获取销售合同
+function GetAXSalesContract(const nRecid,nCompanyId: Widestring): Boolean;//获取销售合同
 var nStr: string;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nContactId,nDataAreaID,nRecid,nOperation:string;
+    //nContactId,nDataAreaID,nRecid,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -1200,15 +1252,18 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end; }
   with DM do
   begin
     FListA:=TStringList.Create;
     try
       FListA.Clear;
       try
-        nStr := 'Select * From %s Where ContactId=''%s'' and companyid=''%s'' and Recid=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_SalesCont, nContactId, nDataAreaID, nRecid]);
+        nStr := 'Select * From %s Where companyid=''%s'' and Recid=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_SalesCont, nCompanyId, nRecid]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -1218,7 +1273,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的销售合同不存在.';
-            nStr := Format(nStr, [nContactId]);
+            nStr := Format(nStr, [nRecId]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -1235,10 +1290,14 @@ begin
             Values['C_Date']:= FormatDateTime('yyyy-mm-dd hh:mm:ss',Now);
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where C_ID=''%s'' and DataAreaID=''%s'' ';
-          nStr := Format(nStr, [sTable_SaleContract, nContactId, nDataAreaID]);
+          nStr := Format(nStr, [sTable_SaleContract, Values['C_ID'], nCompanyId]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -1251,7 +1310,7 @@ begin
                   ''',C_ContType='''+Values['C_ContType']+
                   ''',C_ContQuota='''+Values['C_ContQuota']+
                   ''' where C_ID=''%s'' and DataAreaID=''%s'' ';
-            nStr := Format(nStr, [sTable_SaleContract, nContactId, nDataAreaID]);
+            nStr := Format(nStr, [sTable_SaleContract, Values['C_ID'], nCompanyId]);
           end else
           begin
             nStr:= 'Insert into %s (C_ID,C_Customer,C_CustName,'+
@@ -1260,7 +1319,7 @@ begin
                    Values['C_CustName']+''','''+Values['C_Addr']+''','''+
                    Values['C_SFSP']+''','''+Values['C_ContType']+''','''+
                    Values['C_ContQuota']+''','''+Values['C_Date']+''','''+
-                   nDataAreaID+''')';
+                   nCompanyId+''')';
             nStr := Format(nStr, [sTable_SaleContract]);
           end;
           WriteLog(nStr);
@@ -1281,15 +1340,15 @@ begin
   end;
 end;
 
-function GetAXSalesContLine(const XMLPrimaryKey: Widestring): Boolean;//获取销售合同行
+function GetAXSalesContLine(const nRecid,nCompanyId: Widestring): Boolean;//获取销售合同行
 var nStr: string;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nContactId,nDataAreaID,nRecid,nOperation:string;
+    //nContactId,nDataAreaID,nRecid,nOperation:string;
     FListA:TStrings;
     nType: string;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -1330,15 +1389,18 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end; }
   with DM do
   begin
     FListA:=TStringList.Create;
     try
       FListA.Clear;
       try
-        nStr := 'Select * From %s Where ContactId=''%s'' and DataAreaID=''%s'' and Recid=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_SalContLine, nContactId, nDataAreaID, nRecid]);
+        nStr := 'Select * From %s Where DataAreaID=''%s'' and Recid=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_SalContLine, nCompanyId, nRecid]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -1348,7 +1410,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的销售合同行不存在.';
-            nStr := Format(nStr, [nContactId]);
+            nStr := Format(nStr, [nRecId]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -1370,10 +1432,14 @@ begin
             Values['E_Money']:= FieldByName('amount').AsString;
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
-          nStr:='select * from %s where E_CID=''%s'' and DataAreaID=''%s'' and E_RecID=''%s'' ';
-          nStr := Format(nStr, [sTable_SContractExt, nContactId, nDataAreaID, nRecid]);
+          nStr:='select * from %s where DataAreaID=''%s'' and E_RecID=''%s'' ';
+          nStr := Format(nStr, [sTable_SContractExt, nCompanyId, nRecid]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -1385,8 +1451,8 @@ begin
                   ''',E_Value='''+Values['E_Value']+
                   ''',E_Price='''+Values['E_Price']+
                   ''',E_Money='''+Values['E_Money']+
-                  ''' where E_CID=''%s'' and DataAreaID=''%s'' and E_RecID=''%s'' ';
-            nStr := Format(nStr, [sTable_SContractExt, nContactId, nDataAreaID, nRecid]);
+                  ''' where DataAreaID=''%s'' and E_RecID=''%s'' ';
+            nStr := Format(nStr, [sTable_SContractExt, nCompanyId, nRecid]);
           end else
           begin
             nStr:= 'Insert into %s (E_CID,E_Type,E_StockNo,'+
@@ -1395,7 +1461,7 @@ begin
                    Values['E_StockNo']+''','''+Values['E_StockName']+''','''+
                    Values['E_Value']+''','''+Values['E_Price']+''','''+
                    Values['E_Money']+''','''+
-                   nDataAreaID+''','''+nRecid+''')';
+                   nCompanyId+''','''+nRecid+''')';
             nStr := Format(nStr, [sTable_SContractExt]);
           end;
           Close;
@@ -1415,14 +1481,14 @@ begin
   end;
 end;
 
-function GetAXVehicleNo(const XMLPrimaryKey: Widestring): Boolean;//获取车号
+function GetAXVehicleNo(const nRecid,nCompanyId: Widestring): Boolean;//获取车号
 var nStr: string;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nVehId,nRecid,nDataAreaID,nOperation:string;
+    //nVehId,nRecid,nDataAreaID,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -1465,7 +1531,7 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end;}
   with DM do
   begin
     FListA:=TStringList.Create;
@@ -1473,7 +1539,10 @@ begin
       FListA.Clear;
       try
         nStr := 'Select * From %s Where companyid=''%s'' and Recid=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_VehicleNo, nDataAreaID, nRecid]);
+        nStr := Format(nStr, [sTable_AX_VehicleNo, nCompanyId, nRecid]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -1483,7 +1552,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的车辆信息不存在.';
-            nStr := Format(nStr, [nVehId]);
+            nStr := Format(nStr, [nRecid]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -1499,10 +1568,14 @@ begin
             Values['T_VendAccount']:= FieldByName('VendAccount').AsString;
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where T_Truck=''%s'' ';
-          nStr := Format(nStr, [sTable_Truck, nVehId]);
+          nStr := Format(nStr, [sTable_Truck, Values['T_Truck']]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -1515,7 +1588,7 @@ begin
                   ''',T_XTECB='''+Values['T_XTECB']+
                   ''',T_VendAccount='''+Values['T_VendAccount']+
                   ''' where T_Truck=''%s'' ';
-            nStr := Format(nStr, [sTable_Truck, nVehId]);
+            nStr := Format(nStr, [sTable_Truck, Values['T_Truck']]);
           end else
           begin
             nStr:= 'Insert into %s (T_Truck,T_Owner,T_Driver,'+
@@ -1544,14 +1617,14 @@ begin
   end;
 end;
 
-function GetAXPurOrder(const XMLPrimaryKey: Widestring): Boolean;//获取采购订单
+function GetAXPurOrder(const nRecid,nCompanyId: Widestring): Boolean;//获取采购订单
 var nStr: string;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nPurchId,nDataAreaID,nRecid,nOperation:string;
+    //nPurchId,nDataAreaID,nRecid,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -1592,15 +1665,18 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end;}
   with DM do
   begin
     FListA:=TStringList.Create;
     try
       FListA.Clear;
       try
-        nStr := 'Select * From %s Where PurchId=''%s'' and DataAreaID=''%s'' and Recid=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_PurOrder, nPurchId, nDataAreaID, nRecid]);
+        nStr := 'Select * From %s Where DataAreaID=''%s'' and Recid=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_PurOrder, nCompanyId, nRecid]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -1610,7 +1686,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的采购订单不存在.';
-            nStr := Format(nStr, [nPurchId]);
+            nStr := Format(nStr, [nRecId]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -1630,10 +1706,14 @@ begin
             Values['M_DState']:= FieldByName('DocumentState').AsString;
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where M_ID=''%s'' ';
-          nStr := Format(nStr, [sTable_OrderBaseMain, nPurchId]);
+          nStr := Format(nStr, [sTable_OrderBaseMain, Values['M_ID']]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -1650,7 +1730,7 @@ begin
                   ''',M_DState='''+Values['M_DState']+
                   ''',M_Date='''+Values['M_Date']+
                   ''' where M_ID=''%s'' and DataAreaID=''%s'' ';
-            nStr := Format(nStr, [sTable_OrderBaseMain, nPurchId, nDataAreaID]);
+            nStr := Format(nStr, [sTable_OrderBaseMain, Values['M_ID'], nCompanyId]);
           end else
           begin
             nStr:= 'Insert into %s (M_ID,M_ProID,M_ProName,M_ProPY,M_CID,M_BStatus,'+
@@ -1661,7 +1741,7 @@ begin
                    Values['M_BStatus']+''','''+Values['M_TriangleTrade']+''','''+
                    Values['M_IntComOriSalesId']+''','''+Values['M_PurchType']+''','''+
                    Values['M_DState']+''','''+
-                   Values['M_Date']+''','''+nDataAreaID+''')';
+                   Values['M_Date']+''','''+nCompanyId+''')';
             nStr := Format(nStr, [sTable_OrderBaseMain]);
           end;
           WriteLog(nStr);
@@ -1682,15 +1762,15 @@ begin
   end;
 end;
 
-function GetAXPurOrdLine(const XMLPrimaryKey: Widestring): Boolean;//获取采购订单行
+function GetAXPurOrdLine(const nRecid,nCompanyId: Widestring): Boolean;//获取采购订单行
 var nStr: string;
     nIdx: Integer;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nPurchId,nDataAreaID,nRecid,nOperation:string;
+    //nPurchId,nDataAreaID,nRecid,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -1731,15 +1811,18 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end;}
   with DM do
   begin
     FListA:=TStringList.Create;
     try
       FListA.Clear;
       try
-        nStr := 'Select * From %s Where PurchId=''%s'' and DataAreaID=''%s'' and Recid=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_PurOrdLine, nPurchId, nDataAreaID, nRecid]);
+        nStr := 'Select * From %s Where DataAreaID=''%s'' and Recid=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_PurOrdLine, nCompanyId, nRecid]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -1749,7 +1832,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的采购订单行不存在.';
-            nStr := Format(nStr, [nPurchId]);
+            nStr := Format(nStr, [nRecId]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -1768,10 +1851,14 @@ begin
             Values['B_Date']:= FormatDateTime('yyyy-mm-dd hh:mm:ss',Now);
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
-          nStr:='select * from %s where B_ID=''%s'' and DataAreaID=''%s'' and B_RecID=''%s'' ';
-          nStr := Format(nStr, [sTable_OrderBase, nPurchId, nDataAreaID, nRecid]);
+          nStr:='select * from %s where DataAreaID=''%s'' and B_RecID=''%s'' ';
+          nStr := Format(nStr, [sTable_OrderBase, nCompanyId, nRecid]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -1787,7 +1874,7 @@ begin
                   ''',B_Blocked='''+Values['B_Blocked']+
                   ''',B_Date='''+Values['B_Date']+
                   ''' where B_ID=''%s'' and DataAreaID=''%s'' and B_RECID=''%s'' ';
-            nStr := Format(nStr, [sTable_OrderBase, nPurchId, nDataAreaID, nRecid]);
+            nStr := Format(nStr, [sTable_OrderBase, Values['B_ID'], nCompanyId, nRecid]);
           end else
           begin
             nStr:= 'Insert into %s (B_ID,B_StockNo,B_StockName,B_BStatus,'+
@@ -1798,7 +1885,7 @@ begin
                    Values['B_Value']+''','''+Values['B_SentValue']+''','''+
                    Values['B_RestValue']+''','''+
                    Values['B_Blocked']+''','''+Values['B_Date']+''','''+
-                   nDataAreaID+''','''+nRecid+''')';
+                   nCompanyId+''','''+nRecid+''')';
             nStr := Format(nStr, [sTable_OrderBase]);
           end;
           WriteLog(nStr);
@@ -1820,15 +1907,15 @@ begin
 end;
 
 //获取客户信息
-function GetAXCustomer(const XMLPrimaryKey: Widestring):Boolean;
+function GetAXCustomer(const nRecid,nCompanyId: Widestring):Boolean;
 var nStr: string;
     nIdx: Integer;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nCustNum,nDataAreaID,nRecid,nOperation:string;
+    //nCustNum,nDataAreaID,nRecid,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -1869,7 +1956,7 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end; }
   with DM do
   begin
     FListA:=TStringList.Create;
@@ -1878,8 +1965,11 @@ begin
       try
         nStr := 'Select AccountNum,Name,CreditMax,MandatoryCreditLimit,' +
                 'ContactPersonId,CMT_KHYH,CMT_KHZH '+
-                'From %s where AccountNum=''%s'' and DataAreaID=''%s'' and RecID=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_Cust, nCustNum, nDataAreaID, nRecid]);
+                'From %s where DataAreaID=''%s'' and RecID=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_Cust, nCompanyId, nRecid]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -1889,7 +1979,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的客户信息不存在.';
-            nStr := Format(nStr, [nCustNum]);
+            nStr := Format(nStr, [nRecId]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -1908,10 +1998,14 @@ begin
             Values['C_XuNi']:= sFlag_No;
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where C_ID=''%s'' ';
-          nStr := Format(nStr, [sTable_Customer, nCustNum]);
+          nStr := Format(nStr, [sTable_Customer, Values['C_ID']]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -1927,7 +2021,7 @@ begin
                   ''',C_Account='''+Values['C_Account']+
                   ''',C_XuNi='''+Values['C_XuNi']+
                   ''' where C_ID=''%s'' ';
-            nStr := Format(nStr, [sTable_Customer, nCustNum]);
+            nStr := Format(nStr, [sTable_Customer, Values['C_ID']]);
           end else
           begin
             nStr:= 'Insert into %s (C_ID,C_Name,C_PY,'+
@@ -1943,14 +2037,14 @@ begin
           SQL.Text:=nStr;
           ExecSQL;
           nStr:='select * from %s where A_CID=''%s'' ';
-          nStr := Format(nStr, [sTable_CusAccount, nCustNum]);
+          nStr := Format(nStr, [sTable_CusAccount, Values['C_ID']]);
           Close;
           SQL.Text:=nStr;
           Open;
           if RecordCount < 1 then
           begin
             nStr:= 'Insert into %s (A_CID,A_Date) '+
-                   'values ('''+nCustNum+''','''+Formatdatetime('yyyy-mm-dd hh:mm:ss',Now)+''')';
+                   'values ('''+Values['C_ID']+''','''+Formatdatetime('yyyy-mm-dd hh:mm:ss',Now)+''')';
             nStr := Format(nStr, [sTable_CusAccount]);
             WriteLog(nStr);
             Close;
@@ -1972,15 +2066,15 @@ begin
 end;
 
 //获取供应商信息
-function GetAXProviders(const XMLPrimaryKey: Widestring):Boolean;
+function GetAXProviders(const nRecid,nCompanyId: Widestring):Boolean;
 var nStr: string;
     nIdx: Integer;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nAccountNum,nRecid,nDataAreaID,nOperation:string;
+    //nAccountNum,nRecid,nDataAreaID,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -2022,15 +2116,18 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end; }
   with DM do
   begin
     FListA:=TStringList.Create;
     try
       FListA.Clear;
       try
-        nStr := 'Select AccountNum,Name From %s where AccountNum=''%s'' and DataAreaID=''%s'' and RecID=''%s'' ';
-        nStr := Format(nStr, [sTable_AX_VEND, nAccountNum, nDataAreaID, nRecid]);
+        nStr := 'Select AccountNum,Name From %s where DataAreaID=''%s'' and RecID=''%s'' ';
+        nStr := Format(nStr, [sTable_AX_VEND, nCompanyId, nRecid]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -2040,7 +2137,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的供应商信息不存在.';
-            nStr := Format(nStr, [nAccountNum]);
+            nStr := Format(nStr, [nRecId]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -2052,10 +2149,14 @@ begin
             Values['P_PY']:= GetPinYinOfStr(FieldByName('Name').AsString);
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where P_ID=''%s'' ';
-          nStr := Format(nStr, [sTable_Provider, nAccountNum]);
+          nStr := Format(nStr, [sTable_Provider, Values['P_ID']]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -2064,7 +2165,7 @@ begin
             nStr:='update %s set P_Name='''+Values['P_Name']+
                   ''',P_PY='''+Values['P_PY']+
                   ''' where P_ID=''%s'' ';
-            nStr := Format(nStr, [sTable_Provider, nAccountNum]);
+            nStr := Format(nStr, [sTable_Provider, Values['P_ID']]);
           end else
           begin
             nStr:= 'Insert into %s (P_ID,P_Name,P_PY) '+
@@ -2092,15 +2193,15 @@ begin
 end;
 
 //获取物料信息
-function GetAXMaterails(const XMLPrimaryKey: Widestring):Boolean;
+function GetAXMaterails(const nRecid,nCompanyId: Widestring):Boolean;
 var nStr: string;
     nIdx: Integer;
     nXML: TNativeXml;
     nNode, nTmp: TXmlNode;
-    nItemId,nDataAreaID,nOperation:string;
+    //nItemId,nDataAreaID,nOperation:string;
     FListA:TStrings;
 begin
-  nXML := TNativeXml.Create;
+  {nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
     nNode := nXML.Root.FindNode('Primary');
@@ -2137,7 +2238,7 @@ begin
   begin
     Result:=True;
     Exit;
-  end;
+  end; }
   with DM do
   begin
     FListA:=TStringList.Create;
@@ -2145,7 +2246,10 @@ begin
       FListA.Clear;
       try
         nStr := 'Select ItemId,ItemName,ItemGroupId,Weighning From '+sTable_AX_INVENT+
-                ' where DataAreaID='''+nDataAreaID+''' and ItemId = '''+nItemId+''' ';
+                ' where DataAreaID='''+nCompanyId+''' and RecId = '''+nRecId+''' ';
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -2155,7 +2259,7 @@ begin
           if RecordCount < 1 then
           begin
             nStr := '编号为[ %s ]的物料信息不存在.';
-            nStr := Format(nStr, [nItemId]);
+            nStr := Format(nStr, [nRecId]);
             Result := True;
             WriteLog(nStr);
             Exit;
@@ -2169,10 +2273,14 @@ begin
             Values['M_Weighning']:= FieldByName('Weighning').AsString;
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where M_ID=''%s'' ';
-          nStr := Format(nStr, [sTable_Materails, nItemId]);
+          nStr := Format(nStr, [sTable_Materails, Values['M_ID']]);
           Close;
           SQL.Text:=nStr;
           Open;
@@ -2183,7 +2291,7 @@ begin
                   ''',M_GroupID='''+Values['M_GroupID']+
                   ''',M_Weighning='''+Values['M_Weighning']+
                   ''' where M_ID=''%s'' ';
-            nStr := Format(nStr, [sTable_Materails, nItemId]);
+            nStr := Format(nStr, [sTable_Materails, Values['M_ID']]);
           end else
           begin
             nStr:= 'Insert into %s (M_ID,M_Name,M_PY,M_GroupID,M_Weighning) '+
@@ -2226,6 +2334,9 @@ begin
                 'CellularPhone,ContactPersonId,CMT_Lawagencer,CMT_KHYH,CMT_KHZH '+
                 'From %s where AccountNum=''%s'' and DataAreaID=''%s'' ';
         nStr := Format(nStr, [sTable_AX_Cust, nCusID, nDataAreaID]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -2254,6 +2365,10 @@ begin
             Values['C_XuNi']:= sFlag_No;
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where C_ID=''%s'' ';
@@ -2316,6 +2431,9 @@ begin
       try
         nStr := 'Select * From %s Where ContactId=''%s'' and companyid=''%s'' ';
         nStr := Format(nStr, [sTable_AX_SalesCont, nContactId, nDataAreaID]);
+        ADOCRem.Close;
+        ADOCRem.ConnectionString:=RemDBConn;
+        ADOCRem.Connected:=True;
         with qryRem do
         begin
           WriteLog(nStr);
@@ -2342,6 +2460,10 @@ begin
             Values['C_Date']:= FormatDateTime('yyyy-mm-dd hh:mm:ss',Now);
           end;
         end;
+
+        ADOCLoc.Close;
+        ADOCLoc.ConnectionString:=LocalDBConn;
+        ADOCLoc.Connected:=True;
         with qryLoc,FListA do
         begin
           nStr:='select * from %s where C_ID=''%s'' and DataAreaID=''%s'' ';
@@ -2399,6 +2521,9 @@ function SetOnLineModel(nModel:Boolean):Boolean;
 var nStr:string;
 begin
   Result:=False;
+  DM.ADOCLoc.Close;
+  DM.ADOCLoc.ConnectionString:=LocalDBConn;
+  DM.ADOCLoc.Connected:=True;
   with DM.qryLoc do
   begin
     if nModel then
@@ -2420,6 +2545,9 @@ function GetOnLineModel:Boolean;
 var nStr:string;
 begin
   Result:=True;
+  DM.ADOCLoc.Close;
+  DM.ADOCLoc.ConnectionString:=LocalDBConn;
+  DM.ADOCLoc.Connected:=True;
   with DM.qryLoc do
   begin
     nStr:='select D_Value from Sys_Dict where D_Name=''OnLineModel'' ';
@@ -2475,6 +2603,9 @@ begin
   with DM do
   begin
     try
+      ADOCLoc.Close;
+      ADOCLoc.ConnectionString:=LocalDBConn;
+      ADOCLoc.Connected:=True;
       with qryLoc do
       begin
         nLID:='T'+nTRANSPLANID;
@@ -2539,7 +2670,7 @@ begin
   nXML := TNativeXml.Create;
   try
     nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+XMLPrimaryKey+'</DATA>');
-    nNode := nXML.Root.FindNode('PRIMARY');
+    nNode := nXML.Root.FindNode('Primary');
     if not Assigned(nNode) then
     begin
       Result:=False;
@@ -2632,6 +2763,9 @@ begin
     WriteLog(nStr);
     with DM do
     try
+      ADOCLoc.Close;
+      ADOCLoc.ConnectionString:=LocalDBConn;
+      ADOCLoc.Connected:=True;
       ADOCLoc.BeginTrans;
       with qryLoc do
       begin
@@ -2646,47 +2780,6 @@ begin
           ADOCLoc.RollbackTrans;
       WriteLog('GetThInfo Insert Error: RollbackTrans');
     end;
-
-    {nDBConn := nil;
-    with gParamManager.ActiveParam^ do
-    Try
-      nDBConn := gDBConnManager.GetConnection(FDB.FID, nErrNum);
-      if not Assigned(nDBConn) then
-      begin
-        WriteLog('连接数据库失败(DBConn Is Null).');
-        Exit;
-      end;
-
-      if not nDBConn.FConn.Connected then
-        nDBConn.FConn.Connected := True;  
-      //conn db
-
-      nStr := 'Insert into %s (AX_PLANQTY,AX_VEHICLEId,AX_ITEMID,AX_ITEMNAME,'+
-                           'AX_ITEMTYPE,AX_ITEMPRICE,AX_CUSTOMERID,AX_CUSTOMERNAME,'+
-                           'AX_TRANSPORTER,AX_TRANSPLANID,AX_SALESID,AX_SALESLINERECID,'+
-                           'AX_COMPANYID,AX_Destinationcode,AX_WMSLocationId,AX_FYPlanStatus,'+
-                           'AX_InventLocationId,AX_xtDInventCenterId) '+
-                           'values '+
-                           '(''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'','+
-                           '''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'',''%s'','+
-                           '''%s'',''%s'',''%s'')';
-      nStr := Format(nStr,[sTable_AxPlanInfo, nPLANQTY,nVEHICLEId,nITEMID,nITEMNAME,nITEMTYPE,nITEMPRICE,
-                          nCUSTOMERID,nCUSTOMERNAME,nTRANSPORTER,nTRANSPLANID,nSALESID,nSALESLINERECID,
-                          nCOMPANYID,nDestinationcode,nWMSLocationId,nFYPlanStatus,nInventLocationId,
-                          nxtDInventCenterId]);
-      WriteLog(nStr);
-      try
-        nDBConn.FConn.BeginTrans;
-        gDBConnManager.WorkerExec(nDBConn,nStr);
-        nDBConn.FConn.CommitTrans;
-      except
-        if nDBConn.FConn.InTransaction then
-          nDBConn.FConn.RollbackTrans;
-        raise;
-      end;
-    finally
-      gDBConnManager.ReleaseConnection(nDBConn);
-    end;}
   finally
     nXML.Free;
   end;
@@ -2712,6 +2805,79 @@ begin
     nXML.Free;
   end;
   Result:= True;
+end;
+
+function AnalysisXML(const nXMLPrimary: WideString):Boolean; //解析XML
+var nStr: string;
+    nIdx,nInit: Integer;
+    nXML: TNativeXml;
+    nNode, nCNode, nTmp: TXmlNode;
+    nXTProcessId,nRecid,nCompanyId:string;
+    nList:TStrings;
+begin
+  nInit := GetTickCount;
+  nXML := TNativeXml.Create;
+  nList:= TStringList.Create;
+  nList.Clear;
+  try
+    nXML.ReadFromString('<?xml version="1.0" encoding="UTF-8"?><DATA>'+nXMLPrimary+'</DATA>');
+    nNode := nXML.Root.FindNode('NewDataSet');
+    if not Assigned(nNode) then
+    begin
+      Result:=False;
+      Exit;
+    end;
+    for nIdx:= 0 to nNode.NodeCount - 1 do
+    begin
+      //nCNode:= nNode.FindNode('DataIonfo');
+      nTmp:=nNode[nIdx].FindNode('XTProcessId');
+      if Assigned(nTmp) then
+        nXTProcessId:=nTmp.ValueAsString;
+
+      nTmp:=nNode[nIdx].FindNode('Recid');
+      if Assigned(nTmp) then
+        nRecid:=nTmp.ValueAsString;
+
+      nTmp:=nNode[nIdx].FindNode('CompanyId');
+      if Assigned(nTmp) then
+        nCompanyId:=nTmp.ValueAsString;
+
+      nStr := 'Insert into %s (AX_ProcessId,AX_Recid,AX_CompanyId) '+
+              'values (''%s'',''%s'',''%s'')';
+      nStr := Format(nStr,[sTable_AxMsgList,nXTProcessId,nRecid,nCompanyId]);
+      WriteLog(nStr);
+      nList.Add(nStr);
+    end;
+
+    if nList.Count > 0 then
+    with DM do
+    try
+      ADOCLoc.Close;
+      ADOCLoc.ConnectionString:=LocalDBConn;
+      ADOCLoc.Connected:=True;
+      ADOCLoc.BeginTrans;
+      for nIdx:=0 to nList.Count - 1 do
+      begin
+        with qryMsgList do
+        begin
+          Close;
+          SQL.Text:=nList[nIdx];
+          ExecSQL;
+          Close;
+        end;
+      end;
+      ADOCLoc.CommitTrans;
+      Result:= True;
+    except
+      if ADOCLoc.InTransaction then
+          ADOCLoc.RollbackTrans;
+      WriteLog('AnalysisXML Insert Error: RollbackTrans');
+    end;
+  finally
+    nXML.Free;
+    nList.Free;
+    WriteLog('AnalysisXML：'+IntToStr(GetTickCount-nInit)+'ms');
+  end;
 end;
 
 

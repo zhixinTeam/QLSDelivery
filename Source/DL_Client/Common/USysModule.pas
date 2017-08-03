@@ -12,7 +12,7 @@ interface
 uses
   UClientWorker, UMITPacker,
   UFrameLog, UFrameSysLog, UFormIncInfo, UFormBackupSQL, UFormRestoreSQL,
-  UFormPassword, UFormBaseInfo, UFrameAuthorize, UFormAuthorize, UFormOptions,
+  UFormPassword, UFormBaseInfo, UFrameAuthorize, UFormAuthorize, //UFormOptions,
   UFrameCustomer, UFormCustomer, UFormGetCustom, UFrameSaleContract, UFormSaleContract,
   UFrameZhiKa, UFormZhiKa, UFormGetContract, UFormZhiKaAdjust, UFormZhiKaFixMoney,
   UFrameZhiKaVerify, UFormZhiKaVerify, UFrameCustomerCredit, UFormCustomerCredit,

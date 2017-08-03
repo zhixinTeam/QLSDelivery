@@ -3215,6 +3215,9 @@ begin
     {$ELSE}
     nLID := copy(FieldByName('L_ID').AsString,2,10);
     {$ENDIF}
+    {$IFDEF GLPURCH}
+    nLID := FieldByName('L_ID').AsString;
+    {$ENDIF}
     nLocationId := FieldByName('L_InvLocationId').AsString;
     if nLocationId = '' then nLocationId := 'A';
     nStr:='<PRIMARY>'+
@@ -3271,6 +3274,7 @@ var nID,nIdx: Integer;
     nMsg:Integer;
     nFYPlanStatus,nCenterId,nLocationId:string;
     s:string;
+    nLID:string;
 begin
   Result := False;
 
@@ -3296,12 +3300,20 @@ begin
     end;
     nLocationId := FieldByName('L_InvLocationId').AsString;
     if nLocationId = '' then nLocationId := 'A';
+    {$IFDEF GGJC}
+    nLID := FieldByName('L_ID').AsString;
+    {$ELSE}
+    nLID := copy(FieldByName('L_ID').AsString,2,10);
+    {$ENDIF}
+    {$IFDEF GLPURCH}
+    nLID := FieldByName('L_ID').AsString;
+    {$ENDIF}
     nStr:='<PRIMARY>'+
              '<PLANQTY>'+FieldByName('L_PlanQty').AsString+'</PLANQTY>'+
              '<VEHICLEId>'+FieldByName('L_Truck').AsString+'</VEHICLEId>'+
              '<VENDPICKINGLISTID>S</VENDPICKINGLISTID>'+
              '<TRANSPORTER></TRANSPORTER>'+
-             '<TRANSPLANID>'+copy(FieldByName('L_ID').AsString,2,10)+'</TRANSPLANID>'+
+             '<TRANSPLANID>'+nLID+'</TRANSPLANID>'+
              '<SALESID>'+FieldByName('L_ZhiKa').AsString+'</SALESID>'+
              '<SALESLINERECID>'+FieldByName('L_LineRecID').AsString+'</SALESLINERECID>'+
              '<COMPANYID>'+gCompanyAct+'</COMPANYID>'+
@@ -3431,6 +3443,7 @@ var nID,nIdx: Integer;
     s,nHYDan:string;
     nNetValue, nYKMouney:Double;
     nsWeightTime, nCustAcc, nContQuota:string;
+    nLID:string;
 begin
   Result := False;
 
@@ -3478,12 +3491,18 @@ begin
     end;
     if FieldByName('L_Type').AsString='D' then
       nNetValue:=FieldByName('L_MValue').AsFloat-FieldByName('L_PValue').AsFloat;
-    nStr := '<PRIMARY>';
+
     {$IFDEF GGJC}
-    nStr := nStr+'<TRANSPLANID>'+FieldByName('L_ID').AsString+'</TRANSPLANID>';
+    nLID := FieldByName('L_ID').AsString;
     {$ELSE}
-    nStr := nStr+'<TRANSPLANID>'+copy(FieldByName('L_ID').AsString,2,10)+'</TRANSPLANID>';
+    nLID := copy(FieldByName('L_ID').AsString,2,10);
     {$ENDIF}
+    {$IFDEF GLPURCH}
+    nLID := FieldByName('L_ID').AsString;
+    {$ENDIF}
+
+    nStr := '<PRIMARY>';
+    nStr := nStr+'<TRANSPLANID>'+nLID+'</TRANSPLANID>';
     nStr := nStr+'<ITEMID>'+FieldByName('L_StockNo').AsString+'</ITEMID>';
     nStr := nStr+'<VehicleNum>'+FieldByName('L_Truck').AsString+'</VehicleNum>';
     nStr := nStr+'<VehicleType></VehicleType>';
@@ -3509,9 +3528,9 @@ begin
     nStr := nStr+'<InventLocationId>'+FieldByName('L_InvLocationId').AsString+'</InventLocationId>';
     nStr := nStr+'<xtDInventCenterId>'+FieldByName('L_InvCenterId').AsString+'</xtDInventCenterId>';
     nStr := nStr+'</PRIMARY>';
-    {$IFDEF DEBUG}
+    //{$IFDEF DEBUG}
     WriteLog('·¢ËÍÖµ£º'+nStr);
-    {$ENDIF}
+    //{$ENDIF}
     try
       nService:=GetBPM2ERPServiceSoap(True,gURLAddr,nil);
       //s:=nService.test;
@@ -5412,7 +5431,7 @@ begin
       FListC.Values['Object'] := sFlag_BillNo;
       //to get serial no
 
-      {$IFDEF GGJC}
+      //{$IFDEF GGJC}
       if Length(FListA.Values['LID']) > 8 then
         nOut.FData := FListA.Values['LID']
       else
@@ -5421,12 +5440,12 @@ begin
             FListC.Text, sFlag_Yes, @nOut) then
         raise Exception.Create(nOut.FData);
       end;
-      {$ELSE}
-      if not TWorkerBusinessCommander.CallMe(cBC_GetSerialNO,
+      //{$ELSE}
+      {if not TWorkerBusinessCommander.CallMe(cBC_GetSerialNO,
           FListC.Text, sFlag_Yes, @nOut) then
-      raise Exception.Create(nOut.FData);
+      raise Exception.Create(nOut.FData); }
       //xxxxx
-      {$ENDIF}
+      //{$ENDIF}
       
       FOut.FData := FOut.FData + nOut.FData + ',';
       //combine bill

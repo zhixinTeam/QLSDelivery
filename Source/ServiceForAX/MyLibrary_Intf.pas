@@ -35,7 +35,7 @@ type
   IRemService = interface
     ['{6E787EC4-8E42-4530-AD4A-06726D310F3E}']
     function GetServerTime: DateTime;
-    function DL2WRZSINFO(const BusinessType: Widestring; const XMLPrimaryKey: Variant): Integer;
+    function DL2WRZSINFO(const BusinessType: Widestring; const XMLPrimaryKey: Widestring): Integer;
   end;
 
   { CoRemService }
@@ -49,7 +49,7 @@ type
     function __GetInterfaceName:string; override;
 
     function GetServerTime: DateTime;
-    function DL2WRZSINFO(const BusinessType: Widestring; const XMLPrimaryKey: Variant): Integer;
+    function DL2WRZSINFO(const BusinessType: Widestring; const XMLPrimaryKey: Widestring): Integer;
   end;
 
 implementation
@@ -87,12 +87,12 @@ begin
   end
 end;
 
-function TRemService_Proxy.DL2WRZSINFO(const BusinessType: Widestring; const XMLPrimaryKey: Variant): Integer;
+function TRemService_Proxy.DL2WRZSINFO(const BusinessType: Widestring; const XMLPrimaryKey: Widestring): Integer;
 begin
   try
     __Message.InitializeRequestMessage(__TransportChannel, 'MyLibrary', __InterfaceName, 'DL2WRZSINFO');
     __Message.Write('BusinessType', TypeInfo(Widestring), BusinessType, []);
-    __Message.Write('XMLPrimaryKey', TypeInfo(Variant), XMLPrimaryKey, []);
+    __Message.Write('XMLPrimaryKey', TypeInfo(Widestring), XMLPrimaryKey, []);
     __Message.Finalize;
 
     __TransportChannel.Dispatch(__Message);
