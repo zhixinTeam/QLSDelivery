@@ -1,8 +1,8 @@
 object FDM: TFDM
   OldCreateOrder = False
   OnCreate = DataModuleCreate
-  Left = 400
-  Top = 387
+  Left = 399
+  Top = 390
   Height = 270
   Width = 311
   object ADOConn: TADOConnection
@@ -39,6 +39,7 @@ object FDM: TFDM
     DesignInfo = 4456576
   end
   object edtStyle: TcxDefaultEditStyleController
+    Style.BorderStyle = ebsOffice11
     Style.Edges = [bBottom]
     Style.Font.Charset = GB2312_CHARSET
     Style.Font.Color = clBlack
@@ -47,8 +48,11 @@ object FDM: TFDM
     Style.Font.Style = []
     Style.TextColor = 4227072
     Style.IsFontAssigned = True
+    StyleDisabled.BorderStyle = ebsOffice11
     StyleDisabled.Color = clWindow
+    StyleFocused.BorderStyle = ebsOffice11
     StyleFocused.Color = clInfoBk
+    StyleHot.BorderStyle = ebsOffice11
     Left = 24
     Top = 128
     PixelsPerInch = 96
@@ -82,7 +86,6 @@ object FDM: TFDM
     Top = 128
   end
   object ImageBar: TcxImageList
-    BkColor = 14120960
     FormatVersion = 1
     DesignInfo = 4456468
     ImageInfo = <

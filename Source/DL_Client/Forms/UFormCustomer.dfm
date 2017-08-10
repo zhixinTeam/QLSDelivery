@@ -21,15 +21,6 @@ inherited fFormCustomer: TfFormCustomer
     TabStop = False
     AutoContentSizes = [acsWidth, acsHeight]
     LookAndFeel = FDM.dxLayoutWeb1
-    object EditName: TcxTextEdit
-      Left = 81
-      Top = 36
-      Hint = 'T.C_Name'
-      ParentFont = False
-      Properties.MaxLength = 80
-      TabOrder = 0
-      Width = 121
-    end
     object EditPhone: TcxTextEdit
       Left = 81
       Top = 86
@@ -250,15 +241,27 @@ inherited fFormCustomer: TfFormCustomer
       TabOrder = 12
       Width = 121
     end
+    object EditName: TcxButtonEdit
+      Left = 81
+      Top = 36
+      Hint = 'T.C_Name'
+      Properties.Buttons = <
+        item
+          Default = True
+          Kind = bkEllipsis
+        end>
+      Properties.MaxLength = 80
+      Properties.OnButtonClick = EditNamePropertiesButtonClick
+      TabOrder = 0
+      Width = 121
+    end
     object dxLayoutControl1Group_Root: TdxLayoutGroup
       ShowCaption = False
       Hidden = True
       ShowBorder = False
       object dxLayoutControl1Group1: TdxLayoutGroup
         Caption = #22522#26412#20449#24687
-        object dxLayoutControl1Item2: TdxLayoutItem
-          AutoAligns = [aaVertical]
-          AlignHorz = ahClient
+        object dxLayoutControl1Item23: TdxLayoutItem
           Caption = #23458#25143#21517#31216':'
           Control = EditName
           ControlOptions.ShowBorder = False

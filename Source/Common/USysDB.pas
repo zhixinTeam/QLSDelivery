@@ -533,7 +533,7 @@ const
        'C_Param varChar(32), C_Memo varChar(50), C_XuNi Char(1),' +
        'C_Factory varChar(50), C_ToUser varChar(50), C_IsBind Char(1),'+
        'C_CredMax Decimal(15,5) Default 0,C_MaCredLmt varChar(32),'+
-       'C_CelPhone varChar(32))';
+       'C_AntiAXCredit $Float Default 0, C_CelPhone varChar(32))';
   {-----------------------------------------------------------------------------
    客户信息表: Customer
    *.R_ID: 记录号
@@ -559,6 +559,7 @@ const
    --祁连山新增字段
    *.C_CredMax：信用额度
    *.C_MaCredLmt：强制信用额度[校验是否强制]
+   *.C_AntiAXCredit: 非AX临时授信(信用不足时使用)
    *.C_CelPhone：移动电话
   -----------------------------------------------------------------------------}
 

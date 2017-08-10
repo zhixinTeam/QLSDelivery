@@ -12,7 +12,7 @@ uses
   UDataModule, UFormBase, cxGraphics, cxControls, cxLookAndFeels,
   cxLookAndFeelPainters, cxContainer, cxEdit, dxLayoutControl, cxCheckBox,
   cxLabel, StdCtrls, cxMaskEdit, cxDropDownEdit, cxMCListBox, cxMemo,
-  cxTextEdit;
+  cxTextEdit, cxButtonEdit;
 
 type
   TfFormCustomer = class(TBaseForm)
@@ -20,8 +20,6 @@ type
     dxLayoutControl1: TdxLayoutControl;
     dxLayoutControl1Group1: TdxLayoutGroup;
     dxLayoutControl1Group2: TdxLayoutGroup;
-    EditName: TcxTextEdit;
-    dxLayoutControl1Item2: TdxLayoutItem;
     EditPhone: TcxTextEdit;
     dxLayoutControl1Item3: TdxLayoutItem;
     EditMemo: TcxMemo;
@@ -75,6 +73,8 @@ type
     EditWX: TcxComboBox;
     dxLayoutControl1Item22: TdxLayoutItem;
     dxLayoutControl1Group14: TdxLayoutGroup;
+    EditName: TcxButtonEdit;
+    dxLayoutControl1Item23: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BtnAddClick(Sender: TObject);
@@ -83,10 +83,14 @@ type
     procedure BtnExitClick(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
+    procedure EditNamePropertiesButtonClick(Sender: TObject;
+      AButtonIndex: Integer);
   private
     { Private declarations }
     FCustomerID: string;
     //客户标识
+    FDefineID: string;
+    //手动指定编号
     procedure InitFormData(const nID: string);
     //载入数据
     procedure GetData(Sender: TObject; var nData: string);
@@ -103,8 +107,8 @@ implementation
 
 {$R *.dfm}
 uses
-  IniFiles, ULibFun, UMgrControl, UFormCtrl, UAdjustForm, USysBusiness,
-  USysGrid, USysDB, USysConst;
+  IniFiles, ULibFun, UMgrControl, UFormCtrl, UAdjustForm, UFormInputbox,
+  USysBusiness, USysGrid, USysDB, USysConst;
 
 var
   gForm: TfFormCustomer = nil;
@@ -181,6 +185,7 @@ end;
 procedure TfFormCustomer.FormCreate(Sender: TObject);
 var nIni: TIniFile;
 begin
+  FDefineID := '';
   {$IFNDEF MicroMsg}
   EditWX.Hint := '';
   EditWX.Visible := False; 
@@ -290,6 +295,28 @@ begin
   end;
 end;
 
+procedure TfFormCustomer.EditNamePropertiesButtonClick(Sender: TObject;
+  AButtonIndex: Integer);
+var nStr: string;
+begin
+  if FCustomerID <> '' then
+    Exit; //修改时不允许自定义
+  nStr := FDefineID;
+
+  while True do
+  begin
+    if not ShowInputBox('请输入客户自定义编号: ', '', nStr, 15) then Exit;
+    nStr := Trim(nStr);
+
+    if nStr <> '' then
+    begin
+      FDefineID := nStr;
+      ShowMsg('定义成功', sHint);
+      Exit;
+    end;
+  end;
+end;
+
 //Desc: 添加信息
 procedure TfFormCustomer.BtnAddClick(Sender: TObject);
 begin
@@ -372,7 +399,9 @@ begin
 
   if FCustomerID = '' then
   begin
-    nID := GetSerialNo(sFlag_BusGroup, sFlag_Customer, False);
+    if FDefineID = '' then
+         nID := GetSerialNo(sFlag_BusGroup, sFlag_Customer, False)
+    else nID := FDefineID;
     if nID = '' then Exit;
     
     nList.Add(SF('C_ID', nID));

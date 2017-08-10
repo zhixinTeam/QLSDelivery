@@ -42,6 +42,8 @@ type
     N7: TMenuItem;
     N8: TMenuItem;
     N9: TMenuItem;
+    N10: TMenuItem;
+    N11: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnAddClick(Sender: TObject);
@@ -57,6 +59,7 @@ type
     procedure N7Click(Sender: TObject);
     procedure N8Click(Sender: TObject);
     procedure N9Click(Sender: TObject);
+    procedure N11Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -75,7 +78,8 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl, UDataModule, UFormBase, UFormWait, USysBusiness,
-  USysConst, USysDB, uFormGetWechartAccount, UBusinessPacker, USysLoger;
+  USysConst, USysDB, uFormGetWechartAccount, UBusinessPacker, USysLoger,
+  UFormInputbox;
 
 class function TfFrameCustomer.FrameID: integer;
 begin
@@ -245,6 +249,9 @@ begin
   N7.Enabled := BtnEdit.Enabled;
   N8.Enabled := BtnEdit.Enabled;
   //影子客户设置
+
+  N11.Enabled := BtnEdit.Enabled;
+  //非AX临时额度
 end;
 
 
@@ -477,6 +484,33 @@ begin
   FWhere := 'S_CusID Is Not Null';
   FWhere := Format(FWhere, [sTable_CusShadow]);
   InitFormData(FWhere);
+end;
+
+procedure TfFrameCustomer.N11Click(Sender: TObject);
+var nStr,nMoney: string;
+begin
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nMoney := SQLQuery.FieldByName('C_AntiAXCredit').AsString;
+    while True do
+    begin
+      if not ShowInputBox('请输入临时授信金额: ', '', nMoney, 12) then Exit;
+      if IsNumber(nMoney, True) then Break;
+    end;
+
+    nStr := 'Update %s Set C_AntiAXCredit=%s Where C_ID=''%s''';
+    nStr := Format(nStr, [sTable_Customer, nMoney,
+            SQLQuery.FieldByName('C_ID').AsString]);
+    FDM.ExecuteSQL(nStr);
+
+    nStr := '调整客户[ %s ]临时信用[ %.2f -> %s ].';
+    nStr := Format(nStr, [SQLQuery.FieldByName('C_Name').AsString,
+            SQLQuery.FieldByName('C_AntiAXCredit').AsFloat, nMoney]);
+    FDM.WriteSysLog(sFlag_CustomerItem, SQLQuery.FieldByName('C_ID').AsString,nStr);
+
+    InitFormData(FWhere);
+    ShowMsg('授信成功', sHint);
+  end;
 end;
 
 initialization

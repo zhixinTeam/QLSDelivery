@@ -3484,13 +3484,20 @@ begin
         Exit;
       end;
     end;
+
     nsWeightTime:=formatdatetime('yyyy-mm-dd hh:mm:ss',FieldByName('L_MDate').AsDateTime);
     if nsWeightTime<>'' then
     begin
       nsWeightTime:=Copy(nsWeightTime,12,Length(nsWeightTime)-11);
     end;
     if FieldByName('L_Type').AsString='D' then
+    begin
       nNetValue:=FieldByName('L_MValue').AsFloat-FieldByName('L_PValue').AsFloat;
+      nNetValue := Float2Float(nNetValue, cPrecision, False);
+    end else
+    begin
+      nNetValue := 0;
+    end;
 
     {$IFDEF GGJC}
     nLID := FieldByName('L_ID').AsString;
@@ -6961,6 +6968,23 @@ begin
                   Result:=True;
                   Exit;
                 end;
+              end;
+
+              //+dmzn: 2017-07-24,强制使用本地信用
+              nStr := 'Select C_AntiAXCredit From %s Where C_ID=''%s''';
+              nStr := Format(nStr, [sTable_Customer, nTriCusID]);
+
+              with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+              if RecordCount > 0 then
+              begin
+                nVal := Fields[0].AsFloat;
+                if nVal > 0 then
+                begin
+                  nAxMoney := nAxMoney + nVal;
+                  nStr := '客户[ %s ]验证订单[ %s ]时使用临时授信[ %.2f ]元.';
+                  WriteLog(Format(nStr, [nTriCusID, nBills[0].FZhiKa, nVal]));
+                end;
+                nAxMoney := Float2Float(nAxMoney, cPrecision, False);
               end;
             end else
             begin
