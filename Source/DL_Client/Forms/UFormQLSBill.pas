@@ -370,7 +370,20 @@ begin
   begin
     ShowMsg('请录入经销商提货单号', sHint); Exit;
   end;
+  {$IFDEF YDKP}
+  if cbxSampleID.ItemIndex = -1 then
+  begin
+    ShowMsg('请录入选择试样编号', sHint); Exit;
+  end;
+  {$ENDIF}
+  {$IFDEF PLKP}
+  if cbxSampleID.ItemIndex = -1 then
+  begin
+    ShowMsg('请录入选择试样编号', sHint); Exit;
+  end;
+  {$ENDIF}
 
+  FSampleID := cbxSampleID.Text;
   nStocks := TStringList.Create;
   nList := TStringList.Create;
   nTmp := TStringList.Create;
@@ -385,6 +398,7 @@ begin
     begin
       if not FSelecte then Continue; }
       //xxxxx
+
     with nTmp do
     begin
       Values['Type'] := gType;

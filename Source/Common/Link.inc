@@ -61,13 +61,13 @@
   //状态栏显示
   {$DEFINE HYRFID201}
   //华益读头
-  {$DEFINE GLPURCH} 
+  {.$DEFINE GLPURCH} 
   //古浪
   {.$DEFINE YDKP} 
   //永登、夏河、定西开票
-  {.$DEFINE PLKP} 
+  {$DEFINE PLKP} 
   //平凉开票
-  {.$DEFINE XHPZ} 
+  {$DEFINE XHPZ} 
   //夏河、定西、平凉皮重
   {.$DEFINE ZXKP} 
   //漳县

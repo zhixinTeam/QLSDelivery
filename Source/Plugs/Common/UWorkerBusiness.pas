@@ -3210,14 +3210,14 @@ begin
       WriteLog(nData);
       Exit;
     end;
-    {$IFDEF GGJC}
+    //{$IFDEF GGJC}
     nLID := FieldByName('L_ID').AsString;
-    {$ELSE}
-    nLID := copy(FieldByName('L_ID').AsString,2,10);
-    {$ENDIF}
-    {$IFDEF GLPURCH}
-    nLID := FieldByName('L_ID').AsString;
-    {$ENDIF}
+    //{$ELSE}
+    //nLID := copy(FieldByName('L_ID').AsString,2,10);
+    //{$ENDIF}
+    //{$IFDEF GLPURCH}
+    //nLID := FieldByName('L_ID').AsString;
+    //{$ENDIF}
     nLocationId := FieldByName('L_InvLocationId').AsString;
     if nLocationId = '' then nLocationId := 'A';
     nStr:='<PRIMARY>'+
@@ -3300,14 +3300,14 @@ begin
     end;
     nLocationId := FieldByName('L_InvLocationId').AsString;
     if nLocationId = '' then nLocationId := 'A';
-    {$IFDEF GGJC}
+    //{$IFDEF GGJC}
     nLID := FieldByName('L_ID').AsString;
-    {$ELSE}
-    nLID := copy(FieldByName('L_ID').AsString,2,10);
-    {$ENDIF}
-    {$IFDEF GLPURCH}
-    nLID := FieldByName('L_ID').AsString;
-    {$ENDIF}
+    //{$ELSE}
+    //nLID := copy(FieldByName('L_ID').AsString,2,10);
+    //{$ENDIF}
+    //{$IFDEF GLPURCH}
+    //nLID := FieldByName('L_ID').AsString;
+    //{$ENDIF}
     nStr:='<PRIMARY>'+
              '<PLANQTY>'+FieldByName('L_PlanQty').AsString+'</PLANQTY>'+
              '<VEHICLEId>'+FieldByName('L_Truck').AsString+'</VEHICLEId>'+
@@ -3392,7 +3392,7 @@ begin
              '<VEHICLEId>'+FieldByName('L_Truck').AsString+'</VEHICLEId>'+
              '<VENDPICKINGLISTID>S</VENDPICKINGLISTID>'+
              '<TRANSPORTER></TRANSPORTER>'+
-             '<TRANSPLANID>'+copy(FieldByName('L_ID').AsString,2,10)+'</TRANSPLANID>'+
+             '<TRANSPLANID>'+FieldByName('L_ID').AsString+'</TRANSPLANID>'+
              '<SALESID>'+FieldByName('L_ZhiKa').AsString+'</SALESID>'+
              '<SALESLINERECID>'+FieldByName('L_LineRecID').AsString+'</SALESLINERECID>'+
              '<COMPANYID>'+gCompanyAct+'</COMPANYID>'+
@@ -3499,14 +3499,7 @@ begin
       nNetValue := 0;
     end;
 
-    {$IFDEF GGJC}
     nLID := FieldByName('L_ID').AsString;
-    {$ELSE}
-    nLID := copy(FieldByName('L_ID').AsString,2,10);
-    {$ENDIF}
-    {$IFDEF GLPURCH}
-    nLID := FieldByName('L_ID').AsString;
-    {$ENDIF}
 
     nStr := '<PRIMARY>';
     nStr := nStr+'<TRANSPLANID>'+nLID+'</TRANSPLANID>';
