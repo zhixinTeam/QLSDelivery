@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="gb2312"?>
+<ParamPacks>
+  <Packs>
+    <Pack ID="Bus_MIT_1" Name="本地服务">
+      <SAP/>
+      <DB></DB>
+      <Perform></Perform>
+    </Pack>
+  </Packs>
+  <Param>
+    <DBList>
+      <DB ID="k3_db" Name="K3数据库">
+        <Host>127.0.0.1</Host>
+        <Port>1433</Port>
+        <DBName>AIS20101231173129</DBName>
+        <User>sa</User>
+        <Password>c2E=</Password>
+        <ConnStr>UHJvdmlkZXI9U1FMT0xFREIuMTtQYXNzd29yZD0kUHdkO1BlcnNpc3QgU2VjdXJpdHkgSW5mbz1UcnVlO1VzZXIgSUQ9JFVzZXI7SW5pdGlhbCBDYXRhbG9nPSREQk5hbWU7RGF0YSBTb3VyY2U9JEhvc3Q=</ConnStr>
+        <WorkerNum>5</WorkerNum>
+      </DB>
+	  <DB ID="js_db" Name="计数器数据库">
+        <Host>127.0.0.1</Host>
+        <Port>1433</Port>
+        <DBName>JSData</DBName>
+        <User>sa</User>
+        <Password>c2E=</Password>
+        <ConnStr>UHJvdmlkZXI9U1FMT0xFREIuMTtQYXNzd29yZD0kUHdkO1BlcnNpc3QgU2VjdXJpdHkgSW5mbz1UcnVlO1VzZXIgSUQ9JFVzZXI7SW5pdGlhbCBDYXRhbG9nPSREQk5hbWU7RGF0YSBTb3VyY2U9JEhvc3Q=</ConnStr>
+        <WorkerNum>5</WorkerNum>
+      </DB>
+    </DBList>
+	<PerformList>
+      <Perform ID="perform" Name="性能参数">
+        <PortTCP>8081</PortTCP>
+        <PortHttp>8082</PortHttp>
+        <PoolSizeSAP>1</PoolSizeSAP>
+        <PoolSizeConn>5</PoolSizeConn>
+        <PoolSizeBusiness>20</PoolSizeBusiness>
+        <PoolBehaviorConn>1</PoolBehaviorConn>
+        <PoolBehaviorBus>2</PoolBehaviorBus>
+        <MaxRecordCount>1000</MaxRecordCount>
+        <MonInterval>2000</MonInterval>
+      </Perform>
+    </PerformList>
+  </Param>
+</ParamPacks>
