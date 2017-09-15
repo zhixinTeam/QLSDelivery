@@ -438,7 +438,7 @@ begin
 
   nCardType := '';
   if not GetCardUsed(nCard, nCardType) then Exit;
-  
+
   if nCardType = sFlag_Other then   //临时卡进厂
   begin
     nDB := nil;
@@ -549,7 +549,7 @@ begin
     WriteHardHelperLog(nStr, sPost_In);
     Exit;
   end;
-  
+
   if Length(nTrucks) < 1 then
   begin
     nStr := '磁卡[ %s ]没有需要进厂车辆.';
@@ -585,7 +585,28 @@ begin
     gHardwareHelper.SetCardLastDone(nCard, nReader);
     gHardwareHelper.SetReaderCard(nReader, nCard);
     {$ELSE}
-    if gTruckQueueManager.IsTruckAutoIn then
+    nDB := nil;
+    nRet := False;
+    with gParamManager.ActiveParam^ do
+    Try
+      nDB := gDBConnManager.GetConnection(FDB.FID, nErrNum);
+      if not Assigned(nDB) then
+      begin
+        WriteHardHelperLog('连接HM数据库失败(DBConn Is Null).');
+        Exit;
+      end;
+      nStr := 'select * from %s Where D_Value=''%s'' And D_Name=''KsItem'' ';
+      nStr := Format(nStr, [sTable_SysDict, nReader]);
+      with gDBConnManager.WorkerQuery(nDB,nStr) do
+      begin
+        if RecordCount > 0 then
+          nRet := True;
+      end;
+    finally
+      gDBConnManager.ReleaseConnection(nDB);
+    end;
+    //平凉矿山自动进厂判断
+    if (gTruckQueueManager.IsTruckAutoIn) or nRet then
     begin
       gHardwareHelper.SetCardLastDone(nCard, nReader);
       gHardwareHelper.SetReaderCard(nReader, nCard);
