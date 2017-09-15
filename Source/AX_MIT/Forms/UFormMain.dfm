@@ -19,7 +19,7 @@ object fFormMain: TfFormMain
     Left = 0
     Top = 48
     Width = 180
-    Height = 512
+    Height = 508
     Align = alLeft
     Color = 14408641
     ActiveGroupIndex = 0
@@ -796,6 +796,7 @@ object fFormMain: TfFormMain
         62D3D6C6C6C6C6D45DE4E4E4E4E4E4E4E4FCD562D3D6C6C6C6C6C6C6C6C6C6C6
         C6C6C6C6C6C6C6C6C6C6C63D4100}
       Stretch = True
+      Visible = False
     end
     object ImgClient: TImage
       Left = 289
@@ -938,7 +939,7 @@ object fFormMain: TfFormMain
   end
   object SBar: TStatusBar
     Left = 0
-    Top = 560
+    Top = 556
     Width = 884
     Height = 19
     Panels = <
@@ -956,7 +957,7 @@ object fFormMain: TfFormMain
     Left = 180
     Top = 48
     Width = 704
-    Height = 512
+    Height = 508
     Align = alClient
     BevelOuter = bvNone
     DockSite = True

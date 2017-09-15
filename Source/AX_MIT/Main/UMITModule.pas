@@ -11,10 +11,12 @@ interface
 
 uses
   Forms, Classes, SysUtils, ULibFun, UMITConst,
+  //业务模块
+  UScanAxMsg, USendAxMsg,
   //常规定义
   UBusinessWorker, UBusinessPacker, UMgrDBConn, UMgrParam, UMgrPlug,
   UMgrChannel, UTaskMonitor, UChannelChooser, USAPConnection, USysShareMem,
-  USysLoger, UBaseObject;
+  USysLoger, UBaseObject, UMemDataPool;
   //系统对象
 
 procedure InitSystemObject(const nMainForm: THandle);
@@ -92,6 +94,10 @@ begin
 
   gTaskMonitor.StartMon;
   //mon task start
+
+  gScanAxMsger.Start;
+
+  gSendAxMsger.Start;
 end;
 
 procedure TMainEventWorker.AfterStopServer;
@@ -111,6 +117,10 @@ begin
   {$IFDEF DBPool}
   gDBConnManager.Disconnection();
   {$ENDIF} //db
+
+  gScanAxMsger.Stop;
+
+  gSendAxMsger.Stop;
 end;
 
 //------------------------------------------------------------------------------
@@ -138,6 +148,8 @@ begin
   //日志管理器
   gTaskMonitor := TTaskMonitor.Create;
   //任务监控器
+  gMemDataManager := TMemDataManager.Create;
+  //内存管理器
 
   gParamManager := TParamManager.Create(gPath + 'Parameters.xml');
   if gSysParam.FParam <> '' then
@@ -167,6 +179,10 @@ begin
   gChannelChoolser.AddChanels(gParamManager.URLRemote.Text);
   {$ENDIF}
 
+  gScanAxMsger := TScanAxMsger.Create;
+  //扫描AX消息中间表
+  gSendAxMsger := TSendAxMsger.Create;
+  //发送AX消息
   with nParam do
   begin
     FAppHandle := Application.Handle;

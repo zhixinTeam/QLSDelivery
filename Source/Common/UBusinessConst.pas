@@ -238,7 +238,21 @@ type
     FData     : string;            //数据
     FExtParam : string;            //参数
     FRemoteUL : string;            //工厂服务器UL
-  end;        
+  end;
+
+  TAXSendDataInfo = record
+    FCompanyId   : string;         //公司帐户 ID
+    FProcessflag : Integer;        //是否处理
+    FXTIndexXML  : string;         //数据主键(XML)
+    FXTProcessId : string;         //业务统一标识符
+    FResult      : string;         //接口返回值
+    FSendNum     : Integer;        //推送次数
+    FRefRecid    : Integer;        //业务数据编码
+    Foperation   : string;         //操作标识
+    FRecId       : Integer;        //消息队列唯一标识
+  end;
+  TAXSendDataInfos =array of TAXSendDataInfo;
+  //AX消息列表
 
 procedure AnalyseBillItems(const nData: string; var nItems: TLadingBillItems);
 //解析由业务对象返回的交货单数据

@@ -65,9 +65,9 @@
   //古浪
   {.$DEFINE YDKP} 
   //永登、夏河、定西开票
-  {$DEFINE PLKP} 
+  {.$DEFINE PLKP} 
   //平凉开票
-  {$DEFINE XHPZ} 
+  {.$DEFINE XHPZ} 
   //夏河、定西、平凉皮重
   {.$DEFINE ZXKP} 
   //漳县
@@ -77,6 +77,6 @@
   //成县试样编号
   {.$DEFINE LZST} 
   //兰州商砼水泥內倒
-  {.$DEFINE QHSN} 
+  {$DEFINE QHSN} 
   //青海
 {$ENDIF}
