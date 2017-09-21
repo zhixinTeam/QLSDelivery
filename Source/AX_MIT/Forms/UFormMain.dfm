@@ -1,6 +1,6 @@
 object fFormMain: TfFormMain
-  Left = 387
-  Top = 246
+  Left = 309
+  Top = 56
   Width = 892
   Height = 606
   Caption = #19994#21153#20013#38388#20214
@@ -13,6 +13,7 @@ object fFormMain: TfFormMain
   OldCreateOrder = False
   OnClose = FormClose
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 12
   object dxNavBar1: TdxNavBar

@@ -10,13 +10,13 @@ unit UMITModule;
 interface
 
 uses
-  Forms, Classes, SysUtils, ULibFun, UMITConst,
-  //业务模块
-  UScanAxMsg, USendAxMsg,
+  Forms, Classes, SysUtils, ULibFun, UMITConst, UMITPacker,
   //常规定义
   UBusinessWorker, UBusinessPacker, UMgrDBConn, UMgrParam, UMgrPlug,
   UMgrChannel, UTaskMonitor, UChannelChooser, USAPConnection, USysShareMem,
-  USysLoger, UBaseObject, UMemDataPool;
+  USysLoger, UBaseObject, UMemDataPool,
+  //业务模块
+  UScanAxMsg, USendAxMsg, UWorkerBusinessRemote;
   //系统对象
 
 procedure InitSystemObject(const nMainForm: THandle);
@@ -180,6 +180,7 @@ begin
   {$ENDIF}
 
   gScanAxMsger := TScanAxMsger.Create;
+  gScanAxMsger.LoadConfig(gPath +'UrlConfig.xml');
   //扫描AX消息中间表
   gSendAxMsger := TSendAxMsger.Create;
   //发送AX消息

@@ -48,6 +48,16 @@ type
     class function PackerName: string; override;
   end;
 
+  TMITBusinessMessage = class(TMITPackerBase)
+  protected
+    procedure DoPackIn(const nData: Pointer); override;
+    procedure DoUnPackIn(const nData: Pointer); override;
+    procedure DoPackOut(const nData: Pointer); override;
+    procedure DoUnPackOut(const nData: Pointer); override;
+  public
+    class function PackerName: string; override;
+  end;
+
 implementation
 
 //Date: 2012-3-7
@@ -291,8 +301,63 @@ begin
   end;
 end;
 
+//------------------------------------------------------------------------------
+class function TMITBusinessMessage.PackerName: string;
+begin
+  Result := sBus_BusinessMessage;
+end;
+
+procedure TMITBusinessMessage.DoPackIn(const nData: Pointer);
+begin
+  inherited;
+
+  with FStrBuilder,PWorkerMessageData(nData)^ do
+  begin
+    Values['Command'] := IntToStr(FCommand);
+    Values['Data']    := PackerEncode(FData);
+    Values['ExtParam']  := PackerEncode(FExtParam);
+  end;
+end;
+
+procedure TMITBusinessMessage.DoUnPackIn(const nData: Pointer);
+begin
+  inherited;
+
+  with FStrBuilder,PWorkerMessageData(nData)^ do
+  begin
+    PackerDecode(Values['Command'], FCommand);
+    PackerDecode(Values['Data'], FData);
+    PackerDecode(Values['ExtParam'], FExtParam);
+  end;
+end;
+
+procedure TMITBusinessMessage.DoPackOut(const nData: Pointer);
+begin
+  inherited;
+
+  with FStrBuilder,PWorkerMessageData(nData)^ do
+  begin
+    Values['Command'] := IntToStr(FCommand);
+    Values['Data']    := PackerEncode(FData);
+    Values['ExtParam']  := PackerEncode(FExtParam);
+  end;
+end;
+
+procedure TMITBusinessMessage.DoUnPackOut(const nData: Pointer);
+begin
+  inherited;
+
+  with FStrBuilder,PWorkerMessageData(nData)^ do
+  begin
+    PackerDecode(Values['Command'], FCommand);
+    PackerDecode(Values['Data'], FData);
+    PackerDecode(Values['ExtParam'], FExtParam);
+  end;
+end;
+
 initialization
   gBusinessPackerManager.RegistePacker(TMITQueryField, sPlug_ModuleBus);
   gBusinessPackerManager.RegistePacker(TMITBusinessCommand, sPlug_ModuleBus);
   gBusinessPackerManager.RegistePacker(TMITQueryWebChat, sPlug_ModuleRemote);
+  gBusinessPackerManager.RegistePacker(TMITBusinessMessage, sPlug_ModuleBus);
 end.

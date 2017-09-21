@@ -603,7 +603,8 @@ begin
       FSampleID:= cbxSampleID.Text;
       FYSValid:= sFlag_No;
       FWorkOrder:= cbxWorkSet.Text;
-      nPos:=Pos('.',cbxKw.Text);
+      FKw:= Trim(cbxKw.Text);
+      {nPos:=Pos('.',cbxKw.Text);
       if (nPos>0) and (nPos<Length(cbxKw.Text)) then
       begin
         FKw:= Copy(cbxKw.Text,1,nPos-1);
@@ -611,7 +612,7 @@ begin
       end else
       begin
         ShowMsg('库位格式非法', sHint); Exit;
-      end;
+      end;}
     end;
     if FStockType=1 then
     begin

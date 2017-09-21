@@ -379,6 +379,7 @@ ResourceString
   sTable_AX_PurOrdLine= 'Purchline';                 //采购订单行
   sTable_AX_CompArea  = 'XT_COMPACTAREA';            //销售区域
   sTable_AX_InventSum = 'XTInventSUM';               //生产线余量
+  sTable_XT_MsgTables = 'XT_ERPToWRZSSendDataInfo';  //AX消息中间表
 
 const
   {*新建表*}

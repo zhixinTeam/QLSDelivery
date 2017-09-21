@@ -1,5 +1,5 @@
 //----------------------------------- 通用 -------------------------------------
-{.$DEFINE DEBUG}
+{$DEFINE DEBUG}
 //调试模式
 
 {.$DEFINE TrialVersion}
@@ -73,10 +73,10 @@
   //漳县
   {.$DEFINE GGJC} 
   //甘谷、兰州商砼自动进厂
-  {.$DEFINE CXSY} 
+  {$DEFINE CXSY} 
   //成县试样编号
   {.$DEFINE LZST} 
   //兰州商砼水泥內倒
-  {$DEFINE QHSN} 
+  {.$DEFINE QHSN} 
   //青海
 {$ENDIF}

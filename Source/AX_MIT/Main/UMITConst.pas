@@ -8,7 +8,7 @@ unit UMITConst;
 interface
 
 uses
-  Windows, SysUtils, Classes, ComCtrls, Forms, IniFiles, USysMAC;
+  Windows, SysUtils, Classes, ComCtrls, Forms, IniFiles, USysMAC, SyncObjs;
 
 const
   cSBar_Date          = 0;                           //日期面板索引
@@ -71,6 +71,7 @@ var
   gPath: string;                                     //程序所在路径
   gSysParam:TSysParam;                               //程序环境参数
   gStatusBar: TStatusBar;                            //全局使用状态栏
+  CS:TCriticalSection;                               //全局临界区变量
 
 procedure InitSystemEnvironment;
 //初始化系统运行环境的变量

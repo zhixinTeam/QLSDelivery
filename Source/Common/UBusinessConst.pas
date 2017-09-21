@@ -240,19 +240,15 @@ type
     FRemoteUL : string;            //工厂服务器UL
   end;
 
-  TAXSendDataInfo = record
-    FCompanyId   : string;         //公司帐户 ID
-    FProcessflag : Integer;        //是否处理
-    FXTIndexXML  : string;         //数据主键(XML)
-    FXTProcessId : string;         //业务统一标识符
-    FResult      : string;         //接口返回值
-    FSendNum     : Integer;        //推送次数
-    FRefRecid    : Integer;        //业务数据编码
-    Foperation   : string;         //操作标识
-    FRecId       : Integer;        //消息队列唯一标识
+  PWorkerMessageData = ^TWorkerMessageData;
+  TWorkerMessageData = record
+    FBase     : TBWDataBase;
+    FCommand  : Integer;           //类型
+    FData     : string;            //数据
+    FExtParam : string;            //参数
+    FRemoteUL : string;            //工厂服务器UL
   end;
-  TAXSendDataInfos =array of TAXSendDataInfo;
-  //AX消息列表
+
 
 procedure AnalyseBillItems(const nData: string; var nItems: TLadingBillItems);
 //解析由业务对象返回的交货单数据
@@ -288,6 +284,8 @@ resourcestring
   sBus_BusinessDuanDao        = 'Bus_BusinessDuanDao';  //短倒业务相关
   sBus_BusinessPurchaseOrder  = 'Bus_BusinessPurchaseOrder'; //采购单相关
 
+  sBus_BusinessMessage        = 'Bus_BusinessMessage';
+
   {*client function name*}
   sCLI_ServiceStatus          = 'CLI_ServiceStatus';    //服务状态
   sCLI_GetQueryField          = 'CLI_GetQueryField';    //查询的字段
@@ -297,6 +295,8 @@ resourcestring
   sCLI_BusinessDuanDao        = 'CLI_BusinessDuanDao';  //短倒业务相关
   sCLI_BusinessPurchaseOrder  = 'CLI_BusinessPurchaseOrder'; //采购单相关
   sCLI_BusinessWebchat        = 'CLI_BusinessWebchat';  //Web平台服务
+
+  sCLI_BusinessMessage        = 'CLI_BusinessMessage';
 
 implementation
 

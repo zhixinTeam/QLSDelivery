@@ -13,7 +13,7 @@ uses
   cxLookAndFeelPainters, dxSkinsCore,
   dxSkinsDefaultPainters, dxSkinsdxNavBar2Painter, cxContainer, cxEdit,
   ExtCtrls, ComCtrls, cxLabel, dxNavBarCollns, cxClasses, dxNavBarBase,
-  dxNavBar, cxLookAndFeels;
+  dxNavBar, cxLookAndFeels, SyncObjs;
 
 type
   TfFormMain = class(TForm)
@@ -51,6 +51,7 @@ type
     procedure LabelAdminClick(Sender: TObject);
     procedure SysServiceClick(Sender: TObject);
     procedure Timer4Timer(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   private
     { Private declarations }
     FTrayIcon: TTrayIcon;
@@ -196,6 +197,9 @@ begin
 
   FormLoadConfig;
   //load config
+
+  CS:= TCriticalSection.Create;
+  //≥ı ºªØ
   
   InitSystemObject(Handle);
   //system object
@@ -428,6 +432,11 @@ var nStr: string;
 begin
   nStr := BoolToStr(gSysParam.FIsAdmin, True);
   CreateBaseFormItem(TdxNavBarItem(Sender).Tag, nStr);
+end;
+
+procedure TfFormMain.FormDestroy(Sender: TObject);
+begin
+  CS.Free;
 end;
 
 end.
