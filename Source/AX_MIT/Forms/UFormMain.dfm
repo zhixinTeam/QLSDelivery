@@ -13,7 +13,6 @@ object fFormMain: TfFormMain
   OldCreateOrder = False
   OnClose = FormClose
   OnCreate = FormCreate
-  OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 12
   object dxNavBar1: TdxNavBar

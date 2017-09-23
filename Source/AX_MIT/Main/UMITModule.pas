@@ -15,9 +15,9 @@ uses
   UBusinessWorker, UBusinessPacker, UMgrDBConn, UMgrParam, UMgrPlug,
   UMgrChannel, UTaskMonitor, UChannelChooser, USAPConnection, USysShareMem,
   USysLoger, UBaseObject, UMemDataPool,
-  //业务模块
-  UScanAxMsg, USendAxMsg, UWorkerBusinessRemote;
   //系统对象
+  UMgrAxMsg;
+  //业务模块
 
 procedure InitSystemObject(const nMainForm: THandle);
 procedure RunSystemObject;
@@ -95,9 +95,7 @@ begin
   gTaskMonitor.StartMon;
   //mon task start
 
-  gScanAxMsger.Start;
-
-  gSendAxMsger.Start;
+  gAxMsgManager.Start;
 end;
 
 procedure TMainEventWorker.AfterStopServer;
@@ -118,9 +116,7 @@ begin
   gDBConnManager.Disconnection();
   {$ENDIF} //db
 
-  gScanAxMsger.Stop;
-
-  gSendAxMsger.Stop;
+  gAxMsgManager.Stop;
 end;
 
 //------------------------------------------------------------------------------
@@ -148,6 +144,8 @@ begin
   //日志管理器
   gTaskMonitor := TTaskMonitor.Create;
   //任务监控器
+  gCommonObjectManager := TCommonObjectManager.Create;
+  //通用对象状态管理
   gMemDataManager := TMemDataManager.Create;
   //内存管理器
 
@@ -155,9 +153,6 @@ begin
   if gSysParam.FParam <> '' then
     gParamManager.GetParamPack(gSysParam.FParam, True);
   //参数管理器
-
-  gCommonObjectManager := TCommonObjectManager.Create;
-  //通用对象状态管理
 
   {$IFDEF DBPool}
   gDBConnManager := TDBConnManager.Create;
@@ -179,11 +174,10 @@ begin
   gChannelChoolser.AddChanels(gParamManager.URLRemote.Text);
   {$ENDIF}
 
-  gScanAxMsger := TScanAxMsger.Create;
-  gScanAxMsger.LoadConfig(gPath +'UrlConfig.xml');
-  //扫描AX消息中间表
-  gSendAxMsger := TSendAxMsger.Create;
-  //发送AX消息
+  gAxMsgManager := TAxMsgManager.Create;
+  gAxMsgManager.LoadConfig(gPath +'UrlConfig.xml');
+  //AX消息管理器
+  
   with nParam do
   begin
     FAppHandle := Application.Handle;
