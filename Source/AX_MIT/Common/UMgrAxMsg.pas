@@ -16,13 +16,14 @@ type
   TAXSendDataInfo = record
     FCompanyId: string;
     //FProcessflag: string;
-    //FXTIndexXML: string;
+    FXTIndexXML: string;
     FXTProcessId: string;
     //FResult: string;
     //FSendNum: string;
     FRefRecid: string;
     Foperation: string;
     FRecId: string;
+    FMsgNo: string;
   end;
 
   PCompanyIdUrl = ^TCompanyIdUrl;
@@ -390,15 +391,75 @@ var
   nIdx:Integer;
   nSQL:string;
   nSDI, nOldSDI:PAXSendDataInfo;
-  nC:Integer;
+  nRepeat: Boolean;
+  nList: TStrings;
 begin
+  nList:= TStringList.Create;
   with FOwner do
   try
     FSyncCS.Enter;
-    WriteLog('ScanAxMsgThread');
+    //WriteLog('ScanAxMsgThread');
+    nList.Clear;
     try
+      nRepeat:= False;
+      nSQL:= 'select top 1 * from %s where SyncCounter<10 and SyncDone is null';
+      nSQL:= Format(nSQL, [sTable_XT_TRANSPLAN]);
+      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+      if RecordCount > 0 then
+      begin
+          for nIdx := 0 to FAXDATA.Count - 1 do
+          begin
+            nOldSDI:= FAXDATA[nIdx];
+            if nOldSDI.FRecId = FieldByName('TRANSPLANID').AsString then
+            begin
+              nRepeat:= True;
+              Break;
+            end;
+          end;
+          
+          if not nRepeat then
+          begin
+            nSDI:= gMemDataManager.LockData(FIDSendDataInfo);
+            FAXDATA.Add(nSDI);
+            with nSDI^ do
+            begin
+              FMsgNo := '1';
+              FCompanyId := FieldByName('CompanyId').AsString;
+              FXTProcessId := 'EDS_0011';
+              Foperation := FieldByName('MODE_').AsString;
+              FRecId := FieldByName('TRANSPLANID').AsString;
+              FXTIndexXML := '<CMT_WEIGHTSTATUS>'+FieldByName('CMT_WEIGHTSTATUS').AsString+'</CMT_WEIGHTSTATUS>'+
+                             '<COMPANYID>'+FieldByName('COMPANYID').AsString+'</COMPANYID>'+
+                             '<CUSTACCOUNT>'+FieldByName('CUSTACCOUNT').AsString+'</CUSTACCOUNT>'+
+                             '<CUSTNAME>'+FieldByName('CUSTNAME').AsString+'</CUSTNAME>'+
+                             '<DESTINATIONCODE>'+FieldByName('DESTINATIONCODE').AsString+'</DESTINATIONCODE>'+
+                             '<INVENTLOCATIONID>'+FieldByName('INVENTLOCATIONID').AsString+'</INVENTLOCATIONID>'+
+                             '<ITEMID>'+FieldByName('ITEMID').AsString+'</ITEMID>'+
+                             '<ITEMPRICE>'+FieldByName('ITEMPRICE').AsString+'</ITEMPRICE>'+
+                             '<PLANQTY>'+FieldByName('PLANQTY').AsString+'</PLANQTY>'+
+                             '<POST>'+FieldByName('POST').AsString+'</POST>'+
+                             '<SALESID>'+FieldByName('SALESID').AsString+'</SALESID>'+
+                             '<SALESLINERECID>'+FieldByName('SALESLINERECID').AsString+'</SALESLINERECID>'+
+                             '<TRANSPLANID>'+FieldByName('TRANSPLANID').AsString+'</TRANSPLANID>'+
+                             '<TRANSPORTER>'+FieldByName('TRANSPORTER').AsString+'</TRANSPORTER>'+
+                             '<VEHICLEID>'+FieldByName('VEHICLEID').AsString+'</VEHICLEID>'+
+                             '<WMSLOCATIONID>'+FieldByName('WMSLOCATIONID').AsString+'</WMSLOCATIONID>'+
+                             '<XTDINVENTCENTERID>'+FieldByName('XTDINVENTCENTERID').AsString+'</XTDINVENTCENTERID>'+
+                             '<RECVERSION>'+FieldByName('RECVERSION').AsString+'</RECVERSION>'+
+                             '<PARTITION>'+FieldByName('PARTITION').AsString+'</PARTITION>'+
+                             '<CARDID>'+FieldByName('CARDID').AsString+'</CARDID>'+
+                             '<MODE_>'+FieldByName('MODE_').AsString+'</MODE_>'+
+                             '<ITEMNAME>'+FieldByName('ITEMNAME').AsString+'</ITEMNAME>'+
+                             '<ITEMTYPE>'+FieldByName('ITEMTYPE').AsString+'</ITEMTYPE>';
+            end;
+            nSQL:= 'update %s set SyncStart= ''%s'' where TRANSPLANID= ''%s''';
+            nSQL:= Format(nSQL, [sTable_XT_TRANSPLAN, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz', Now), FieldByName('TRANSPLANID').AsString]);
+            nList.Add(nSQL);
+          end;
+      end;
+
       //nSQL:= 'select top 10 CompanyId, XTProcessId, RefRecid, operation, RecId from %s where Processflag=0 order by COMPANYID';
-      nSQL:= 'select top 1 CompanyId, XTProcessId, RefRecid, operation, RecId from %s where Processflag=0';
+      nSQL:= 'select top 1 CompanyId, XTProcessId, RefRecid, operation, RecId from %s where SyncCounter<10 and SyncDone is null';
       nSQL:= Format(nSQL,[sTable_XT_MsgTables]);
 
       with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
@@ -406,8 +467,8 @@ begin
         if RecordCount < 1 then Exit;
 
         nIdx := 0;
-        First;
-        while not Eof do
+        //First;
+        //while not Eof do
         begin
           for nIdx := 0 to FAXDATA.Count - 1 do
           begin
@@ -419,18 +480,25 @@ begin
           FAXDATA.Add(nSDI);
           with nSDI^ do
           begin
+            FMsgNo := '0';
             FCompanyId := FieldByName('CompanyId').AsString;
             FXTProcessId := FieldByName('XTProcessId').AsString;
             FRefRecid := FieldByName('RefRecid').AsString;
             Foperation := FieldByName('operation').AsString;
             FRecId := FieldByName('RecId').AsString;
-            //FProcessflag := FieldByName('Processflag').AsInteger;
-            //FXTIndexXML := FieldByName('XTIndexXML').AsString;
-            //FResult := FieldByName('Result').AsString;
-            //FSendNum := FieldByName('SendNum').AsInteger;
           end;
-          Next;
+          nSQL:= 'update %s set SyncStart= ''%s'' where RecId= ''%s''';
+          nSQL:= Format(nSQL, [sTable_XT_MsgTables, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz', Now), FieldByName('RecId').AsString]);
+          nList.Add(nSQL);
+          //Next;
         end;
+      end;
+
+      if nList.Count> 0 then
+      for nIdx := 0 to nList.Count - 1 do
+      begin
+        gDBConnManager.ExecSQL(nList[nIdx]);
+        nList.Delete(nIdx);
       end;
     except
       on E:Exception do
@@ -439,6 +507,7 @@ begin
       end;
     end;
   finally
+    nList.Free;
     FSyncCS.Leave;
   end;
 end;
@@ -455,7 +524,7 @@ begin
   FXMLBuilder := TNativeXml.Create;
 
   FWaiter := TWaitObject.Create;
-  FWaiter.Interval := 10 * 1000;
+  FWaiter.Interval := 2 * 1000;
 end;
 
 destructor TSendAxMsgThread.Destroy;
@@ -510,7 +579,6 @@ procedure TSendAxMsgThread.DoNewSendAXMsg;
 var
   nIdx,i,N:Integer;
   nSQL:string;
-  nCompanyId,nUrl:string;
   nOut: TWorkerBusinessCommand;
   nCIU: PCompanyIdUrl;
   nSDI: PAXSendDataInfo;
@@ -530,16 +598,17 @@ begin
               with nSDI^, FXMLBuilder.Root.NodeNew('Item') do
               begin
                 NodeNew('CompanyId').ValueAsString := FCompanyId;
+                NodeNew('XTINDEXXML').ValueAsString := FXTIndexXML;
                 NodeNew('XTProcessId').ValueAsString := FXTProcessId;
                 NodeNew('RefRecid').ValueAsString := FRefRecid;
                 NodeNew('operation').ValueAsString := Foperation;
                 NodeNew('RecId').ValueAsString := FRecId;
               end;
-              gMemDataManager.UnLockData(nSDI);
               FAXDATA.Delete(nIdx);
               Break;
             end else
               Inc(nIdx);
+            gMemDataManager.UnLockData(nSDI);
           end;
     except
       on E:Exception do
@@ -551,8 +620,8 @@ begin
     FSyncCS.Leave;
   end;
   if FXMLBuilder.Root.NodeCount> 0 then
-          CallRemoteWorker(sCLI_BusinessMessage, FXMLBuilder.WriteToString, nCIU.FRemoteUrl, '', @nOut);
-        WriteLog('SendAxMsgThread');
+          CallRemoteWorker(sCLI_BusinessMessage, FXMLBuilder.WriteToString, nCIU.FRemoteUrl, nSDI.FMsgNo, @nOut);
+    //WriteLog('SendAxMsgThread');
 end;
 
 procedure TSendAxMsgThread.BuildDefaultXMLPack;

@@ -285,46 +285,87 @@ begin
     if Assigned(nNode) then
     begin
       nTmp := nNode.FindNode('RecId');
-      if Assigned(nTmp) then nZID:= nZID + ',' + nTmp.ValueAsString;
+      if Assigned(nTmp) then nZID:= nZID + ',' +''''+ nTmp.ValueAsString+'''';
     end;
   end;
   if Length(nZID) < 1 then Exit;
   nZID := Copy(nZID, 2, Length(nZID)-1);
-
-  if nResult then //成功
+  
+  if FIn.FBase.FMsgNO='0' then
   begin
-    nStr := 'Select * From %s Where RecId in (%s)';
-    nStr := Format(nStr, [sTable_XT_MsgTables, nZID]);
-
-    with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+    if nResult then //成功
     begin
-      if RecordCount < 1 then
+      nStr := 'Select * From %s Where RecId in (%s)';
+      nStr := Format(nStr, [sTable_XT_MsgTables, nZID]);
+
+      with gDBConnManager.WorkerQuery(FDBConn, nStr) do
       begin
-        nData := 'AX变更消息 [%s] 信息已丢失!';
-        nData := Format(nData, [FIn.FData]);
+        if RecordCount < 1 then
+        begin
+          nData := 'AX变更消息 [%s] 信息已丢失!';
+          nData := Format(nData, [FIn.FData]);
+          Exit;
+        end;
+      end;
+
+      FDBConn.FConn.BeginTrans;
+      try
+        nStr := 'Update %s Set SyncCounter=SyncCounter+1, SyncDone=''%s'' Where RecId in (%s)';
+        nStr := Format(nStr, [sTable_XT_MsgTables, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz',Now), nZID]);
+        gDBConnManager.WorkerExec(FDBConn, nStr);
+
+        FDBConn.FConn.CommitTrans;
+        //Finished
+      except
+        FDBConn.FConn.RollbackTrans;
+        nData := Format('AX变更消息[ %s ] 保存信息失败!', [FIn.FData]);
         Exit;
       end;
-    end;
-
-    FDBConn.FConn.BeginTrans;
-    try
-      nStr := 'Update %s Set SendNum=SendNum+1, Processflag=1 Where RecId in (%s)';
+    end else
+    begin
+      nStr := 'Update %s Set SyncCounter=SyncCounter+1 Where RecId in (%s)';
       nStr := Format(nStr, [sTable_XT_MsgTables, nZID]);
       gDBConnManager.WorkerExec(FDBConn, nStr);
-
-      FDBConn.FConn.CommitTrans;
-      //Finished
-    except
-      FDBConn.FConn.RollbackTrans;
-      nData := Format('AX变更消息[ %s ] 保存信息失败!', [FIn.FData]);
-      Exit;
+      //write status
     end;
   end else
+  if FIn.FBase.FMsgNO = '1' then
   begin
-    nStr := 'Update %s Set SendNum=SendNum+1 Where RecId in (%s)';
-    nStr := Format(nStr, [sTable_XT_MsgTables, nZID]);
-    gDBConnManager.WorkerExec(FDBConn, nStr);
-    //write status
+    if nResult then //成功
+    begin
+      nStr := 'Select * From %s Where TRANSPLANID in (%s)';
+      nStr := Format(nStr, [sTable_XT_TRANSPLAN, nZID]);
+
+      with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+      begin
+        if RecordCount < 1 then
+        begin
+          nData := 'AX变更消息 [%s] 信息已丢失!';
+          nData := Format(nData, [FIn.FData]);
+          Exit;
+        end;
+      end;
+
+      FDBConn.FConn.BeginTrans;
+      try
+        nStr := 'Update %s Set SyncCounter=SyncCounter+1, SyncDone=''%s'' Where TRANSPLANID in (%s)';
+        nStr := Format(nStr, [sTable_XT_TRANSPLAN, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz',Now), nZID]);
+        gDBConnManager.WorkerExec(FDBConn, nStr);
+
+        FDBConn.FConn.CommitTrans;
+        //Finished
+      except
+        FDBConn.FConn.RollbackTrans;
+        nData := Format('AX变更消息[ %s ] 保存信息失败!', [FIn.FData]);
+        Exit;
+      end;
+    end else
+    begin
+      nStr := 'Update %s Set SyncCounter=SyncCounter+1 Where TRANSPLANID in (%s)';
+      nStr := Format(nStr, [sTable_XT_TRANSPLAN, nZID]);
+      gDBConnManager.WorkerExec(FDBConn, nStr);
+      //write status
+    end;
   end;
 end;
 
