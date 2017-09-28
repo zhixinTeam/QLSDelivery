@@ -402,6 +402,24 @@ begin
   with FOwner do
   try
     FSyncCS.Enter;
+<<<<<<< .mine
+    nList.Clear;
+    try
+      nRepeat:= False;
+      nSQL:= 'select top 1 * from %s where SyncCounter<10 and SyncDone is null';
+      nSQL:= Format(nSQL, [sTable_XT_TRANSPLAN]);
+      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+      if RecordCount > 0 then
+||||||| .r28
+    //WriteLog('ScanAxMsgThread');
+    nList.Clear;
+    try
+      nRepeat:= False;
+      nSQL:= 'select top 1 * from %s where SyncCounter<10 and SyncDone is null';
+      nSQL:= Format(nSQL, [sTable_XT_TRANSPLAN]);
+      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+      if RecordCount > 0 then
+=======
     nRepeat:= False;
     nList := TStringList.Create; 
 
@@ -412,6 +430,7 @@ begin
     if RecordCount > 0 then
     begin
       for nIdx := 0 to FAXDATA.Count - 1 do
+>>>>>>> .r29
       begin
         nOldSDI:= FAXDATA[nIdx];
         if nOldSDI.FRecId = FieldByName('TRANSPLANID').AsString then
@@ -505,11 +524,42 @@ begin
       end;
     end;
 
+<<<<<<< .mine
+      if nList.Count> 0 then
+      try
+        FDBConn.FConn.BeginTrans;
+        for nIdx := 0 to nList.Count - 1 do
+          gDBConnManager.WorkerExec(FDBConn, nList[nIdx]);
+        FDBConn.FConn.CommitTrans;
+      except
+        if FDBConn.FConn.InTransaction then
+          FDBConn.FConn.RollbackTrans;
+        raise;
+      end;
+    except
+      on E:Exception do
+      begin
+        WriteLog('DoNewScanMsg: ' + E.Message);
+      end;
+||||||| .r28
+      if nList.Count> 0 then
+      for nIdx := 0 to nList.Count - 1 do
+      begin
+        gDBConnManager.ExecSQL(nList[nIdx]);
+        nList.Delete(nIdx);
+      end;
+    except
+      on E:Exception do
+      begin
+        WriteLog('DoNewScanMsg: ' + E.Message);
+      end;
+=======
     if nList.Count> 0 then
     for nIdx := 0 to nList.Count - 1 do
     begin
       gDBConnManager.ExecSQL(nList[nIdx]);
       nList.Delete(nIdx);
+>>>>>>> .r29
     end;
   finally
     nList.Free;
@@ -576,8 +626,111 @@ begin
   end;
 end;
 
+<<<<<<< .mine
+procedure TSendAxMsgThread.DoNewSendAXMsg;
+var
+  nIdx,i,N:Integer;
+  nSQL:string;
+  nOut: TWorkerBusinessCommand;
+  nCIU: PCompanyIdUrl;
+  nSDI: PAXSendDataInfo;
+begin
+  with FOwner do
+  try
+    FSyncCS.Enter;
+    try
+          nCIU:= GetCompanyId;
+          BuildDefaultXMLPack;
+          nIdx := 0;
+          while nIdx < FAXDATA.Count do
+          begin
+            nSDI:= FAXDATA[nIdx];
+            if UpperCase(nCIU.FCompanyId) = UpperCase(nSDI.FCompanyId) then
+            begin
+              with nSDI^, FXMLBuilder.Root.NodeNew('Item') do
+              begin
+                NodeNew('CompanyId').ValueAsString := FCompanyId;
+                NodeNew('XTINDEXXML').ValueAsString := FXTIndexXML;
+                NodeNew('XTProcessId').ValueAsString := FXTProcessId;
+                NodeNew('RefRecid').ValueAsString := FRefRecid;
+                NodeNew('operation').ValueAsString := Foperation;
+                NodeNew('RecId').ValueAsString := FRecId;
+              end;
+              FAXDATA.Delete(nIdx);
+              //Break;
+            end else
+              Inc(nIdx);
+            gMemDataManager.UnLockData(nSDI);
+          end;
+    except
+      on E:Exception do
+      begin
+        WriteLog('DoNewSendAXMsg: ' + E.Message);
+      end;
+    end;
+  finally
+    FSyncCS.Leave;
+  end;
+  
+  if FXMLBuilder.Root.NodeCount> 0 then
+          CallRemoteWorker(sCLI_BusinessMessage, FXMLBuilder.WriteToString, nCIU.FRemoteUrl, nSDI.FMsgNo, @nOut);
+    //WriteLog('SendAxMsgThread');
+end;
+
+||||||| .r28
+procedure TSendAxMsgThread.DoNewSendAXMsg;
+var
+  nIdx,i,N:Integer;
+  nSQL:string;
+  nOut: TWorkerBusinessCommand;
+  nCIU: PCompanyIdUrl;
+  nSDI: PAXSendDataInfo;
+begin
+  with FOwner do
+  try
+    FSyncCS.Enter;
+    try
+          nCIU:= GetCompanyId;
+          BuildDefaultXMLPack;
+          nIdx := 0;
+          while nIdx < FAXDATA.Count do
+          begin
+            nSDI:= FAXDATA[nIdx];
+            if UpperCase(nCIU.FCompanyId) = UpperCase(nSDI.FCompanyId) then
+            begin
+              with nSDI^, FXMLBuilder.Root.NodeNew('Item') do
+              begin
+                NodeNew('CompanyId').ValueAsString := FCompanyId;
+                NodeNew('XTINDEXXML').ValueAsString := FXTIndexXML;
+                NodeNew('XTProcessId').ValueAsString := FXTProcessId;
+                NodeNew('RefRecid').ValueAsString := FRefRecid;
+                NodeNew('operation').ValueAsString := Foperation;
+                NodeNew('RecId').ValueAsString := FRecId;
+              end;
+              FAXDATA.Delete(nIdx);
+              Break;
+            end else
+              Inc(nIdx);
+            gMemDataManager.UnLockData(nSDI);
+          end;
+    except
+      on E:Exception do
+      begin
+        WriteLog('DoNewSendAXMsg: ' + E.Message);
+      end;
+    end;
+  finally
+    FSyncCS.Leave;
+  end;
+  if FXMLBuilder.Root.NodeCount> 0 then
+          CallRemoteWorker(sCLI_BusinessMessage, FXMLBuilder.WriteToString, nCIU.FRemoteUrl, nSDI.FMsgNo, @nOut);
+    //WriteLog('SendAxMsgThread');
+end;
+
+=======
 //Date: 2017-09-28
 //Desc: Ä¬ÈÏXML²ÎÊý
+>>>>>>> .r29
 procedure TSendAxMsgThread.BuildDefaultXMLPack;
 begin
   with FXMLBuilder do
