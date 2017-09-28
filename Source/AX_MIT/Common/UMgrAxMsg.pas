@@ -506,10 +506,15 @@ begin
     end;
 
     if nList.Count> 0 then
-    for nIdx := 0 to nList.Count - 1 do
-    begin
-      gDBConnManager.ExecSQL(nList[nIdx]);
-      nList.Delete(nIdx);
+    try
+      FDBConn.FConn.BeginTrans;
+      for nIdx := 0 to nList.Count - 1 do
+        gDBConnManager.WorkerExec(FDBConn, nList[nIdx]);
+      FDBConn.FConn.CommitTrans;
+    except
+      if FDBConn.FConn.InTransaction then
+        FDBConn.FConn.RollbackTrans;
+      raise;
     end;
   finally
     nList.Free;
