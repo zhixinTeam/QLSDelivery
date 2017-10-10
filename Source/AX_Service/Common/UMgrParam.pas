@@ -104,6 +104,8 @@ type
 var
   gParamManager: TParamManager = nil;
   //全局使用
+  gCompanyAct,gURLAddr:string;
+  //公司账套,上传接口地址-全局使用
 
 implementation
 

@@ -12,6 +12,7 @@ interface
 uses
   Forms, Classes, SysUtils, ULibFun, UMITConst,
   //常规定义
+  UWorkerBussinessMessage, UMITPacker, UMessageScan, UWorkerBusiness,
   UBusinessWorker, UBusinessPacker, UMgrDBConn, UMgrParam, UMgrPlug,
   UMgrChannel, UTaskMonitor, UChannelChooser, USAPConnection, USysShareMem,
   USysLoger, UBaseObject;
@@ -92,6 +93,8 @@ begin
 
   gTaskMonitor.StartMon;
   //mon task start
+  gMessageScan.Start;
+  //消息扫描启动
 end;
 
 procedure TMainEventWorker.AfterStopServer;
@@ -99,7 +102,8 @@ begin
   inherited;
   gTaskMonitor.StopMon;
   //stop mon task
-
+  gMessageScan.Stop;
+  //停止消息扫描
   {$IFDEF AutoChannel}
   gChannelChoolser.StopRefresh;
   {$ENDIF} //channel
@@ -166,6 +170,10 @@ begin
   gChannelChoolser.AutoUpdateLocal := False;
   gChannelChoolser.AddChanels(gParamManager.URLRemote.Text);
   {$ENDIF}
+
+  gMessageScan:=TMessageScan.Create;
+  //消息表扫描线程
+  gMessageScan.LoadConfig(gPath+'MessageScan.xml');
 
   with nParam do
   begin
