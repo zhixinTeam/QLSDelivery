@@ -10,7 +10,7 @@ interface
 uses
   Windows, Classes, SysUtils, UBusinessPacker, UBusinessWorker, UBusinessConst,
   UClientWorker, UMITPacker, UWaitItem, ULibFun,
-  {$IFDEF QHSN} UMultiJS_Reply, {$ELSE}UMultiJS,{$ENDIF} USysDB, USysLoger;
+  {$IFDEF MultiReplay} UMultiJS_Reply, {$ELSE}UMultiJS,{$ENDIF} USysDB, USysLoger;
 
 type
   TSysParam = record

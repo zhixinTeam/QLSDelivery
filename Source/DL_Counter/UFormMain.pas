@@ -10,7 +10,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  {$IFDEF QHSN} UMultiJS_Reply, {$ELSE}UMultiJS,{$ENDIF}
+  {$IFDEF MultiReplay} UMultiJS_Reply, {$ELSE}UMultiJS,{$ENDIF}
   USysConst, UFrameJS, cxGraphics, cxControls, cxLookAndFeels,
   cxLookAndFeelPainters, Menus, ImgList, dxorgchr, cxSplitter, ComCtrls,
   ToolWin, ExtCtrls, UMemDataPool;
