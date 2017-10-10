@@ -12,6 +12,9 @@ uses
   UBusinessWorker, UWaitItem, ULibFun, USysDB, UMITConst, USysLoger,
   UBusinessPacker, NativeXml, UMgrParam, UWorkerBusiness;
 
+const LessMark    = '<=';
+const GreaterMark = '>';
+
 type
   TAXSyncer = class;
   TAXSyncThread = class(TThread)
@@ -30,6 +33,8 @@ type
     //磅单同步计时计数
     //FNumAXBASESync: Integer;
     //基础表同步计数计时
+    FNumFaildDataSync: Integer;
+    //基础表同步计数计时
     FWaiter: TWaitObject;
     //等待对象
     FSyncLock: TCrossProcWaitObject;
@@ -38,11 +43,11 @@ type
     function GetOnLineModel: string;
     //获取在线模式
     procedure DoNewAXSync;
-    procedure DoNewBillSyncAX;
-    procedure DoDelBillSyncAX;
-    procedure DoEmptyBillSyncAX;
-    procedure DoPoundSyncAX;
-    procedure DoPurSyncAX;
+    procedure DoNewBillSyncAX(nMark :string);
+    procedure DoDelBillSyncAX(nMark :string);
+    procedure DoEmptyBillSyncAX(nMark :string);
+    procedure DoPoundSyncAX(nMark :string);
+    procedure DoPurSyncAX(nMark :string);
     procedure Execute; override;
     //执行线程
   public
@@ -189,6 +194,8 @@ begin
   //init counter
   FNumPoundSync:=0;
   //FNumAXBASESync:=0;
+  FNumFaildDataSync := 0;
+  
   while not Terminated do
   try
     FWaiter.EnterWait;
@@ -198,6 +205,7 @@ begin
     //inc counter
     Inc(FNumPoundSync);
     //Inc(FNumAXBASESync);
+    Inc(FNumFaildDataSync);
 
     if FNumAXSync >= 3 then
       FNumAXSync := 0;
@@ -208,8 +216,11 @@ begin
     {if FNumAXBASESync>=30 then
       FNumAXBASESync:=0; }
     //同步基础信息
-    
-    if (FNumAXSync <> 0) and (FNumPoundSync<>0)  then Continue; //and (FNumAXBASESync<>0)
+    if FNumFaildDataSync>=720 then
+      FNumFaildDataSync:=0;
+    //同步失败数据到AX: 1次/12小时
+
+    if (FNumAXSync <> 0) and (FNumPoundSync<>0) and (FNumFaildDataSync<>0) then Continue; //and (FNumAXBASESync<>0)
     //无业务可做
 
     //--------------------------------------------------------------------------
@@ -230,9 +241,9 @@ begin
         begin
           WriteLog('同步提货单到AX...');
           nInit := GetTickCount;
-          DoNewBillSyncAX;
-          DoDelBillSyncAX;
-          DoEmptyBillSyncAX;
+          DoNewBillSyncAX(LessMark);
+          DoDelBillSyncAX(LessMark);
+          DoEmptyBillSyncAX(LessMark);
           WriteLog('同步提货单到AX完毕,耗时: ' + IntToStr(GetTickCount - nInit));
         end else
         begin
@@ -246,10 +257,32 @@ begin
         begin
           WriteLog('同步磅单到AX...');
           nInit := GetTickCount;
-          DoPoundSyncAX;
-          DoPurSyncAX;
+          DoPoundSyncAX(LessMark);
+          DoPurSyncAX(LessMark);
           //DoDuanSyncAX;
           WriteLog('同步磅单到AX完毕,耗时: ' + IntToStr(GetTickCount - nInit));
+        end else
+        begin
+          WriteLog('离线模式');
+        end;
+      end;
+
+      if FNumFaildDataSync = 0 then
+      begin
+        if nModel = sFlag_Yes then
+        begin
+          WriteLog('同步失败提货单到AX...');
+          nInit := GetTickCount;
+          DoNewBillSyncAX(GreaterMark);
+          DoDelBillSyncAX(GreaterMark);
+          DoEmptyBillSyncAX(GreaterMark);
+          WriteLog('同步失败提货单到AX完毕,耗时: ' + IntToStr(GetTickCount - nInit));
+
+          WriteLog('同步失败磅单到AX...');
+          nInit := GetTickCount;
+          DoPoundSyncAX(GreaterMark);
+          DoPurSyncAX(GreaterMark);
+          WriteLog('同步失败磅单到AX完毕,耗时: ' + IntToStr(GetTickCount - nInit));
         end else
         begin
           WriteLog('离线模式');
@@ -295,7 +328,7 @@ end;
 
 //Date: 2016-07-09
 //lih: 同步提货单到AX
-procedure TAXSyncThread.DoNewBillSyncAX;
+procedure TAXSyncThread.DoNewBillSyncAX(nMark :string);
 var
   nErr: Integer;
   nSQL,nStr: string;
@@ -308,12 +341,12 @@ begin
     nSQL := 'select L_ID From '+sTable_Bill+' where (L_EmptyOut<>''Y'') '+
             'and ((L_FYAX <> ''1'') or (L_FYAX is null)) '+
             'and (L_PDate is not null) '+
-            'and L_FYNUM<=3 ';
+            'and L_FYNUM'+ nMark +'3 ';
     {$ELSE}
     nSQL := 'select L_ID From %s where (L_EmptyOut<>''Y'') '+
             'and ((L_FYAX <> ''1'') or (L_FYAX is null)) '+
             'and (L_PDate is not null) '+
-            'and L_FYNUM<=3 ';
+            'and L_FYNUM'+ nMark +'3 ';
     nSQL := Format(nSQL,[sTable_Bill]);
     {$ENDIF}
 
@@ -351,7 +384,7 @@ end;
 
 //Date: 2016-07-09
 //lih: 同步已删除提货单到AX
-procedure TAXSyncThread.DoDelBillSyncAX;
+procedure TAXSyncThread.DoDelBillSyncAX(nMark :string);
 var
   nErr: Integer;
   nSql,nStr: string;
@@ -360,7 +393,7 @@ var
 begin
   try
     FListA.Clear;
-    nSQL := 'select L_ID From %s where (L_FYAX = ''1'') and (L_FYDEL = ''0'') and L_FYDELNUM<=3 ';
+    nSQL := 'select L_ID From %s where (L_FYAX = ''1'') and (L_FYDEL = ''0'') and L_FYDELNUM'+ nMark +'3 ';
     nSQL := Format(nSQL,[sTable_BillBak]);
     with gDBConnManager.WorkerQuery(FDBConn,nSql) do
     begin
@@ -396,7 +429,7 @@ end;
 
 //Date: 2016-07-09
 //lih: 同步空车出厂提货单到AX
-procedure TAXSyncThread.DoEmptyBillSyncAX;
+procedure TAXSyncThread.DoEmptyBillSyncAX(nMark :string);
 var
   nErr: Integer;
   nSql,nStr: string;
@@ -409,7 +442,7 @@ begin
     nSQL := 'select L_ID From %s where (L_EmptyOut=''Y'') and '+
             '(L_FYAX = ''1'') and '+
             '((L_EOUTAX <> ''1'') or (L_EOUTAX is null)) and '+
-            'L_EOUTNUM<=3 ';
+            'L_EOUTNUM'+ nMark +'3 ';
     nSQL := Format(nSQL,[sTable_Bill]);
     with gDBConnManager.WorkerQuery(FDBConn,nSql) do
     begin
@@ -445,7 +478,7 @@ end;
 
 //Date: 2016-07-09
 //lih: 同步销售磅单到AX
-procedure TAXSyncThread.DoPoundSyncAX;
+procedure TAXSyncThread.DoPoundSyncAX(nMark :string);
 var
   nErr: Integer;
   nSql,nStr: string;
@@ -459,7 +492,7 @@ begin
             '(L_EmptyOut <> ''Y'') and '+
             '((L_BDAX <> ''1'') or (L_BDAX is null)) and '+
             '(L_BDAX <> ''2'') and '+
-            '(L_FYAX=''1'') and L_BDNUM<=3';
+            '(L_FYAX=''1'') and L_BDNUM'+ nMark +'3 ';
     nSQL := Format(nSQL,[sTable_Bill]);
     with gDBConnManager.WorkerQuery(FDBConn,nSql) do
     begin
@@ -495,7 +528,7 @@ end;
 
 //Date: 2016-07-09
 //lih: 同步采购磅单到AX
-procedure TAXSyncThread.DoPurSyncAX;
+procedure TAXSyncThread.DoPurSyncAX(nMark :string);
 var
   nErr: Integer;
   nSql,nStr: string;
@@ -507,8 +540,8 @@ begin
     nSQL := 'select D_ID From %s '+
             'where (D_Status=''O'') and '+
             '((D_BDAX <> ''1'') or (D_BDAX is null)) and '+
-            'D_BDNUM<=3';
-    nSQL := Format(nSQL,[sTable_OrderDtl]);
+            'D_BDNUM'+ nMark +'3 '+ ' and ( D_YSResult = ''%s'' or D_YSResult is null) ';
+    nSQL := Format(nSQL,[sTable_OrderDtl, sFlag_Yes]);
     with gDBConnManager.WorkerQuery(FDBConn,nSql) do
     begin
       if RecordCount<1 then

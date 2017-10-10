@@ -84,7 +84,8 @@ type
 implementation
 
 uses
-  UMgrHardHelper, UMgrCodePrinter, UMgrQueue, UMultiJS_Reply, UTaskMonitor,
+  UMgrHardHelper, UMgrCodePrinter, UMgrQueue, {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF}
+  UTaskMonitor,
   UMgrTruckProbe, UMgrRFID102;
 
 //Date: 2012-3-13

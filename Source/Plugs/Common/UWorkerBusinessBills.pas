@@ -704,7 +704,8 @@ begin
     end;
     if nBxz and (nOnLineModel=sFlag_Yes) then
     begin
-      nStr := 'select IsNull(SUM(L_Value*L_Price),''0'') as L_TotalMoney from %s where L_BDAX = ''2'' and L_CusID=''%s'' ';
+      nStr := 'select IsNull(SUM(L_Value*L_Price+L_Value*L_TransPrice),''0'')'+
+              ' as L_TotalMoney from %s where L_BDAX = ''2'' and L_CusID=''%s'' ';
       nStr := Format(nStr,[sTable_Bill, FListA.Values['CusID']]);
       with gDBConnManager.WorkerQuery(FDBConn, nStr) do
       if RecordCount > 0 then
@@ -718,17 +719,18 @@ begin
   FListB.Text := PackerDecodeStr(FListA.Values['Bills']);
   //unpack bill list
   nVal := 0;
+
   for nIdx:=0 to FListB.Count - 1 do
   begin
     FListC.Text := PackerDecodeStr(FListB[nIdx]);
     //get bill info
 
     with FListC do
-      nVal := nVal + Float2Float(StrToFloat(Values['Price']) *
+      nVal := nVal + Float2Float((StrToFloat(Values['Price'])+StrToFloatdef(Values['TransPrice'],0)) *
                      StrToFloat(Values['Value']), cPrecision, True);
     //xxxx
   end;
-  
+  //两票制增加运费计算
   if nBxz then
   begin
     if nOnLineModel=sFlag_Yes then   //在线模式，远程获取客户资金额度
@@ -783,7 +785,7 @@ begin
       raise Exception.Create(nOut.FData); }
       //xxxxx
       //{$ENDIF}
-      
+
       FOut.FData := FOut.FData + nOut.FData + ',';
       //combine bill
       FListC.Text := PackerDecodeStr(FListB[nIdx]);
@@ -804,8 +806,9 @@ begin
               SF('L_Value', FListC.Values['Value'], sfVal),
               SF('L_PlanQty', FListC.Values['Value'], sfVal),
               SF('L_Price', FListC.Values['Price'], sfVal),
+              SF('L_TransPrice', FListC.Values['TransPrice'], sfVal),
               SF('L_LineRecID', FListC.Values['RECID']),
-              
+
               SF('L_ZKMoney', nFixMoney),
               SF('L_Truck', FListA.Values['Truck']),
               SF('L_Status', sFlag_BillNew),
@@ -1102,7 +1105,7 @@ begin
       Values['ZhiKa'] := FieldByName('L_ZhiKa').AsString;
       Values['ZKMoney'] := FieldByName('L_ZKMoney').AsString;
     end;
-    
+
     nVal := FieldByName('L_Value').AsFloat;
     nMon := nVal * FieldByName('L_Price').AsFloat;
     nMon := Float2Float(nMon, cPrecision, True);
@@ -1355,7 +1358,7 @@ begin
   Result := False;
   //init
 
-  nStr := 'Select L_ZhiKa,L_Value,L_Price,L_CusID,L_OutFact,L_ZKMoney,L_LineRecID From %s ' +
+  nStr := 'Select L_ZhiKa,L_Value,L_Price,L_CusID,L_OutFact,L_ZKMoney,L_LineRecID,L_TransPrice From %s ' +
           'Where L_ID=''%s''';
   nStr := Format(nStr, [sTable_Bill, FIn.FData]);
 
@@ -1377,16 +1380,16 @@ begin
       nData := Format(nData, [FIn.FData]);
       Exit;
     end;
-    
+
     nCus := FieldByName('L_CusID').AsString;
     nZK  := FieldByName('L_ZhiKa').AsString;
     nFix := FieldByName('L_ZKMoney').AsString;
 
     nVal := FieldByName('L_Value').AsFloat;
-    nMoney := Float2Float(nVal*FieldByName('L_Price').AsFloat, cPrecision, True);
+    nMoney := Float2Float(nVal*(FieldByName('L_Price').AsFloat+FieldByName('L_TransPrice').AsFloat), cPrecision, True);
     nLineRecID := FieldByName('L_LineRecID').AsString;
   end;
-                   
+
   nStr := 'Select R_ID,T_HKBills,T_Bill From %s ' +
           'Where T_HKBills Like ''%%%s%%''';
   nStr := Format(nStr, [sTable_ZTTrucks, FIn.FData]);
@@ -1510,7 +1513,7 @@ begin
     nStr := 'Delete From %s Where L_ID=''%s''';
     nStr := Format(nStr, [sTable_Bill, FIn.FData]);
     gDBConnManager.WorkerExec(FDBConn, nStr);
-    
+
     FDBConn.FConn.CommitTrans;
 
     nStr := 'select IsNull(SUM(L_Value),''0'') as SendValue from %s where L_LineRecID=''%s'' ';
@@ -1525,7 +1528,7 @@ begin
     nStr := Format(nStr, [sTable_ZhiKaDtl, nSendValue, nLineRecID]);
     //xxxxx
     gDBConnManager.WorkerExec(FDBConn, nStr);
-    
+
     Result := True;
   except
     FDBConn.FConn.RollbackTrans;
@@ -1839,7 +1842,7 @@ begin
           'L_StockName,L_Truck,L_Value,L_Price,L_ZKMoney,L_Status,' +
           'L_NextStatus,L_Card,L_IsVIP,L_PValue,L_MValue,L_SalesType,'+
           'L_EmptyOut,L_LineRecID,L_InvLocationId,L_InvCenterId,'+
-          'L_IfNeiDao,L_TriaTrade From $Bill b ';
+          'L_IfNeiDao,L_TriaTrade,L_TransPrice From $Bill b ';
   //xxxxx
 
   if nIsBill then
@@ -1879,6 +1882,7 @@ begin
       FStockName  := FieldByName('L_StockName').AsString;
       FValue      := FieldByName('L_Value').AsFloat;
       FPrice      := FieldByName('L_Price').AsFloat;
+      FTransPrice := FieldByName('L_TransPrice').AsFloat;
 
       FCard       := FieldByName('L_Card').AsString;
       FIsVIP      := FieldByName('L_IsVIP').AsString;
@@ -1908,7 +1912,7 @@ begin
       FCenterID     := FieldByName('L_InvCenterId').AsString;
       FNeiDao       := FieldByName('L_IfNeiDao').AsString;
       FTriaTrade    := FieldByName('L_TriaTrade').AsString;
-      
+
       FSelected := True;
 
       Inc(nIdx);
@@ -1977,7 +1981,7 @@ begin
        if (RecordCount > 0) and (Fields[0].AsString = sFlag_No) then
         nBills[0].FNextStatus := sFlag_TruckZT;
       //袋装不过磅
-    end; 
+    end;
 
     for nIdx:=Low(nBills) to High(nBills) do
     begin
@@ -2120,7 +2124,6 @@ begin
            FNextStatus := sFlag_TruckBFM
       else FNextStatus := sFlag_TruckOut;
 
-      {$IFDEF QHSN}
       nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
               'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
       nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
@@ -2130,7 +2133,7 @@ begin
         FCenterID:= FieldByName('Z_CenterID').AsString;
         FKw:= FieldByName('Z_Name').AsString;
       end;
-      
+
       if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
         FStockName, FCenterID, @nOut) then
       begin
@@ -2158,10 +2161,19 @@ begin
               SF('L_HYDan', nReiNo),
               SF('L_CW', FKw)
               ], sTable_Bill, SF('L_ID', FID), False);
-      {$ELSE}
-      nSQL := MakeSQLByStr([SF('L_Status', FStatus),              SF('L_NextStatus', FNextStatus),              SF('L_LadeTime', sField_SQLServer_Now, sfVal),              SF('L_LadeMan', FIn.FBase.FFrom.FUser),              SF('L_HYDan', FSampleID),              SF('L_EmptyOut', FYSValid),              SF('L_WorkOrder', FWorkOrder),              SF('L_CW', FKw)              ], sTable_Bill, SF('L_ID', FID), False);      {$ENDIF}
+//      {$ELSE}
+//      nSQL := MakeSQLByStr([SF('L_Status', FStatus),
+//              SF('L_NextStatus', FNextStatus),
+//              SF('L_LadeTime', sField_SQLServer_Now, sfVal),
+//              SF('L_LadeMan', FIn.FBase.FFrom.FUser),
+//              SF('L_HYDan', FSampleID),
+//              SF('L_EmptyOut', FYSValid),
+//              SF('L_WorkOrder', FWorkOrder),
+//              SF('L_CW', FKw)
+//              ], sTable_Bill, SF('L_ID', FID), False);
+//      {$ENDIF}
       FListA.Add(nSQL);
-      
+
       nSQL := 'Update %s Set T_InLade=%s Where T_HKBills Like ''%%%s%%''';
       nSQL := Format(nSQL, [sTable_ZTTrucks, sField_SQLServer_Now, FID]);
       FListA.Add(nSQL);
@@ -2174,7 +2186,7 @@ begin
     for nIdx:=Low(nBills) to High(nBills) do
     with nBills[nIdx] do
     begin
-      {$IFDEF QHSN}
+
       nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
               'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
       nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
@@ -2184,7 +2196,7 @@ begin
         FCenterID:= FieldByName('Z_CenterID').AsString;
         FKw:= FieldByName('Z_Name').AsString;
       end;
-      
+
       if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
         FStockName, FCenterID, @nOut) then
       begin
@@ -2201,7 +2213,7 @@ begin
 
       nReiNo:=nOut.FData; //获取式样编号
       WriteLog('['+FID+']GetSampleID: '+nReiNo);
-      
+
       nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckFH),
               SF('L_NextStatus', sFlag_TruckBFM),
               SF('L_LadeTime', sField_SQLServer_Now, sfVal),
@@ -2212,8 +2224,17 @@ begin
               SF('L_HYDan', nReiNo),
               SF('L_CW', FKw)
               ], sTable_Bill, SF('L_ID', FID), False);
-      {$ELSE}
-      nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckFH),              SF('L_NextStatus', sFlag_TruckBFM),              SF('L_LadeTime', sField_SQLServer_Now, sfVal),              SF('L_LadeMan', FIn.FBase.FFrom.FUser),              SF('L_HYDan', FSampleID),              SF('L_EmptyOut', FYSValid),              SF('L_WorkOrder', FWorkOrder),              SF('L_CW', FKw)              ], sTable_Bill, SF('L_ID', FID), False);      {$ENDIF}
+//      {$ELSE}
+//      nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckFH),
+//              SF('L_NextStatus', sFlag_TruckBFM),
+//              SF('L_LadeTime', sField_SQLServer_Now, sfVal),
+//              SF('L_LadeMan', FIn.FBase.FFrom.FUser),
+//              SF('L_HYDan', FSampleID),
+//              SF('L_EmptyOut', FYSValid),
+//              SF('L_WorkOrder', FWorkOrder),
+//              SF('L_CW', FKw)
+//              ], sTable_Bill, SF('L_ID', FID), False);
+//      {$ENDIF}
       FListA.Add(nSQL);
 
       nSQL := 'Update %s Set T_InLade=%s Where T_HKBills Like ''%%%s%%''';
@@ -2229,7 +2250,7 @@ begin
     nBxz := True;
     nInt := -1;
     nMVal := 0;
-    
+
     for nIdx:=Low(nBills) to High(nBills) do
     if nBills[nIdx].FPoundID = sFlag_Yes then
     begin
@@ -2362,7 +2383,8 @@ begin
           end;
           if nBxz and (nOnLineModel=sFlag_Yes) then
           begin
-            nStr := 'select IsNull(SUM(L_Value*L_Price),''0'') as L_TotalMoney from %s where L_BDAX=''2'' and L_CusID=''%s'' ';
+            nStr := 'select IsNull(SUM(L_Value*L_Price+L_Value*L_TransPrice),''0'')'+
+                    ' as L_TotalMoney from %s where L_BDAX = ''2'' and L_CusID=''%s'' ';
             nStr := Format(nStr,[sTable_Bill, FCusID]);
             with gDBConnManager.WorkerQuery(FDBConn, nStr) do
             if RecordCount > 0 then
@@ -2489,7 +2511,7 @@ begin
               WriteLog('['+FID+']Update YKMoney: '+nSQL);
             end;
           end;
-          
+
           nSQL := MakeSQLByStr([SF('L_Value', FValue, sfVal)
                   ], sTable_Bill, SF('L_ID', FID), False);
           FListA.Add(nSQL); //更新提货量
@@ -2530,7 +2552,7 @@ begin
         end;
       end;
     end;
-    
+
     nVal := 0;
     for nIdx:=Low(nBills) to High(nBills) do
     with nBills[nIdx] do
@@ -2661,7 +2683,7 @@ begin
     begin
       FListB.Add(FID);
       //交货单列表
-      
+
       nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckOut),
               SF('L_NextStatus', ''),
               SF('L_Card', ''),

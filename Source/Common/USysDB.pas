@@ -181,6 +181,7 @@ ResourceString
   sFlag_HYValue       = 'HYMaxValue';                //化验批次量
   sFlag_SaleManDept   = 'SaleManDepartment';         //业务员部门编号
   sFlag_ShadowWeight  = 'ShadowWeight';              //影子重量
+  sFlag_OrderLimValue = 'OrderLimValue';                //订单开单限值
   
   sFlag_PDaiWuChaZ    = 'PoundDaiWuChaZ';            //袋装正误差 10t-150t
   sFlag_PDaiWuChaF    = 'PoundDaiWuChaF';            //袋装负误差 10t-150t
@@ -887,7 +888,7 @@ const
        'D_TPrice Char(1) Default ''Y'', D_LineNum numeric(28, 12) Default 0,'+
        'D_SalesStatus int Default(0), DATAAREAID varChar(3),'+
        'D_RECID bigint not null default ((0)),D_Blocked int not null default((0)),'+
-       'D_Memo varChar(200), D_TotalValue $Float)';
+       'D_Memo varChar(200), D_TotalValue $Float, D_TransPrice $Float Default 0)';
   {-----------------------------------------------------------------------------
    纸卡明细:ZhiKaDtl
    *.R_ID:记录编号
@@ -905,6 +906,7 @@ const
    *.D_Blocked：已停止
    *.D_Memo: 备注
    *.D_TotalValue: 订单总量
+   *.D_TransPrice:运费单价
   -----------------------------------------------------------------------------}
 
   sSQL_NewBill = 'Create Table $Table(R_ID $Inc, L_ID varChar(20),' +
@@ -941,7 +943,7 @@ const
        'L_WorkOrder varchar(10), L_KHSBM varchar(20), L_OrgXSQYMC varChar(20),'+
        'L_IfHYPrint Char(1), L_IfFenChe Char(1), L_IfNeiDao Char(1),'+
        'L_TriaTrade Char(1), L_ContQuota Char(1),L_ToAddr varChar(100),'+
-       'L_IdNumber varChar(50))';
+       'L_IdNumber varChar(50), L_TransPrice $Float Default 0)';
   {-----------------------------------------------------------------------------
    交货单表: Bill
    *.R_ID: 编号
@@ -1010,6 +1012,7 @@ const
    *.L_ContQuota: 是否专款专用（0：否 1：是）
    *.L_ToAddr: 去向（送货地点）
    *.L_IdNumber: 司机身份证号
+   *.L_TransPrice:运费单价
   -----------------------------------------------------------------------------}
   sSQL_NewOrdBaseMain = 'Create Table $Table(R_ID $Inc, M_ID varChar(20),' +
        'M_CID varChar(50), M_BStatus Char(1), ' +
@@ -1257,7 +1260,7 @@ const
        'P_Valid Char(1), P_PrintNum Integer Default 1,' +
        'P_DelMan varChar(32), P_DelDate DateTime, P_KZValue $Float,'+
        'P_HisTruck varchar(15), P_HisPValue decimal(15,5),'+
-       'P_KWDate datetime)';
+       'P_KWDate datetime, P_HisMValue decimal(15,5), P_KwMan varChar(32))';
   {-----------------------------------------------------------------------------
    过磅记录: Materails
    *.P_ID: 编号
@@ -1285,7 +1288,8 @@ const
    *.P_HisTruck: 勘误车号
    *.P_HisPValue: 勘误皮重
    *.P_KWDate: 勘误日期
-
+   *.P_HisMValue: 勘误毛重
+   *.P_KwMan: 勘误人员
   -----------------------------------------------------------------------------}
 
   sSQL_NewPicture = 'Create Table $Table(R_ID $Inc, P_ID varChar(15),' +
@@ -1967,7 +1971,10 @@ const
        'AX_CUSTOMERNAME varChar(400), AX_TRANSPORTER varChar(50), AX_TRANSPLANID varChar(50), '+
        'AX_SALESID varChar(50), AX_SALESLINERECID bigint, AX_COMPANYID varChar(30), '+
        'AX_Destinationcode varChar(32), AX_WMSLocationId varChar(32), AX_FYPlanStatus varChar(32), '+
-       'AX_InventLocationId varChar(32), AX_xtDInventCenterId varChar(32))';
+       'AX_InventLocationId varChar(32), AX_xtDInventCenterId varChar(32), '+
+       'AX_WEIGHTSTATUS int not null default ((0)), AX_POST int not null default ((0)), '+
+       'AX_RECVERSION int not null default ((0)), AX_PARTITION bigint not null default ((0)), '+
+       'AX_CARDID varChar(20), AX_MODE varChar(10), AX_RESULT varChar(10))';
   {-----------------------------------------------------------------------------
    AX提货信息表：E_AxPlanInfo
    *.AX_PLANQTY: 计划提货量
@@ -1988,15 +1995,26 @@ const
    *.AX_FYPlanStatus：状态
    *.AX_InventLocationId：仓库
    *.AX_xtDInventCenterId：生产线
+   //新增
+   *.AX_WEIGHTSTATUS：
+   *.AX_POST
+   *.AX_RECVERSION
+   *.AX_PARTITION
+   *.AX_CARDID
+   *.AX_MODE
+   *.AX_RESULT
   -----------------------------------------------------------------------------}
   sSQL_NewAxMsgList = 'Create Table $Table(R_ID $Inc, AX_ProcessId varChar(30), ' +
-       'AX_Recid varChar(30), AX_CompanyId varChar(30), AX_Status varChar(10))';
+       'AX_Recid varChar(30), AX_CompanyId varChar(30), AX_Status varChar(10), ' +
+       'AX_SyncTime int Default 0,AX_XtIndexXml varChar(2000))';
   {-----------------------------------------------------------------------------
    AX消息队列表：E_AxMsgList
    *.AX_ProcessId: 业务ID
    *.AX_Recid: 行ID
    *.AX_CompanyId：账套
    *.AX_Status: 状态
+   *.AX_SyncTime: 同步次数
+   *.AX_XtIndexXml: 参数XML  存储提货信息
   -----------------------------------------------------------------------------}
 
 //------------------------------------------------------------------------------

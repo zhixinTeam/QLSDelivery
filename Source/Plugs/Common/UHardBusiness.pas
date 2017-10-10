@@ -11,7 +11,7 @@ uses
   Windows, Classes, Controls, SysUtils, UMgrDBConn, UMgrParam, DB,
   UBusinessWorker, UBusinessConst, UBusinessPacker, UMgrQueue,
   UMgrHardHelper, U02NReader, UMgrERelay, UMgrRemotePrint,
-  UMultiJS_Reply, UMgrLEDDisp, UMgrRFID102, UMITConst;
+  {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF} UMgrLEDDisp, UMgrRFID102, UMITConst;
 
 procedure WhenReaderCardArrived(const nReader: THHReaderItem);
 procedure WhenHYReaderCardArrived(const nReader: PHYReaderItem);
@@ -655,7 +655,6 @@ begin
   end;
   //采购磁卡直接抬杆
 
-  {$IFDEF QHSN}
   nPLine := nil;
   //nPTruck := nil;
 
@@ -687,7 +686,6 @@ begin
   finally
     SyncLock.Leave;
   end;
-  {$ENDIF}
 
   if not SaveLadingBills(sFlag_TruckIn, nTrucks) then
   begin
@@ -713,7 +711,6 @@ begin
   end;
   {$ENDIF}
 
-  {$IFDEF QHSN}
   nDB := nil;
   with gParamManager.ActiveParam^ do
   Try
@@ -751,7 +748,6 @@ begin
   finally
     gDBConnManager.ReleaseConnection(nDB);
   end;
-  {$ENDIF}
 end;
 
 //Date: 2012-4-22
@@ -784,7 +780,7 @@ begin
       end;
 
       if not nDBConn.FConn.Connected then
-        nDBConn.FConn.Connected := True;  
+        nDBConn.FConn.Connected := True;
       //conn db
       nStr := 'select * from %s Where I_Card=''%s'' ';
       nStr := Format(nStr, [sTable_InOutFatory, nCard]);
@@ -922,7 +918,7 @@ begin
     if FNextStatus = sFlag_TruckOut then Continue;
     nStr := '车辆[ %s ]下一状态为:[ %s ],无法出厂.';
     nStr := Format(nStr, [FTruck, TruckStatusToStr(FNextStatus)]);
-    
+
     WriteHardHelperLog(nStr, sPost_Out);
     Exit;
   end;
@@ -949,7 +945,7 @@ begin
     //发送微信消息
     SendMsgToWebMall(nTrucks[0].FID,cSendWeChatMsgType_OutFactory,nCardType);
   end;
-  
+
   for nIdx:=Low(nTrucks) to High(nTrucks) do
   begin
     {$IFDEF ZXKP}
@@ -975,7 +971,7 @@ begin
 
     nStr := nStr + #7 + nCardType;
     //磁卡类型
-    
+
     if (nPrinter = '') and (nHyprinter = '') then
     begin
       gRemotePrinter.PrintBill(nTrucks[nIdx].FID + nStr);
@@ -1362,6 +1358,7 @@ var nStr: string;
     nPLine: PLineItem;
     nPTruck: PTruckItem;
     nTrucks: TLadingBillItems;
+    nSelfTunnel: string;
 
     function IsJSRun: Boolean;
     begin
@@ -1405,8 +1402,21 @@ begin
     nTunnel := gTruckQueueManager.GetTruckTunnel(nTrucks[0].FTruck);
     //重新定位车辆所在车道
     if IsJSRun then Exit;
+  end
+  else
+  begin
+    nSelfTunnel := gTruckQueueManager.GetTruckTunnel(nTrucks[0].FTruck);
+    if Length(nSelfTunnel) > 0 then
+    if nTunnel <> nSelfTunnel then
+    begin
+      nStr := '车辆[ %s ]刷卡通道错误，当前刷卡通道为：[ %s ]，正确通道为：[ %s ]';
+      nStr := Format(nStr, [nTrucks[0].FTruck,nTunnel,nSelfTunnel]);
+      WriteNearReaderLog(nStr);
+      Exit;
+    end;
+    if IsJSRun then Exit;
   end;
-  
+
   if not IsTruckInQueue(nTrucks[0].FTruck, nTunnel, False, nStr,
          nPTruck, nPLine, sFlag_Dai) then
   begin
@@ -1518,7 +1528,7 @@ begin
   nTmp := nTruck.FStockName + FloatToStr(nTruck.FValue);
   nStr := nStr + nTruck.FStockName + StringOfChar(' ', 12 - Length(nTmp)) +
           FloatToStr(nTruck.FValue);
-  //xxxxx  
+  //xxxxx
 
   gERelayManager.ShowTxt(nTunnel, nStr);
   //显示内容
@@ -1533,6 +1543,7 @@ var nStr: string;
     nPLine: PLineItem;
     nPTruck: PTruckItem;
     nTrucks: TLadingBillItems;
+    nSelfTunnel: string;
 begin
   {$IFDEF DEBUG}
   WriteNearReaderLog('MakeTruckLadingSan进入.');
@@ -1556,6 +1567,20 @@ begin
     Exit;
   end;
 
+  if nTunnel <> '' then
+  begin
+    nSelfTunnel := gTruckQueueManager.GetTruckTunnel(nTrucks[0].FTruck);
+    if Length(nSelfTunnel) > 0 then
+    if nTunnel <> nSelfTunnel then
+    begin
+      nStr := '车辆[ %s ]刷卡通道错误，当前刷卡通道为：[ %s ]，正确通道为：[ %s ]';
+      nStr := Format(nStr, [nTrucks[0].FTruck,nTunnel,nSelfTunnel]);
+      WriteNearReaderLog(nStr);
+      Exit;
+    end;
+  end;
+  //强制通道
+
   for nIdx:=Low(nTrucks) to High(nTrucks) do
   with nTrucks[nIdx] do
   begin
@@ -1564,14 +1589,14 @@ begin
 
     nStr := '车辆[ %s ]下一状态为:[ %s ],无法放灰.';
     nStr := Format(nStr, [FTruck, TruckStatusToStr(FNextStatus)]);
-    
+
     WriteHardHelperLog(nStr);
     Exit;
   end;
 
   if not IsTruckInQueue(nTrucks[0].FTruck, nTunnel, False, nStr,
          nPTruck, nPLine, sFlag_San) then
-  begin 
+  begin
     WriteNearReaderLog(nStr);
     //loged
 

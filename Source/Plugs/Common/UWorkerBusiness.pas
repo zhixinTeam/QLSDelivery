@@ -10,7 +10,7 @@ interface
 uses
   Windows, Classes, Controls, DB, SysUtils, UBusinessWorker, UBusinessPacker,
   UBusinessConst, UMgrDBConn, UMgrParam, ZnMD5, ULibFun, UFormCtrl, USysLoger,
-  USysDB, UMITConst, NativeXml, revicewstest, BPM2ERPService, HTTPApp;
+  USysDB, UMITConst, NativeXml, revicewstest, BPM2ERPService, HTTPApp, DateUtils;
 
 type
   TBusWorkerQueryField = class(TBusinessWorkerBase)
@@ -3469,6 +3469,7 @@ var nID,nIdx: Integer;
     nService: BPM2ERPServiceSoap;
     nMsg:Integer;
     nsWeightTime:string;
+    nDtA, nDtB : TDateTime;
 begin
   Result := False;
   nSQL := 'select * From %s a, %s b, %s c where a.D_OID=b.O_ID and a.D_ID=c.P_Order and a.D_ID = ''%s'' ';
@@ -3481,7 +3482,17 @@ begin
       nData := Format(nData, [FIn.FData]);
       Exit;
     end;
-    nsWeightTime:=formatdatetime('yyyy-mm-dd hh:mm:ss',FieldByName('D_MDate').AsDateTime);
+    try
+      nDtA := FieldByName('D_PDate').AsDateTime;
+      nDtB := FieldByName('D_MDate').AsDateTime;
+      nIdx := CompareDateTime(nDtA,nDtB);
+      if nIdx > 0 then
+        nsWeightTime:=formatdatetime('yyyy-mm-dd hh:mm:ss',nDtA)
+      else
+        nsWeightTime:=formatdatetime('yyyy-mm-dd hh:mm:ss',nDtB);
+    except
+      nsWeightTime:=formatdatetime('yyyy-mm-dd hh:mm:ss',nDtB);
+    end;
     if nsWeightTime<>'' then
     begin
       nsWeightTime:=Copy(nsWeightTime,12,Length(nsWeightTime)-11);
@@ -4570,18 +4581,18 @@ begin
   Result := True;
   SetLength(FHuaYan, 0);
   FOut.FData := '';
-  {$IFDEF QHSN}
+
   nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
           '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL from %s a,%s b '+
           'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_CenterID=''%s'' '+
           'and R_BatValid=''%s'' order by a.R_ID';
   nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, FIn.FExtParam, sFlag_Yes]);
-  {$ELSE}
-  nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
-          '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL from %s a,%s b '+
-          'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_BatValid=''%s'' order by a.R_ID';
-  nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, sFlag_Yes]);
-  {$ENDIF}
+//  {$ELSE}
+//  nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
+//          '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL from %s a,%s b '+
+//          'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_BatValid=''%s'' order by a.R_ID';
+//  nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, sFlag_Yes]);
+//  {$ENDIF}
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
   if RecordCount > 0 then

@@ -35,7 +35,7 @@ implementation
 uses
   SysUtils, USysLoger, UHardBusiness, UMgrTruckProbe, UMgrParam,
   UMgrQueue, UMgrLEDCard, UMgrHardHelper, UMgrRemotePrint, U02NReader,
-  UMgrERelay, {$IFDEF QHSN} UMultiJS_Reply, {$ELSE}UMultiJS,{$ENDIF}
+  UMgrERelay, {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF}
   UMgrRemoteVoice, UMgrCodePrinter, UMgrLEDDisp, UMgrRFID102,
   UMgrVoiceNet;
 
@@ -153,9 +153,7 @@ end;
 
 procedure THardwareWorker.BeforeStartServer;
 begin
-  {$IFDEF QHSN}
   gTruckQueueManager.StartQueue(gParamManager.ActiveParam.FDB.FID);
-  {$ENDIF}
   //truck queue
 
   gHardwareHelper.OnProce := WhenReaderCardArrived;
@@ -174,13 +172,12 @@ begin
   g02NReader.OnCardOut := WhenReaderCardOut;
   g02NReader.StartReader;
   //near reader
-  {$IFDEF QHSN}
+
   gMultiJSManager.SaveDataProc := WhenSaveJS;
   gMultiJSManager.StartJS;
   //counter
-  
+
   gERelayManager.ControlStart;
-  {$ENDIF}
   //erelay
 
   gRemotePrinter.StartPrinter;
@@ -191,9 +188,9 @@ begin
   if Assigned(gNetVoiceHelper) then
     gNetVoiceHelper.StartVoice;
   //NetVoice
-  {$IFDEF QHSN}
+
   gCardManager.StartSender;
-  {$ENDIF}
+
   //led display
   gDisplayManager.StartDisplay;
   //small led
@@ -209,10 +206,10 @@ begin
   //printer
   if Assigned(gNetVoiceHelper) then
     gNetVoiceHelper.StopVoice;
-  //NetVoice  
-  {$IFDEF QHSN}
+  //NetVoice
+
   gERelayManager.ControlStop;
-  {$ENDIF}
+
   //erelay
   gMultiJSManager.StopJS;
   //counter
@@ -235,9 +232,9 @@ begin
 
   gDisplayManager.StopDisplay;
   //small led
-  {$IFDEF QHSN}
+
   gCardManager.StopSender;
-  {$ENDIF}
+
   //led
   gProberManager.StopProber;
   //TruckProbe

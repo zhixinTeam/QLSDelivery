@@ -1145,14 +1145,16 @@ begin
         FListA.Add(nSQL);
         //调整已收货；
       end;}
-      nSQL := 'Update $OrderBase Set B_SentValue=B_SentValue+$Val, ' +
-              'B_RestValue=B_Value-B_SentValue-$Val '+
-              'Where B_RecID = ''$RID'' ';
-      nSQL := MacroValue(nSQL, [MI('$OrderBase', sTable_OrderBase),
-              MI('$RID', FRecID), MI('$Val', FloatToStr(nVal))]);
-      FListA.Add(nSQL);
-      //调整已收货；
-
+      if FYSValid <> sFlag_NO then
+      begin
+        nSQL := 'Update $OrderBase Set B_SentValue=B_SentValue+$Val, ' +
+                'B_RestValue=B_Value-B_SentValue-$Val '+
+                'Where B_RecID = ''$RID'' ';
+        nSQL := MacroValue(nSQL, [MI('$OrderBase', sTable_OrderBase),
+                MI('$RID', FRecID), MI('$Val', FloatToStr(nVal))]);
+        FListA.Add(nSQL);
+        //调整已收货；
+      end;
       {nSQL := 'Update $OrderBase Set B_FreezeValue=B_FreezeValue-$KDVal ' +
               'Where B_ID = (select O_BID From $Order Where O_ID=''$ID'''+
               ' And O_CType= ''L'') and B_Value>0';

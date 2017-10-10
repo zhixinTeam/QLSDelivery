@@ -188,6 +188,7 @@ type
     FStockName  : string;          //品种名称
     FValue      : Double;          //提货量
     FPrice      : Double;          //提货单价
+    FTransPrice : Double;          //运费单价
 
     FCard       : string;          //磁卡号
     FIsVIP      : string;          //通道类型
@@ -307,6 +308,7 @@ procedure AnalyseBillItems(const nData: string; var nItems: TLadingBillItems);
 var nStr: string;
     nIdx,nInt: Integer;
     nListA,nListB: TStrings;
+    nTransPrice: Double;//两票制运费单价
 begin
   nListA := TStringList.Create;
   nListB := TStringList.Create;
@@ -379,6 +381,13 @@ begin
              FPrice := StrToFloat(nStr)
         else FPrice := 0;
 
+        nStr := Trim(Values['TransPrice']);
+        if (nStr <> '') and IsNumber(nStr, True) then
+             nTransPrice := StrToFloat(nStr)
+        else nTransPrice := 0;
+
+        FPrice := FPrice + nTransPrice;//单价合并
+
         nStr := Trim(Values['KZValue']);
         if (nStr <> '') and IsNumber(nStr, True) then
              FKZValue := StrToFloat(nStr)
@@ -402,7 +411,7 @@ begin
   finally
     nListB.Free;
     nListA.Free;
-  end;   
+  end;
 end;
 
 //Date: 2014-09-18
@@ -439,6 +448,7 @@ begin
         Values['StockName']  := FStockName;
         Values['Value']      := FloatToStr(FValue);
         Values['Price']      := FloatToStr(FPrice);
+        Values['TransPrice'] := FloatToStr(FTransPrice);
 
         Values['Card']       := FCard;
         Values['IsVIP']      := FIsVIP;
@@ -473,7 +483,7 @@ begin
         Values['KZValue']    := FloatToStr(FKZValue);
         Values['YSValid']    := FYSValid;
         Values['Memo']       := FMemo;
-        
+
         Values['SampleID']   := FSampleID;          //试样编号
         Values['CenterID']   := FCenterID;          //生产线ID
         Values['LocationID'] := FLocationID;        //仓库ID
@@ -528,7 +538,7 @@ begin
   finally
     nListB.Free;
     nListA.Free;
-  end;   
+  end;
 end;
 
 end.
