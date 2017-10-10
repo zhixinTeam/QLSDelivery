@@ -61,7 +61,7 @@
   //状态栏显示
   {$DEFINE HYRFID201}
   //华益读头
-  {.$DEFINE GLPURCH} 
+  {$DEFINE GLPURCH} 
   //古浪
   {.$DEFINE YDKP} 
   //永登、夏河、定西开票
@@ -79,4 +79,6 @@
   //兰州商砼水泥內倒
   {$DEFINE QHSN} 
   //青海
+  {$DEFINE MultiReplay}
+  //计数器应答模式
 {$ENDIF}
