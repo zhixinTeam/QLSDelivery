@@ -96,14 +96,15 @@ begin
   //xxxxx
 
   if FWhere = '' then
-       nStr := nStr + 'Where (a.O_ID=b.D_OID) and (O_Date>=''$S'' and O_Date<''$End'')'
-  else nStr := nStr + 'Where (a.O_ID=b.D_OID) and (O_Date>=''$S'' and O_Date<''$End'') and (' + FWhere + ')';
+       nStr := nStr + 'Where (a.O_ID=b.D_OID) and (D_PDate>=''$S'' and D_PDate<''$End'')'
+  else nStr := nStr + 'Where (a.O_ID=b.D_OID) and (D_PDate>=''$S'' and D_PDate<''$End'') and (' + FWhere + ')';
 
   {if CheckDelete.Checked then
     nStr := MacroValue(nStr, [MI('$Bill', sTable_OrderBak),
             MI('$OrderDtl', sTable_OrderDtlBak),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))])
   else}
+    nStr := nStr + ' and (D_YSResult = ''%s'' or D_YSResult is null)';//¹ıÂË¾ÜÊÕ×´Ì¬
     nStr := MacroValue(nStr, [MI('$Order', sTable_Order),
             MI('$OrderDtl', sTable_OrderDtl),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);

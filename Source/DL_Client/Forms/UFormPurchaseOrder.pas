@@ -30,11 +30,12 @@ type
     EditCardType: TcxComboBox;
     dxLayout1Item3: TdxLayoutItem;
     dxLayout1Group2: TdxLayoutGroup;
-    cxLabel1: TcxLabel;
+    cxLabelOrderRest: TcxLabel;
     dxLayout1Item4: TdxLayoutItem;
     dxLayout1Group4: TdxLayoutGroup;
     chkNeiDao: TcxCheckBox;
     dxLayout1Item6: TdxLayoutItem;
+    cxLabel2: TcxLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BtnOKClick(Sender: TObject);
@@ -180,6 +181,7 @@ begin
     EditMate.Text     := Values['SQ_StockName'];
     //EditValue.Text    := Values['SQ_RestValue'];
     EditValue.Text    := '0.00';
+    cxLabelOrderRest.Caption := '订单剩余量:'+ Values['SQ_RestValue'] ;
   end;
 end;
 
@@ -209,10 +211,17 @@ end;
 
 //Desc: 保存
 procedure TfFormPurchaseOrder.BtnOKClick(Sender: TObject);
-var nOrder, nCardType: string;
+var nOrder, nCardType: string; nLimValue : Double;
 begin
   if not IsDataValid then Exit;
   //check valid
+  
+  nLimValue := GetOrderLimValue;
+  if StrToFloatDef(FCardData.Values['SQ_RestValue'],0) <= nLimValue then
+  begin
+    ShowMsg('订单剩余量超过规定限值，禁止开单',sHint);
+    Exit;
+  end;
 
   with FListA do
   begin

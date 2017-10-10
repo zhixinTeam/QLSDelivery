@@ -452,23 +452,12 @@ begin
     EditQuaEnd.SetFocus;
     ShowMsg('请填写有效的预警量', sHint); Exit;
   end;
-  {$IFDEF CXSY}
   if cbxCenterID.ItemIndex < 0 then
   begin
     EditStock.SetFocus;
     ShowMsg('请选择生产线', sHint); Exit;
   end;
-  {$ENDIF}
-  
-  {$IFDEF QHSN}
-  if cbxCenterID.ItemIndex < 0 then
-  begin
-    EditStock.SetFocus;
-    ShowMsg('请选择生产线', sHint); Exit;
-  end;
-  {$ELSE}
-  cbxCenterID.ItemIndex := -1;
-  {$ENDIF}
+
 
   
   if FRecordID = '' then

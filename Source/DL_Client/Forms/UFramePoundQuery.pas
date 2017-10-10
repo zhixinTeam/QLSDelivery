@@ -360,7 +360,9 @@ begin
   begin
     nP.FCommand := cCmd_EditData;
     nP.FParamA := SQLQuery.FieldByName('R_ID').AsString;
-    
+    nP.FParamB := SQLQuery.FieldByName('P_Order').AsString;
+    nP.FParamc := SQLQuery.FieldByName('P_Bill').AsString;
+
     CreateBaseFormItem(cFI_FormPoundKw, '', @nP);
 
     if (nP.FCommand = cCmd_ModalResult) and (nP.FParamA = mrOK) then

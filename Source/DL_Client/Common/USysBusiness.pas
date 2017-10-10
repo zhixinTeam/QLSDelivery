@@ -202,7 +202,10 @@ function ChangeDispatchMode(const nMode: Byte): Boolean;
 function GetHYMaxValue: Double;
 function GetHYValueByStockNo(const nNo: string): Double;
 //获取化验单已开量
-
+function GetOrderRestValue(nTotalValue: Double; nRecId: string): string;
+//获取订单剩余量
+function GetOrderLimValue: Double;
+//获取订单量开单限值
 function IsWeekValid(const nWeek: string; var nHint: string): Boolean;
 //周期是否有效
 function IsWeekHasEnable(const nWeek: string): Boolean;
@@ -1947,6 +1950,32 @@ begin
   if RecordCount > 0 then
        Result := Fields[1].AsFloat
   else Result := -1;
+end;
+
+//Desc: 获取订单开单限值
+function GetOrderLimValue: Double;
+var nStr: string;
+begin
+  nStr := 'Select D_Value From %s Where D_Name=''%s''';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_OrderLimValue]);
+
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+       Result := Fields[0].AsFloat
+  else Result := 100;
+end;
+
+//Desc: 获取订单剩余量
+function GetOrderRestValue(nTotalValue: Double; nRecId: string): string;
+var nStr: string;
+begin
+  nStr := 'Select SUM(D_Value) as D_Value From %s Where D_RecID=''%s''';
+  nStr := Format(nStr, [sTable_OrderDtl, nRecId]);
+
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+    Result := Format('%.2f', [nTotalValue - Fields[0].AsFloat])
+  else Result := '0.00';
 end;
 
 //Desc: 检测nWeek是否存在或过期

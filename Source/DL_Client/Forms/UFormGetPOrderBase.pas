@@ -75,8 +75,8 @@ implementation
 {$R *.dfm}
 
 uses
-  IniFiles, ULibFun, UMgrControl, UFormCtrl, UFormBase, USysGrid, USysDB, 
-  USysConst, UDataModule, UBusinessPacker;
+  IniFiles, ULibFun, UMgrControl, UFormCtrl, UFormBase, USysGrid, USysDB,
+  USysConst, UDataModule, UBusinessPacker, USysBusiness;
 
 class function TfFormGetPOrderBase.CreateForm(const nPopedom: string;
   const nParam: Pointer): TWinControl;
@@ -148,9 +148,9 @@ begin
   Result := False;
   ListQuery.Items.Clear;
 
-  nStr := 'Select *,(B_Value-IsNull(B_SentValue,0)-IsNull(B_FreezeValue,0)) As B_MaxValue From $TB a, $MB b ' +
-          'Where a.B_ID=b.M_ID ' +
-          //'And ((M_DState=''30'') or (M_DState=''40''))'+
+  nStr := 'Select *,(B_Value-IsNull(B_SentValue,0)-IsNull(B_FreezeValue,0)) As B_MaxValue From $TB a, $MB b, $NB c ' +
+          'Where a.B_ID=b.M_ID ' + ' And a.B_StockNo=c.M_ID ' +  ' And c.M_Weighning = ''1'' ' +
+          'And ((M_DState=''30'') or (M_DState=''40''))'+
           'And ((B_BStatus=''Y'') or (B_BStatus=''1'') or ((M_PurchType=''0'') and (B_BStatus=''0''))) '+
           'and B_Blocked=''0'' ';
   if nQueryType = '1' then //¹©Ó¦ÉÌ
@@ -168,10 +168,10 @@ begin
   end else Exit;
 
   nStr := MacroValue(nStr , [MI('$TB', sTable_OrderBase), MI('$MB', sTable_OrderBaseMain),
-          MI('$QUERY', nQuery)]);
+          MI('$NB', sTable_Materails), MI('$QUERY', nQuery)]);
 
 
-  with FDM.QueryTemp(nStr) do
+  with FDM.QuerySQL(nStr) do
   if RecordCount > 0 then
   begin
     First;
@@ -196,13 +196,19 @@ begin
       {if FieldByName('B_Value').AsFloat>0 then
         FRestValue:= Format('%.2f', [FieldByName('B_MaxValue').AsFloat])
       else}
-      if FieldByName('B_Value').AsFloat>0 then
-        FRestValue:= Format('%.2f', [FieldByName('B_RestValue').AsFloat])
-      else
-        FRestValue := '0.00';
+//      if FieldByName('B_Value').AsFloat>0 then
+//        FRestValue:= Format('%.2f', [FieldByName('B_RestValue').AsFloat])
+//      else
+//        FRestValue := '0.00';
 
       {if (FieldByName('B_MaxValue').AsFloat>0)
         or (FieldByName('B_Value').AsFloat<=0) then }
+
+      if FieldByName('B_Value').AsFloat>0 then
+        FRestValue:= getOrderRestValue(FieldByName('B_Value').AsFloat,FRecID)
+      else
+        FRestValue := '0.00';
+
       with ListQuery.Items.Add do
       begin
         Caption := FID;

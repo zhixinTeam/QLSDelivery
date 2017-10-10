@@ -116,8 +116,8 @@ begin
   //xxxxx
 
   if FWhere = '' then
-       nStr := nStr + 'Where (L_Date>=''$S'' and L_Date<''$End'')'
-  else nStr := nStr + 'Where (L_Date>=''$S'' and L_Date<''$End'') and (' + FWhere + ')';
+       nStr := nStr + 'Where (L_MDate>=''$S'' and L_MDate<''$End'')'
+  else nStr := nStr + 'Where (L_MDate>=''$S'' and L_MDate<''$End'') and (' + FWhere + ')';
 
   if CheckDelete.Checked then
     nStr := MacroValue(nStr, [MI('$Bill', sTable_BillBak),

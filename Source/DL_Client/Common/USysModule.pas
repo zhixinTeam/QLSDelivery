@@ -32,6 +32,8 @@ uses
   UFormHYStock, UFormHYData, UFormHYRecord, UFormGetStockNo,
   UFrameHYStock, UFrameHYData, UFrameHYRecord, UFormAXBaseLoad, UFormSiteConfirm,
   //by lih 2016-05-26 //2016-07-18
+  UFormPurchReject,//原材料拒收
+  UFormOnLineModel,//设置在线离线状态
   UFrameUpInfo, UFramePoundWuCha, UFormPWuCha, UFrameZTQuery, UFormPoundKw,
   UFormWorkSet, UFrameUpPurchase, UFramePoundDevia, UFrameLSCard, UFormLSCard,
   UFormTransfer, UFrameQueryTransferDetail, UFrameSTCard, UFormSTCard,

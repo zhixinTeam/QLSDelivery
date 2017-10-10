@@ -90,6 +90,7 @@ const
   cFI_FormIncInfo       = $1003;                     //公司信息
   cFI_FormChangePwd     = $1005;                     //修改密码
   cFI_FormOptions       = $1201;                     //参数选项
+  cFI_FormOnLineModel   = $1202;                     //设置在线离线状态
 
   cFI_FormBaseInfo      = $1006;                     //基本信息
   cFI_FormCustomer      = $1007;                     //客户资料
@@ -185,6 +186,7 @@ const
   cFI_FormAXBaseLoadP    = $1109;                    //采购基础数据下载
   cFI_FrameYSLines       = $1110;                    //采购验收通道
   cFI_FormYSLine         = $1111;                    //采购验收通道设置
+  cFI_FormPurchReject    = $1112;                    //原材料拒收
 
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
@@ -327,6 +329,7 @@ begin
   AddMenuModuleItem('MAIN_A05', cFI_FormChangePwd, mtForm);
   AddMenuModuleItem('MAIN_A07', cFI_FrameAuthorize);
   AddMenuModuleItem('MAIN_A12', cFI_FormOptions, mtForm);
+  AddMenuModuleItem('MAIN_A13', cFI_FormOnLineModel, mtForm);
 
   AddMenuModuleItem('MAIN_B01', cFI_FormBaseInfo, mtForm);
   AddMenuModuleItem('MAIN_B02', cFI_FrameCustomer);
@@ -397,6 +400,7 @@ begin
   AddMenuModuleItem('MAIN_M10', cFI_FrameDeduct);
   AddMenuModuleItem('MAIN_M11', cFI_FrameLSCard);
   AddMenuModuleItem('MAIN_M12', cFI_FrameYSLines);
+  AddMenuModuleItem('MAIN_M13', cFI_FormPurchReject,mtForm);
 
   AddMenuModuleItem('MAIN_W01', cFI_FrameWXAccount);
   AddMenuModuleItem('MAIN_W02', cFI_FrameWXSendLog);

@@ -106,6 +106,7 @@ type
     FStockNO: string;
     FStockName: string;
     FPrice: Double;
+    FTransPrice: Double;
     FValue: Double;
     FSelecte: Boolean;
     FRecID: string;
@@ -338,6 +339,7 @@ begin
       FPrice := FieldByName('D_Price').AsFloat;
         //FValue := 0;
       FValue:= FieldByName('D_Value').AsFloat;
+      FTransPrice := FieldByName('D_TransPrice').AsFloat;
       FSelecte := False;
       FRecID := FieldByName('D_RECID').AsString;
       {if gInfo.FPriceChanged then
@@ -593,10 +595,6 @@ begin
   else begin
     ShowMsg('生产线格式非法', sHint); Exit;
   end;
-  if Trim(EditJXSTHD.Text) = '' then
-  begin
-    ShowMsg('请录入经销商提货单号', sHint); Exit;
-  end;
 
   nStocks := TStringList.Create;
   nList := TStringList.Create;
@@ -617,6 +615,7 @@ begin
       Values['StockName'] := FStockName;
       Values['Price'] := FloatToStr(FPrice);
       Values['Value'] := FloatToStr(FValue);
+      Values['TransPrice'] := FloatToStr(FTransPrice);
       Values['RECID'] := FRecID;
       {$IFDEF YDKP}//开票录入试样编号
       if cbxSampleID.Enabled=True then

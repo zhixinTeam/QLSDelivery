@@ -26,6 +26,7 @@ inherited fFormQLSBill: TfFormQLSBill
       Left = 81
       Top = 225
       ParentFont = False
+      Properties.ReadOnly = True
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
       TabOrder = 7
@@ -36,6 +37,7 @@ inherited fFormQLSBill: TfFormQLSBill
       Top = 125
       ParentFont = False
       Properties.MaxLength = 15
+      Properties.ReadOnly = True
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
       TabOrder = 2
@@ -45,6 +47,7 @@ inherited fFormQLSBill: TfFormQLSBill
     object EditLading: TcxComboBox [4]
       Left = 81
       Top = 125
+      Enabled = False
       ParentFont = False
       Properties.DropDownListStyle = lsEditFixedList
       Properties.ItemHeight = 18
@@ -52,6 +55,7 @@ inherited fFormQLSBill: TfFormQLSBill
         '0=0'#12289#33258#25552
         '1=1'#12289#19968#31080#21046
         '2=2'#12289#20004#31080#21046)
+      Properties.ReadOnly = False
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
       Style.ButtonStyle = btsHotFlat
@@ -74,7 +78,9 @@ inherited fFormQLSBill: TfFormQLSBill
     object EditStock: TcxComboBox [6]
       Left = 81
       Top = 200
+      Enabled = False
       ParentFont = False
+      Properties.ReadOnly = True
       TabOrder = 6
       Width = 314
     end
@@ -82,6 +88,7 @@ inherited fFormQLSBill: TfFormQLSBill
       Left = 277
       Top = 150
       ParentFont = False
+      Properties.ReadOnly = False
       TabOrder = 4
       Width = 162
     end
@@ -122,6 +129,7 @@ inherited fFormQLSBill: TfFormQLSBill
     object EditType: TcxComboBox [12]
       Left = 81
       Top = 150
+      Enabled = False
       ParentFont = False
       Properties.DropDownListStyle = lsFixedList
       Properties.Items.Strings = (
@@ -129,6 +137,7 @@ inherited fFormQLSBill: TfFormQLSBill
         'V=V'#12289'VIP'
         'Z=Z'#12289#26632#21488
         'S=S'#12289#33337#36816)
+      Properties.ReadOnly = False
       TabOrder = 3
       Width = 121
     end
@@ -138,6 +147,7 @@ inherited fFormQLSBill: TfFormQLSBill
       Width = 358
       Height = 20
       Ctl3D = True
+      Enabled = False
       ItemHeight = 12
       ParentCtl3D = False
       TabOrder = 5
@@ -152,6 +162,7 @@ inherited fFormQLSBill: TfFormQLSBill
           Default = True
           Kind = bkEllipsis
         end>
+      Properties.ReadOnly = False
       Properties.OnButtonClick = EditIDPropertiesButtonClick
       TabOrder = 0
       OnKeyPress = EditIDKeyPress

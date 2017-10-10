@@ -59,6 +59,7 @@ inherited fFormRFIDCard: TfFormRFIDCard
     object edtRFIDCard2: TcxTextEdit [6]
       Left = 87
       Top = 87
+      ParentFont = False
       TabOrder = 3
       Width = 191
     end

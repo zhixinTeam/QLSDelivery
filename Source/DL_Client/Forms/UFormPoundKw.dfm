@@ -1,21 +1,21 @@
 inherited fFormPoundKw: TfFormPoundKw
   Caption = 'fFormPoundKw'
-  ClientHeight = 204
+  ClientHeight = 228
   ClientWidth = 295
   PixelsPerInch = 96
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
     Width = 295
-    Height = 204
+    Height = 228
     inherited BtnOK: TButton
       Left = 149
-      Top = 171
-      TabOrder = 5
+      Top = 195
+      TabOrder = 6
     end
     inherited BtnExit: TButton
       Left = 219
-      Top = 171
-      TabOrder = 6
+      Top = 195
+      TabOrder = 7
     end
     object cxLabel1: TcxLabel [2]
       Left = 23
@@ -27,6 +27,7 @@ inherited fFormPoundKw: TfFormPoundKw
       Left = 87
       Top = 107
       ParentFont = False
+      Properties.ReadOnly = True
       TabOrder = 3
       Width = 121
     end
@@ -51,6 +52,13 @@ inherited fFormPoundKw: TfFormPoundKw
       ParentFont = False
       Properties.ReadOnly = True
       TabOrder = 2
+      Width = 121
+    end
+    object EditMValue: TcxTextEdit [7]
+      Left = 87
+      Top = 157
+      ParentFont = False
+      TabOrder = 5
       Width = 121
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
@@ -80,6 +88,11 @@ inherited fFormPoundKw: TfFormPoundKw
         object dxLayout1Item6: TdxLayoutItem
           Caption = #30382#37325'('#21544'):'
           Control = EditPValue
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayout1Item8: TdxLayoutItem
+          Caption = #27611#37325'('#21544'):'
+          Control = EditMValue
           ControlOptions.ShowBorder = False
         end
       end

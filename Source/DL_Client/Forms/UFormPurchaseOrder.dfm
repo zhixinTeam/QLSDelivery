@@ -99,11 +99,14 @@ inherited fFormPurchaseOrder: TfFormPurchaseOrder
       TabOrder = 4
       Width = 121
     end
-    object cxLabel1: TcxLabel [8]
+    object cxLabelOrderRest: TcxLabel [8]
       Left = 221
       Top = 169
-      Caption = #27880':'#20020#26102#21345#20986#21378#26102#22238#25910';'#22266#23450#21345#20986#21378#26102#19981#22238#25910
+      AutoSize = False
+      Caption = #35746#21333#21097#20313#37327':'
       ParentFont = False
+      Height = 16
+      Width = 231
     end
     object chkNeiDao: TcxCheckBox [9]
       Left = 23
@@ -167,11 +170,17 @@ inherited fFormPurchaseOrder: TfFormPurchaseOrder
             ControlOptions.ShowBorder = False
           end
           object dxLayout1Item4: TdxLayoutItem
-            Control = cxLabel1
+            Control = cxLabelOrderRest
             ControlOptions.ShowBorder = False
           end
         end
       end
     end
+  end
+  object cxLabel2: TcxLabel
+    Left = 221
+    Top = 196
+    Caption = #27880':'#20020#26102#21345#20986#21378#26102#22238#25910';'#22266#23450#21345#20986#21378#26102#19981#22238#25910
+    ParentFont = False
   end
 end

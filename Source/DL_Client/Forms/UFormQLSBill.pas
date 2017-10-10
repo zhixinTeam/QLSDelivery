@@ -366,10 +366,6 @@ begin
   else begin
     ShowMsg('生产线格式非法', sHint); Exit;
   end;
-  if Trim(EditJXSTHD.Text) = '' then
-  begin
-    ShowMsg('请录入经销商提货单号', sHint); Exit;
-  end;
   {$IFDEF YDKP}
   if cbxSampleID.ItemIndex = -1 then
   begin

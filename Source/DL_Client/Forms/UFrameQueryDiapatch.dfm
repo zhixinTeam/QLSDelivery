@@ -31,6 +31,7 @@ inherited fFrameQueryDispatch: TfFrameQueryDispatch
       Left = 81
       Top = 93
       Hint = 'T.T_Truck'
+      ParentFont = False
       TabOrder = 1
       Width = 121
     end
@@ -38,6 +39,7 @@ inherited fFrameQueryDispatch: TfFrameQueryDispatch
       Left = 265
       Top = 93
       Hint = #25152#22312#38431#21015':'
+      ParentFont = False
       TabOrder = 2
       Width = 121
     end
@@ -45,6 +47,7 @@ inherited fFrameQueryDispatch: TfFrameQueryDispatch
       Left = 449
       Top = 93
       Hint = 'T.T_InTime'
+      ParentFont = False
       TabOrder = 3
       Width = 121
     end
@@ -52,12 +55,14 @@ inherited fFrameQueryDispatch: TfFrameQueryDispatch
       Left = 633
       Top = 93
       Hint = 'T.T_InFact'
+      ParentFont = False
       TabOrder = 4
       Width = 121
     end
     object EditTruck: TcxButtonEdit [4]
       Left = 81
       Top = 36
+      ParentFont = False
       Properties.Buttons = <
         item
           Default = True

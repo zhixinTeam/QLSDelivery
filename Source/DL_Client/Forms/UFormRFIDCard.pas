@@ -104,8 +104,8 @@ begin
   try
     FParam := nParam;
     InitFormData;
-    if not ActionComPort(False) then Exit;
-    
+//    if not ActionComPort(False) then Exit;
+
     //tmrReadCard.Enabled := True;
     chkValue.Checked := FParam.FParamC = sFlag_Yes;
 
@@ -117,6 +117,7 @@ begin
     if chkValue.Checked then
          FParam.FParamC := sFlag_Yes
     else FParam.FParamC := sFlag_No;
+    BtnOK.Enabled := False;
   finally
     Free;
   end;
@@ -149,9 +150,10 @@ begin
     ActiveControl := edtRFIDCard;
     edtRFIDCard.SelectAll;
     ModalResult := mrCancel;
-
-    ShowMsg('请输入有效电子标签', sHint);
+    ShowDlg('未输入有效电子标签！请检查', sWarn);
     Exit;
+//    ShowMsg('请输入有效电子标签', sHint);
+//    Exit;
   end;
 
   ModalResult := mrOk;
@@ -313,12 +315,20 @@ end;
 
 procedure TfFormRFIDCard.BtnReadCard1Click(Sender: TObject);
 begin
+  if not ActionComPort(False) then Exit;
   edtRFIDCard.Text:=ReadCardNo;
+  ActionComPort(True) ;
+  if Length(edtRFIDCard.Text) > 0 then
+    BtnOK.Enabled := True;
 end;
 
 procedure TfFormRFIDCard.BtnReadCard2Click(Sender: TObject);
 begin
+  if not ActionComPort(False) then Exit;
   edtRFIDCard2.Text:=ReadCardNo;
+  ActionComPort(True) ;
+  if Length(edtRFIDCard2.Text) > 0 then
+    BtnOK.Enabled := True;
 end;
 
 initialization

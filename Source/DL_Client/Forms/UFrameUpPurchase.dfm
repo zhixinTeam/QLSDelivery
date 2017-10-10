@@ -26,6 +26,7 @@ inherited fFrameUpPurchase: TfFrameUpPurchase
     object EditBill: TcxButtonEdit [0]
       Left = 81
       Top = 36
+      ParentFont = False
       Properties.Buttons = <
         item
           Default = True
@@ -37,6 +38,7 @@ inherited fFrameUpPurchase: TfFrameUpPurchase
     object EditTruck: TcxButtonEdit [1]
       Left = 265
       Top = 36
+      ParentFont = False
       Properties.Buttons = <
         item
           Default = True
@@ -49,6 +51,7 @@ inherited fFrameUpPurchase: TfFrameUpPurchase
     object EditCus: TcxButtonEdit [2]
       Left = 437
       Top = 36
+      ParentFont = False
       Properties.Buttons = <
         item
           Default = True
@@ -60,6 +63,7 @@ inherited fFrameUpPurchase: TfFrameUpPurchase
     object EditDate: TcxButtonEdit [3]
       Left = 621
       Top = 36
+      ParentFont = False
       Properties.Buttons = <
         item
           Default = True
