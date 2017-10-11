@@ -56,7 +56,8 @@ type
     FTimeCounter: Integer;
     //计时
     FSzttceApi:TSzttceApi;
-
+    FDownLoadWay:Integer;
+    //数据下载途径
     FHotKeyMgr: THotKeyManager;
     FHotKey: Cardinal;
 
@@ -86,7 +87,7 @@ uses
   IniFiles, ULibFun, CPortTypes, USysLoger, USysDB, USmallFunc, UDataModule,
   UFormConn,USysConst,UClientWorker,UMITPacker,USysModule,USysBusiness, uNewCard,
   UDataReport,UFormInputbox, UCardTypeSelect,UFormBarcodePrint, uZXNewPurchaseCard,
-  UFormBase;
+  UFormBase, uNewCardQls;
 
 type
   TReaderType = (ptT800, pt8142);
@@ -145,6 +146,11 @@ begin
   //数据库连接
 
   RunSystemObject;
+
+  if Pos('祁连山',gSysParam.FMainTitle) > 0 then
+    FDownLoadWay := 0
+  else
+    FDownLoadWay := 1;
   FLastQuery := 0;
   FLastCard := '';
   FTimeCounter := 0;
@@ -555,36 +561,61 @@ begin
     ShowMsg('系统正在读卡，请稍候...',sHint);
     Exit;
   end;
-
-  if Sender=imgCard then
+  if FDownLoadWay = 0 then
   begin
-    if not Assigned(fFormNewCard) then
+    if Sender=imgCard then
     begin
-      fFormNewCard := TfFormNewCard.Create(nil);
-      fFormNewCard.SzttceApi := FSzttceApi;
-      fFormNewCard.SetControlsClear;
+      if not Assigned(fFormNewCardQls) then
+      begin
+        fFormNewCardQls := TfFormNewCardQls.Create(nil);
+        fFormNewCardQls.SzttceApi := FSzttceApi;
+        fFormNewCardQls.SetControlsClear;
+      end;
+      fFormNewCardQls.BringToFront;
+      fFormNewCardQls.Left := self.Left;
+      fFormNewCardQls.Top := self.Top;
+      fFormNewCardQls.Width := self.Width;
+      fFormNewCardQls.Height := self.Height;
+      fFormNewCardQls.Show;
+    end
+    else if Sender=imgPurchaseCard then
+    begin
+      ShowMsg('采购业务暂时不支持自助办卡，请去人工窗口办理！',sHint);
+      Exit;
     end;
-    fFormNewCard.BringToFront;
-    fFormNewCard.Left := self.Left;
-    fFormNewCard.Top := self.Top;
-    fFormNewCard.Width := self.Width;
-    fFormNewCard.Height := self.Height;
-    fFormNewCard.Show;
   end
-  else if Sender=imgPurchaseCard then
+  else
   begin
-   if not Assigned(fFormNewPurchaseCard) then
+    if Sender=imgCard then
     begin
-      fFormNewPurchaseCard := TfFormNewPurchaseCard.Create(nil);
-      fFormNewPurchaseCard.SzttceApi := FSzttceApi;
-      fFormNewPurchaseCard.SetControlsClear;
+      if not Assigned(fFormNewCard) then
+      begin
+        fFormNewCard := TfFormNewCard.Create(nil);
+        fFormNewCard.SzttceApi := FSzttceApi;
+        fFormNewCard.SetControlsClear;
+      end;
+      fFormNewCard.BringToFront;
+      fFormNewCard.Left := self.Left;
+      fFormNewCard.Top := self.Top;
+      fFormNewCard.Width := self.Width;
+      fFormNewCard.Height := self.Height;
+      fFormNewCard.Show;
+    end
+    else if Sender=imgPurchaseCard then
+    begin
+     if not Assigned(fFormNewPurchaseCard) then
+      begin
+        fFormNewPurchaseCard := TfFormNewPurchaseCard.Create(nil);
+        fFormNewPurchaseCard.SzttceApi := FSzttceApi;
+        fFormNewPurchaseCard.SetControlsClear;
+      end;
+      fFormNewPurchaseCard.BringToFront;
+      fFormNewPurchaseCard.Left := self.Left;
+      fFormNewPurchaseCard.Top := self.Top;
+      fFormNewPurchaseCard.Width := self.Width;
+      fFormNewPurchaseCard.Height := self.Height;
+      fFormNewPurchaseCard.Show;
     end;
-    fFormNewPurchaseCard.BringToFront;
-    fFormNewPurchaseCard.Left := self.Left;
-    fFormNewPurchaseCard.Top := self.Top;
-    fFormNewPurchaseCard.Width := self.Width;
-    fFormNewPurchaseCard.Height := self.Height;
-    fFormNewPurchaseCard.Show;
   end;
   TimerInsertCard.Enabled := False;
 end;

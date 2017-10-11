@@ -90,7 +90,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=../../Bin/DL_AICM_V3
+OutputDir=../../Bin/DL_AICM
 UnitOutputDir=../../Dcu/DL_SelfHelp
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -155,10 +155,11 @@ Item1=../../Dcu/DL_Client
 Item2=../Dcu/DL_Client
 Item3=../Dcu
 [HistoryLists\hlOutputDirectorry]
-Count=6
-Item0=../../Bin/DL_AICM_V3
-Item1=../../Bin/DL_AICM_V2
-Item2=../../Bin/DL_SelfHelp
-Item3=../../Bin/DL_Client
-Item4=../Bin/DL_Client
-Item5=../Bin
+Count=7
+Item0=../../Bin/DL_AICM
+Item1=../../Bin/DL_AICM_V3
+Item2=../../Bin/DL_AICM_V2
+Item3=../../Bin/DL_SelfHelp
+Item4=../../Bin/DL_Client
+Item5=../Bin/DL_Client
+Item6=../Bin

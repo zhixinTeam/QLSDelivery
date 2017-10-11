@@ -10,7 +10,7 @@ uses
   Windows, DB, Classes, Controls, SysUtils, UBusinessPacker, UBusinessWorker,
   UBusinessConst, ULibFun, UAdjustForm, UFormCtrl, UDataModule, UDataReport,
   UFormBase, cxMCListBox, UMgrPoundTunnels, UMgrCamera, USysConst, HKVNetSDK,
-  USysDB, USysLoger;
+  USysDB, USysLoger, cxDropDownEdit;
 
 type
   TLadingStockItem = record
@@ -283,6 +283,20 @@ function get_shopPurchaseByno(const nXmlStr:string):string;
 function PrintYesNo:Boolean;
 //是否打印
 
+function LoadSalesInfo(const nZID: string; var nHint: string): TDataset;
+//载入订单信息
+function LoadSaleLineInfo(const nRecID: string; var nHint: string): TDataset;
+//载入订单行
+function LoadAXPlanInfo(const nID: string; var nHint: string): TDataset;
+//载入提货信息
+function GetCustomerExtQls(const nCusID:string): string;
+//获取客户扩展信息QLS
+procedure InitCenter(const nStockNo,nType: string; const nCbx:TcxComboBox);
+//初始化生产线ID
+function GetLadingWay(const nID:string): string;
+//获取提货方式
+
+
 function CallBusinessCommand(const nCmd: Integer; const nData,nExt: string;
   const nOut: PWorkerBusinessCommand; const nWarn: Boolean = True): Boolean;
 implementation
@@ -420,6 +434,7 @@ begin
     if nWarn then
          nIn.FBase.FParam := ''
     else nIn.FBase.FParam := sParam_NoHintOnError;
+
 
     if gSysParam.FAutoPound and (not gSysParam.FIsManual) then
       nIn.FBase.FParam := sParam_NoHintOnError;
@@ -2640,6 +2655,109 @@ begin
   Result := '';
   if CallBusinessCommand(cBC_WeChat_get_shopPurchasebyNO, nXmlStr, '', @nOut,False) then
     Result := nOut.FData;
+end;
+
+function LoadSaleLineInfo(const nRecID: string; var nHint: string): TDataset;
+var nStr: string;
+begin
+  nStr := 'Select zk.* From $ZK zk Where D_RECID=''$ID''';
+
+  nStr := MacroValue(nStr, [MI('$ZK', sTable_ZhiKaDtl), MI('$ID', nRecID)]);
+
+  Result := FDM.QueryTemp(nStr);
+
+  if Result.RecordCount < 1 then
+  begin
+    Result := nil;
+    nHint := '订单信息已无效';
+  end;
+end;
+
+//载入订单信息
+function LoadSalesInfo(const nZID: string; var nHint: string): TDataset;
+var nStr: string;
+begin
+  nStr := 'Select zk.*,con.C_ContQuota,cus.C_ID,cus.C_Name From $ZK zk ' +
+          ' Left Join $Con con On con.C_ID=zk.Z_CID ' +
+          ' Left Join $Cus cus On cus.C_ID=zk.Z_Customer ' +
+          'Where Z_ID=''$ID''';
+
+  nStr := MacroValue(nStr, [MI('$ZK', sTable_ZhiKa),
+             MI('$Con', sTable_SaleContract),
+             MI('$Cus', sTable_Customer), MI('$ID', nZID)]);
+
+  Result := FDM.QueryTemp(nStr);
+
+  if Result.RecordCount < 1 then
+  begin
+    Result := nil;
+    nHint := '订单信息已无效';
+  end;
+end;
+
+//载入提货信息
+function LoadAXPlanInfo(const nID: string; var nHint: string): TDataset;
+var nStr: string;
+begin
+  nStr := 'Select ap.* From $AP ap Where AX_TRANSPLANID=''$ID''';
+  nStr := MacroValue(nStr, [MI('$AP', sTable_AxPlanInfo), MI('$ID', nID)]);
+  Result := FDM.QuerySQL(nStr);
+
+  if Result.RecordCount < 1 then
+  begin
+    Result := nil;
+    nHint := '获取提货信息失败';
+  end;
+end;
+
+//获取客户扩展信息QLS
+function GetCustomerExtQls(const nCusID:string): string;
+var nSQL:string;
+    nIdx:Integer;
+begin
+  Result := '';
+  nSQL := 'select E_CustExtName from %s a where E_CusID = ''%s'' order by R_ID DESC ';
+  nSQL := Format(nSQL,[sTable_CustomerExt, nCusID]);
+  with FDM.QueryTemp(nSQL) do
+  begin
+    if RecordCount > 0 then
+    begin
+      Result := Fields[0].AsString;
+    end;
+  end;
+end;
+
+//初始化生产线
+procedure InitCenter(const nStockNo,nType: string; const nCbx:TcxComboBox);
+var
+  nStr,nItemGID:string;
+begin
+  nCbx.Properties.Items.Clear;
+  nCbx.Text := '';
+  nStr := 'Select Z_CenterID From %s Where Z_StockNo=''%s'' and Z_Valid=''%s'' ';
+  nStr := Format(nStr, [sTable_ZTLines, nStockNo, sFlag_Yes]);
+  with FDM.QueryTemp(nStr) do
+  begin
+    if RecordCount < 1 then Exit;
+    nCbx.Text:= Fields[0].AsString;
+  end;
+end;
+
+//获取提货方式
+function GetLadingWay(const nID:string): string;
+var nSQL:string;
+    nIdx:Integer;
+begin
+  Result := '0';
+  nSQL := 'select Z_Lading from %s a where Z_ID = ''%s'' ';
+  nSQL := Format(nSQL,[sTable_ZhiKa, nID]);
+  with FDM.QueryTemp(nSQL) do
+  begin
+    if RecordCount > 0 then
+    begin
+      Result := Fields[0].AsString;
+    end;
+  end;
 end;
 
 end.

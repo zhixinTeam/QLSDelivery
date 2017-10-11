@@ -1,5 +1,5 @@
 object fFormMain: TfFormMain
-  Left = 380
+  Left = 239
   Top = 5
   BorderStyle = bsNone
   Caption = #29992#25143#33258#21161#26597#35810#31995#32479
