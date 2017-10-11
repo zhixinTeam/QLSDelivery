@@ -474,7 +474,6 @@ begin
     with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
     if RecordCount > 0 then
     begin
-       Exit;
 
       nIdx := 0;
       //First;
