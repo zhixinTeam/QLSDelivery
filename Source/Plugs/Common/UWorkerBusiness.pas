@@ -3092,14 +3092,7 @@ begin
       WriteLog(nData);
       Exit;
     end;
-    //{$IFDEF GGJC}
     nLID := FieldByName('L_ID').AsString;
-    //{$ELSE}
-    //nLID := copy(FieldByName('L_ID').AsString,2,10);
-    //{$ENDIF}
-    //{$IFDEF GLPURCH}
-    //nLID := FieldByName('L_ID').AsString;
-    //{$ENDIF}
     nLocationId := FieldByName('L_InvLocationId').AsString;
     if nLocationId = '' then nLocationId := 'A';
     nStr:='<PRIMARY>'+
@@ -3182,14 +3175,7 @@ begin
     end;
     nLocationId := FieldByName('L_InvLocationId').AsString;
     if nLocationId = '' then nLocationId := 'A';
-    //{$IFDEF GGJC}
     nLID := FieldByName('L_ID').AsString;
-    //{$ELSE}
-    //nLID := copy(FieldByName('L_ID').AsString,2,10);
-    //{$ENDIF}
-    //{$IFDEF GLPURCH}
-    //nLID := FieldByName('L_ID').AsString;
-    //{$ENDIF}
     nStr:='<PRIMARY>'+
              '<PLANQTY>'+FieldByName('L_PlanQty').AsString+'</PLANQTY>'+
              '<VEHICLEId>'+FieldByName('L_Truck').AsString+'</VEHICLEId>'+
@@ -3243,7 +3229,7 @@ var nID,nIdx: Integer;
     nService: BPM2ERPServiceSoap;
     nMsg:Integer;
     nFYPlanStatus,nCenterId,nLocationId:string;
-    s:string;
+    nLID,s:string;
 begin
   Result := False;
 
@@ -3269,12 +3255,13 @@ begin
     end;
     nLocationId := FieldByName('L_InvLocationId').AsString;
     if nLocationId = '' then nLocationId := 'A';
+    nLID := FieldByName('L_ID').AsString;
     nStr:='<PRIMARY>'+
              '<PLANQTY>'+FieldByName('L_PlanQty').AsString+'</PLANQTY>'+
              '<VEHICLEId>'+FieldByName('L_Truck').AsString+'</VEHICLEId>'+
              '<VENDPICKINGLISTID>S</VENDPICKINGLISTID>'+
              '<TRANSPORTER></TRANSPORTER>'+
-             '<TRANSPLANID>'+FieldByName('L_ID').AsString+'</TRANSPLANID>'+
+             '<TRANSPLANID>'+nLID+'</TRANSPLANID>'+
              '<SALESID>'+FieldByName('L_ZhiKa').AsString+'</SALESID>'+
              '<SALESLINERECID>'+FieldByName('L_LineRecID').AsString+'</SALESLINERECID>'+
              '<COMPANYID>'+gCompanyAct+'</COMPANYID>'+

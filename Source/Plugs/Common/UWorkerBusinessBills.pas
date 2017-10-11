@@ -2276,14 +2276,6 @@ begin
           nBxz:=False;
         end else
         begin
-          {if not TWorkerBusinessCommander.CallMe(cBC_GetTriangleTrade,    //获取是否三角贸易
-                nBills[0].FZhiKa, '', @nOut) then
-          begin
-            nData := nOut.FData;
-            Exit;
-          end;
-          nTriaTrade:=nOut.FData;
-          if nTriaTrade = sFlag_Yes then }   // 三角贸易
           WriteLog('贸易类型：'+FTriaTrade);
           if FTriaTrade = '1' then    // 三角贸易
           begin
@@ -2856,11 +2848,11 @@ begin
       end;
     end;
     {$ELSE}
-       {$IFNDEF ZXKP}
+      {$IFNDEF ZXKP}
        if Assigned(gHardShareData) then
           gHardShareData('TruckOut:' + nBills[0].FCard);
         //磅房处理自动出厂
-       {$ENDIF}
+      {$ENDIF}
     {$ENDIF}
   end;
 

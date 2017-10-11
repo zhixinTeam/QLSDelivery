@@ -219,11 +219,12 @@ procedure TAxMsgManager.Start;
 var
   nIdx:Integer;
 begin
+  Stop;
+  
   if not Assigned(FScanThread) then
     FScanThread := TScanAxMsgThread.Create(self);
   FScanThread.Wakeup;
 
-  Stop;
   SetLength(FSenders, FSendThreadCount);
   for nIdx:= Low(FSenders) to High(FSenders) do
     FSenders[nIdx]:= nil;
@@ -520,6 +521,7 @@ begin
     nList.Free;
     FOwner.FSyncCS.Leave;
   end;
+  WriteLog('ScanAxMsgThread');
 end;
 
 //------------------------------------------------------------------------------
@@ -671,8 +673,10 @@ begin
   end;
 
   if nBool then
+  begin
     CallRemoteWorker(sCLI_BusinessMessage, FXMLBuilder.WriteToString, nCIU.FRemoteUrl, nData.FMsgNo, @nOut);
-  //WriteLog('SendAxMsgThread');
+    WriteLog('SendAxMsgThread');
+  end;
 end;
 
 initialization

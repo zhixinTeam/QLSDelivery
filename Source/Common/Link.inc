@@ -62,7 +62,7 @@
   {$DEFINE HYRFID201}
   //华益读头
   {$DEFINE GLPURCH} 
-  //古浪
+  //古浪、民和
   {.$DEFINE YDKP} 
   //永登、夏河、定西开票
   {.$DEFINE PLKP} 
@@ -71,13 +71,13 @@
   //夏河、定西、平凉皮重
   {.$DEFINE ZXKP} 
   //漳县
-  {.$DEFINE GGJC} 
-  //甘谷、兰州商砼自动进厂
+  {$DEFINE GGJC} 
+  //甘谷、兰州商砼、民和自动出厂
   {.$DEFINE CXSY} 
   //成县试样编号
   {.$DEFINE LZST} 
   //兰州商砼水泥內倒
-  {$DEFINE QHSN} 
+  {.$DEFINE QHSN} 
   //青海
   {$DEFINE MultiReplay}
   //计数器应答模式

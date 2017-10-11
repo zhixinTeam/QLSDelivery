@@ -162,14 +162,9 @@ var nInit: Int64;
   nPacker: TBusinessPackerBase;
 begin
   FChannel := nil;
-  nPacker := nil;
   try
     Result := False;
     //default return
-
-    nPacker := gBusinessPackerManager.LockPacker(sBus_BusinessMessage);
-    nPacker.InitData(@nIn, True, False);
-    //init
     nPacker.UnPackIn(nData, @nIn);
     
     FChannel := gChannelManager.LockChannel(cBus_Channel_Business, mtSoap);
@@ -236,8 +231,6 @@ begin
   Result := False;
   nStr := nData;
 
-  nPacker := nil;
-  nPacker := gBusinessPackerManager.LockPacker(sBus_BusinessMessage);
   Result := ISrvBusiness(FChannel.FChannel).Action(GetFlagStr(cWorker_GetMITName), nData);
   //remote call
 

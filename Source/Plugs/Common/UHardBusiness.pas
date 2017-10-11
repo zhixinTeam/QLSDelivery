@@ -11,7 +11,8 @@ uses
   Windows, Classes, Controls, SysUtils, UMgrDBConn, UMgrParam, DB,
   UBusinessWorker, UBusinessConst, UBusinessPacker, UMgrQueue,
   UMgrHardHelper, U02NReader, UMgrERelay, UMgrRemotePrint,
-  {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF} UMgrLEDDisp, UMgrRFID102, UMITConst;
+  {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF}
+  UMgrLEDDisp, UMgrRFID102, UMITConst;
 
 procedure WhenReaderCardArrived(const nReader: THHReaderItem);
 procedure WhenHYReaderCardArrived(const nReader: PHYReaderItem);
@@ -581,10 +582,6 @@ begin
 
   if nTrucks[0].FStatus = sFlag_TruckIn then
   begin
-    {$IFDEF GGJC}
-    gHardwareHelper.SetCardLastDone(nCard, nReader);
-    gHardwareHelper.SetReaderCard(nReader, nCard);
-    {$ELSE}
     nDB := nil;
     nRet := False;
     with gParamManager.ActiveParam^ do
@@ -619,7 +616,6 @@ begin
       nStr := Format(nStr, [nTrucks[0].FTruck]);
       WriteHardHelperLog(nStr, sPost_In);
     end;
-    {$ENDIF}
     Exit;
   end;
 
@@ -633,10 +629,7 @@ begin
       WriteHardHelperLog(nStr, sPost_In);
       Exit;
     end;
-    {$IFDEF GGJC}
-    gHardwareHelper.SetCardLastDone(nCard, nReader);
-    gHardwareHelper.SetReaderCard(nReader, nCard);
-    {$ELSE}
+
     if gTruckQueueManager.IsTruckAutoIn then
     begin
       gHardwareHelper.SetCardLastDone(nCard, nReader);
@@ -647,7 +640,7 @@ begin
       gHYReaderManager.OpenDoor(nReader);
       //抬杆
     end;
-    {$ENDIF}
+
     nStr := '原材料卡[%s]进厂抬杆成功';
     nStr := Format(nStr, [nCard]);
     WriteHardHelperLog(nStr, sPost_In);
@@ -695,10 +688,7 @@ begin
     WriteHardHelperLog(nStr, sPost_In);
     Exit;
   end;
-  {$IFDEF GGJC}
-  gHardwareHelper.SetCardLastDone(nCard, nReader);
-  gHardwareHelper.SetReaderCard(nReader, nCard);
-  {$ELSE}
+
   if gTruckQueueManager.IsTruckAutoIn then
   begin
     gHardwareHelper.SetCardLastDone(nCard, nReader);
@@ -709,7 +699,6 @@ begin
     gHYReaderManager.OpenDoor(nReader);
     //抬杆
   end;
-  {$ENDIF}
 
   nDB := nil;
   with gParamManager.ActiveParam^ do
@@ -1358,7 +1347,6 @@ var nStr: string;
     nPLine: PLineItem;
     nPTruck: PTruckItem;
     nTrucks: TLadingBillItems;
-    nSelfTunnel: string;
 
     function IsJSRun: Boolean;
     begin
@@ -1401,19 +1389,6 @@ begin
   begin
     nTunnel := gTruckQueueManager.GetTruckTunnel(nTrucks[0].FTruck);
     //重新定位车辆所在车道
-    if IsJSRun then Exit;
-  end
-  else
-  begin
-    nSelfTunnel := gTruckQueueManager.GetTruckTunnel(nTrucks[0].FTruck);
-    if Length(nSelfTunnel) > 0 then
-    if nTunnel <> nSelfTunnel then
-    begin
-      nStr := '车辆[ %s ]刷卡通道错误，当前刷卡通道为：[ %s ]，正确通道为：[ %s ]';
-      nStr := Format(nStr, [nTrucks[0].FTruck,nTunnel,nSelfTunnel]);
-      WriteNearReaderLog(nStr);
-      Exit;
-    end;
     if IsJSRun then Exit;
   end;
 
@@ -1543,7 +1518,6 @@ var nStr: string;
     nPLine: PLineItem;
     nPTruck: PTruckItem;
     nTrucks: TLadingBillItems;
-    nSelfTunnel: string;
 begin
   {$IFDEF DEBUG}
   WriteNearReaderLog('MakeTruckLadingSan进入.');
@@ -1566,20 +1540,6 @@ begin
     WriteNearReaderLog(nStr);
     Exit;
   end;
-
-  if nTunnel <> '' then
-  begin
-    nSelfTunnel := gTruckQueueManager.GetTruckTunnel(nTrucks[0].FTruck);
-    if Length(nSelfTunnel) > 0 then
-    if nTunnel <> nSelfTunnel then
-    begin
-      nStr := '车辆[ %s ]刷卡通道错误，当前刷卡通道为：[ %s ]，正确通道为：[ %s ]';
-      nStr := Format(nStr, [nTrucks[0].FTruck,nTunnel,nSelfTunnel]);
-      WriteNearReaderLog(nStr);
-      Exit;
-    end;
-  end;
-  //强制通道
 
   for nIdx:=Low(nTrucks) to High(nTrucks) do
   with nTrucks[nIdx] do
@@ -1681,7 +1641,7 @@ end;
 procedure MakeTruckAutoOut(const nCardNo: string);
 var nReader,nExtReader: string;
 begin
-  //if gTruckQueueManager.IsTruckAutoOut then
+  if gTruckQueueManager.IsTruckAutoOut then
   begin
     nReader := gHardwareHelper.GetReaderLastOn(nCardNo,nExtReader);
     if nReader <> '' then
