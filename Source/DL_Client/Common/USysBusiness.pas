@@ -345,6 +345,8 @@ function LoadSaleLineInfo(const nRecID: string; var nHint: string): TDataset;
 //载入订单行
 function LoadAXPlanInfo(const nID: string; var nHint: string): TDataset;
 //载入提货信息
+function TruckIn(const nCardNo: string): string;
+//车辆进厂
 
 implementation
 
@@ -1670,7 +1672,7 @@ begin
   nStr := CombineBillItmes(nData);
   Result := CallBusinessSaleBill(cBC_SavePostBills, nStr, nPost, @nOut);
   nFoutData:=nOut.FData;
-  WriteLog('SaveLadingBills: '+nFoutData);
+  //WriteLog('SaveLadingBills: '+nFoutData);
   if (not Result) or (nOut.FData = '') or (Pos('余额不足',nOut.FData)>0) then Exit;
   if (Pos('P',nOut.FData)>0) and (Length(nOut.FData)<=11) then
   begin
@@ -3277,6 +3279,15 @@ begin
   Result := '';
   if CallBusinessCommand(cBC_WeChat_get_shoporders, nXmlStr, '', @nOut) then
     Result := nOut.FData;
+end;
+
+//车辆进厂
+function TruckIn(const nCardNo: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  if CallBusinessHardware(cBC_TruckAutoIn, nCardNo, '', @nOut) then
+       Result := nOut.FData
+  else Result := '';
 end;
 
 

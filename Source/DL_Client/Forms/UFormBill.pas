@@ -580,6 +580,20 @@ var nIdx: Integer;
     nStr,nCenterYL,nStockNo,nCenterID:string;
     nYL:Double;
 begin
+  {$IFDEF ZXKP}
+  if not CheckTruckOK(Trim(EditTruck.Text)) then
+  begin
+    ShowMsg(EditTruck.Text+'禁止开单',sHint);
+    Exit;
+  end;
+  {$ENDIF}
+  {$IFDEF YDKP}
+  if not CheckTruckOK(Trim(EditTruck.Text)) then
+  begin
+    ShowMsg(EditTruck.Text+'禁止开单',sHint);
+    Exit;
+  end;
+  {$ENDIF}
   FSumTon:=0.00;
   if ListBill.Items.Count < 1 then
   begin

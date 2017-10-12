@@ -403,6 +403,7 @@ var nRet: Boolean;
     nIdx,nInt: Integer;
     nBills: TLadingBillItems;
     nNStatus: string;
+    nFoutData: string;
 begin
   nStr := Format('读取到卡号[ %s ],开始执行业务.', [nCard]);
   WriteLog(nStr);
@@ -452,6 +453,39 @@ begin
         ShowMsg('车辆进厂失败', sHint);
       end;
     end;
+    {$ENDIF}
+    
+    {$IFDEF MHSN}
+    if (FNextStatus=sFlag_TruckNone) then
+    begin
+      nStr:= TruckIn(nCard);
+      LoadBillItems(FCardTmp);
+      Exit;
+      {if (FCardUsed=sFlag_Provide) then
+      begin
+        if SavePurchaseOrders(sFlag_TruckIn, nBills) then
+        begin
+          ShowMsg('车辆进厂成功', sHint);
+          LoadBillItems(FCardTmp);
+          Exit;
+        end else
+        begin
+          ShowMsg('车辆进厂失败', sHint);
+        end;
+      end;
+      if (FCardUsed=sFlag_Sale) then
+      begin
+        if SaveLadingBills(nFoutData, sFlag_TruckIn, nBills) then
+        begin
+          ShowMsg('车辆进厂成功', sHint);
+          LoadBillItems(FCardTmp);
+          Exit;
+        end else
+        begin
+          ShowMsg('车辆进厂失败', sHint);
+        end;
+      end;}
+    end; 
     {$ENDIF}
     if (FStatus <> sFlag_TruckBFP) and (FNextStatus = sFlag_TruckZT) then
       FNextStatus := sFlag_TruckBFP;

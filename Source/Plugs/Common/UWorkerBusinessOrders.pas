@@ -958,6 +958,10 @@ begin
       if (pos('熟料',FStockName)>0) then FNextStatus := sFlag_TruckBFM;
       {$ENDIF}
 
+      {$IFDEF MHSN}
+      if (pos('熟料',FStockName)>0) then FNextStatus := sFlag_TruckBFM;
+      {$ENDIF}
+
       nSQL := MakeSQLByStr([
             SF('P_ID', nOut.FData),
             SF('P_Type', sFlag_Provide),
@@ -1229,16 +1233,22 @@ begin
       //磅房处理自动出厂
       WriteLog('磅房处理自动出厂');
       {$ELSE}
-      nSQL := 'Select D_Value From %s Where D_Name=''AutoOutStock'' and D_Value=''%s''';
-      nSQL := Format(nSQL, [sTable_SysDict, nPound[0].FStockNo]);
-
-      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
-      if RecordCount > 0 then
-      begin
+        {$IFDEF MHSN}
         gHardShareData('TruckOut:' + nPound[0].FCard);
         //磅房处理自动出厂
         WriteLog('磅房处理自动出厂');
-      end;
+        {$ELSE}
+        nSQL := 'Select D_Value From %s Where D_Name=''AutoOutStock'' and D_Value=''%s''';
+        nSQL := Format(nSQL, [sTable_SysDict, nPound[0].FStockNo]);
+
+        with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+        if RecordCount > 0 then
+        begin
+          gHardShareData('TruckOut:' + nPound[0].FCard);
+          //磅房处理自动出厂
+          WriteLog('磅房处理自动出厂');
+        end;
+        {$ENDIF}
       {$ENDIF}
     end;
   end;

@@ -72,6 +72,8 @@ type
     //车辆检测控制器业务
     function OpenPoundDoor(var nData: string): Boolean;
     //道闸抬杆
+    function TruckAutoIn(var nData: string): Boolean;
+    //车辆自动进厂
   public
     constructor Create; override;
     destructor destroy; override;
@@ -84,7 +86,8 @@ type
 implementation
 
 uses
-  UMgrHardHelper, UMgrCodePrinter, UMgrQueue, {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF}
+  UMgrHardHelper, UMgrCodePrinter, UMgrQueue, UHardBusiness,
+  {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF}
   UTaskMonitor,
   UMgrTruckProbe, UMgrRFID102;
 
@@ -247,6 +250,7 @@ begin
      cBC_IsTunnelOK           : Result := TruckProbe_IsTunnelOK(nData);
      cBC_TunnelOC             : Result := TruckProbe_TunnelOC(nData);
      cBC_OPenPoundDoor        : Result := OpenPoundDoor(nData);
+     cBC_TruckAutoIn          : Result := TruckAutoIn(nData);
     else
       begin
         Result := False;
@@ -673,6 +677,13 @@ begin
   except
     FOut.FData:= '道闸抬杆Error';
   end;
+end;
+
+//lih: 车辆自动进厂
+function THardwareCommander.TruckAutoIn(var nData: string): Boolean;
+begin
+  Result:= True;
+  MakeTruckIn(FIn.FData, '');
 end;
 
 initialization

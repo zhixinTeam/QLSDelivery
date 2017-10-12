@@ -25,7 +25,8 @@ procedure WhenBusinessMITSharedDataIn(const nData: string);
 //业务中间件共享数据
 procedure WhenSaveJS(const nTunnel: PMultiJSTunnel);
 //保存计数结果
-
+procedure MakeTruckIn(const nCard,nReader: string);
+//车辆进厂
 procedure SendMsgToWebMall(const nLid:string;const MsgType:Integer;const nBillType:string);
 //推送消息到微信平台
 function Do_send_event_msg(const nXmlStr: string): string;

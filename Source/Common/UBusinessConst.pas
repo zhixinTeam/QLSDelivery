@@ -84,6 +84,7 @@ const
   cBC_IsTunnelOK              = $0075;   //查询车检状态
   cBC_TunnelOC                = $0076;   //红绿灯开关
   cBC_OPenPoundDoor           = $0077;   //道闸抬杆
+  cBC_TruckAutoIn             = $0078;   //车辆自动进厂
 
   cBC_SyncCustomer            = $0080;   //远程同步客户
   cBC_SyncSaleMan             = $0081;   //远程同步业务员
