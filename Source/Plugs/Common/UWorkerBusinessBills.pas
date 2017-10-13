@@ -2123,7 +2123,17 @@ begin
       if nInt >= 0 then //ÒÑ³ÆÆ¤
            FNextStatus := sFlag_TruckBFM
       else FNextStatus := sFlag_TruckOut;
-
+      {$IFDEF YDKP}
+      nSQL := MakeSQLByStr([SF('L_Status', FStatus),
+              SF('L_NextStatus', FNextStatus),
+              SF('L_LadeTime', sField_SQLServer_Now, sfVal),
+              SF('L_LadeMan', FIn.FBase.FFrom.FUser),
+              //SF('L_HYDan', FSampleID),
+              SF('L_EmptyOut', FYSValid),
+              SF('L_WorkOrder', FWorkOrder),
+              SF('L_CW', FKw)
+              ], sTable_Bill, SF('L_ID', FID), False);
+      {$ELSE}
       nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
               'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
       nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
@@ -2161,17 +2171,8 @@ begin
               SF('L_HYDan', nReiNo),
               SF('L_CW', FKw)
               ], sTable_Bill, SF('L_ID', FID), False);
-//      {$ELSE}
-//      nSQL := MakeSQLByStr([SF('L_Status', FStatus),
-//              SF('L_NextStatus', FNextStatus),
-//              SF('L_LadeTime', sField_SQLServer_Now, sfVal),
-//              SF('L_LadeMan', FIn.FBase.FFrom.FUser),
-//              SF('L_HYDan', FSampleID),
-//              SF('L_EmptyOut', FYSValid),
-//              SF('L_WorkOrder', FWorkOrder),
-//              SF('L_CW', FKw)
-//              ], sTable_Bill, SF('L_ID', FID), False);
-//      {$ENDIF}
+
+      {$ENDIF}
       FListA.Add(nSQL);
 
       nSQL := 'Update %s Set T_InLade=%s Where T_HKBills Like ''%%%s%%''';
@@ -2186,7 +2187,17 @@ begin
     for nIdx:=Low(nBills) to High(nBills) do
     with nBills[nIdx] do
     begin
-
+      {$IFDEF YDKP}
+      nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckFH),
+              SF('L_NextStatus', sFlag_TruckBFM),
+              SF('L_LadeTime', sField_SQLServer_Now, sfVal),
+              SF('L_LadeMan', FIn.FBase.FFrom.FUser),
+              //SF('L_HYDan', FSampleID),
+              SF('L_EmptyOut', FYSValid),
+              SF('L_WorkOrder', FWorkOrder),
+              SF('L_CW', FKw)
+              ], sTable_Bill, SF('L_ID', FID), False);
+      {$ELSE}
       nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
               'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
       nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
@@ -2224,17 +2235,8 @@ begin
               SF('L_HYDan', nReiNo),
               SF('L_CW', FKw)
               ], sTable_Bill, SF('L_ID', FID), False);
-//      {$ELSE}
-//      nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckFH),
-//              SF('L_NextStatus', sFlag_TruckBFM),
-//              SF('L_LadeTime', sField_SQLServer_Now, sfVal),
-//              SF('L_LadeMan', FIn.FBase.FFrom.FUser),
-//              SF('L_HYDan', FSampleID),
-//              SF('L_EmptyOut', FYSValid),
-//              SF('L_WorkOrder', FWorkOrder),
-//              SF('L_CW', FKw)
-//              ], sTable_Bill, SF('L_ID', FID), False);
-//      {$ENDIF}
+
+      {$ENDIF}
       FListA.Add(nSQL);
 
       nSQL := 'Update %s Set T_InLade=%s Where T_HKBills Like ''%%%s%%''';

@@ -509,9 +509,9 @@ begin
     nNStatus:= TruckStatusToStr(FNextStatus);
     nStr := '车辆 %s 不能过磅,应该 %s ';
     if nNStatus='放灰处' then
-      nNStatus:='去换票室'
+      nNStatus:='去放灰处'
     else if nNStatus='栈台' then
-      nNStatus:='去换票室';
+      nNStatus:='去栈台';
     nStr := Format(nStr, [FTruck, nNStatus]);
     PlayVoice(nStr);
   end;

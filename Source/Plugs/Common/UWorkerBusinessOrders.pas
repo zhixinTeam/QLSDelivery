@@ -912,21 +912,6 @@ begin
   //----------------------------------------------------------------------------
   if FIn.FExtParam = sFlag_TruckBFP then //³ÆÁ¿Æ¤ÖØ
   begin
-    FListB.Clear;
-    nStr := 'Select D_Value From %s Where D_Name=''%s''';
-    nStr := Format(nStr, [sTable_SysDict, sFlag_NFStock]);
-
-    with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-    if RecordCount > 0 then
-    begin
-      First;
-      while not Eof do
-      begin
-        FListB.Add(Fields[0].AsString);
-        Next;
-      end;
-    end;
-
     FListC.Clear;
     FListC.Values['Group'] := sFlag_BusGroup;
     FListC.Values['Object'] := sFlag_PoundID;
@@ -943,13 +928,11 @@ begin
       FStatus := sFlag_TruckBFP;
       FNextStatus := sFlag_TruckXH;
 
-      {if FListB.IndexOf(FStockNo) >= 0 then
-        FNextStatus := sFlag_TruckBFM; }
-      nStr := 'Select D_Value From %s Where ((D_Name=''%s'') or (D_Name=''%s'')) and D_Value=''%s'' ';
-      nStr := Format(nStr, [sTable_SysDict, sFlag_NFStock, sFlag_NFPurch, FStockNo]);
+      nStr := 'Select YS_Valid From %s Where YS_Valid=''%s'' and Y_StockNo=''%s'' ';
+      nStr := Format(nStr, [sTable_YSLines, sFlag_Yes, FStockNo]);
 
       with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-      if RecordCount > 0 then
+      if RecordCount < 0 then
       begin
         FNextStatus := sFlag_TruckBFM;
       end;

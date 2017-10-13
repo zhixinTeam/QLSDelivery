@@ -12,7 +12,7 @@ uses
   UBusinessWorker, UBusinessConst, UBusinessPacker, UMgrQueue,
   UMgrHardHelper, U02NReader, UMgrERelay, UMgrRemotePrint,
   {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF}
-  UMgrLEDDisp, UMgrRFID102, UMITConst;
+  UMgrLEDDisp, UMgrRFID102, UMITConst, Graphics;
 
 procedure WhenReaderCardArrived(const nReader: THHReaderItem);
 procedure WhenHYReaderCardArrived(const nReader: PHYReaderItem);
@@ -37,14 +37,80 @@ procedure ModifyWebOrderStatus(const nLId:string;nStatus:Integer=c_WeChatStatusF
 function Do_ModifyWebOrderStatus(const nXmlStr: string): string;
 //修改网上订单状态
 
+function SaveDBImage(const nDS: TDataSet; const nFieldName: string;
+      const nImage: string): Boolean; overload;
+function SaveDBImage(const nDS: TDataSet; const nFieldName: string;
+  const nImage: TGraphic): Boolean; overload;
+
+procedure WriteHardHelperLog(const nEvent: string; nPost: string = '');
+
 implementation
 
 uses
-  ULibFun, USysDB, USysLoger, UTaskMonitor;
+  ULibFun, USysDB, USysLoger, UTaskMonitor, HKVNetSDK, UFormCtrl;
 
 const
   sPost_In   = 'in';
   sPost_Out  = 'out';
+
+function SaveDBImage(const nDS: TDataSet; const nFieldName: string;
+      const nImage: string): Boolean;
+var nPic: TPicture;
+begin
+  Result := False;
+  if not FileExists(nImage) then Exit;
+
+  nPic := nil;
+  try
+    nPic := TPicture.Create;
+    nPic.LoadFromFile(nImage);
+
+    SaveDBImage(nDS, nFieldName, nPic.Graphic);
+    FreeAndNil(nPic);
+  except
+    if Assigned(nPic) then nPic.Free;
+  end;
+end;
+
+function SaveDBImage(const nDS: TDataSet; const nFieldName: string;
+  const nImage: TGraphic): Boolean;
+var nField: TField;
+    nStream: TMemoryStream;
+    nBuf: array[1..MAX_PATH] of Char;
+begin
+  Result := False;
+  nField := nDS.FindField(nFieldName);
+  if not (Assigned(nField) and (nField is TBlobField)) then Exit;
+
+  nStream := nil;
+  try
+    if not Assigned(nImage) then
+    begin
+      nDS.Edit;
+      TBlobField(nField).Clear;
+      nDS.Post; Result := True; Exit;
+    end;
+    
+    nStream := TMemoryStream.Create;
+    nImage.SaveToStream(nStream);
+    nStream.Seek(0, soFromEnd);
+
+    FillChar(nBuf, MAX_PATH, #0);
+    StrPCopy(@nBuf[1], nImage.ClassName);
+    nStream.WriteBuffer(nBuf, MAX_PATH);
+
+    nDS.Edit;
+    nStream.Position := 0;
+    TBlobField(nField).LoadFromStream(nStream);
+
+    nDS.Post;
+    FreeAndNil(nStream);
+    Result := True;
+  except
+    if Assigned(nStream) then nStream.Free;
+    if nDS.State = dsEdit then nDS.Cancel;
+  end;
+end;
 
 //Date: 2014-09-15
 //Parm: 命令;数据;参数;输出
@@ -1339,6 +1405,317 @@ begin
   end;
 end;
 
+procedure SavePicture(const nID, nTruck, nMate, nFile: string);
+var nStr: string;
+    nRID: Integer;
+    nDBConn: PDBWorker;
+    nIdx:Integer;
+begin
+  nDBConn := nil;
+  with gParamManager.ActiveParam^ do
+  begin
+    try
+      nDBConn := gDBConnManager.GetConnection(FDB.FID, nIdx);
+      if not Assigned(nDBConn) then
+      begin
+        WriteNearReaderLog('连接HM数据库失败(DBConn Is Null).');
+        Exit;
+      end;
+
+      if not nDBConn.FConn.Connected then
+        nDBConn.FConn.Connected := True;
+
+      nDBConn.FConn.BeginTrans;
+      try
+        nStr := MakeSQLByStr([
+            SF('P_ID', nID),
+            SF('P_Name', nTruck),
+            SF('P_Mate', nMate),
+            SF('P_Date', sField_SQLServer_Now, sfVal)
+            ], sTable_Picture, '', True);
+        gDBConnManager.WorkerExec(nDBConn, nStr);
+
+        nStr := 'Select Max(%s) From %s';
+        nStr := Format(nStr, ['R_ID', sTable_Picture]);
+
+        with gDBConnManager.WorkerQuery(nDBConn, nStr) do
+        if RecordCount > 0 then
+        begin
+          nRID := Fields[0].AsInteger;
+        end;
+
+        nStr := 'Select P_Picture From %s Where R_ID=%d';
+        nStr := Format(nStr, [sTable_Picture, nRID]);
+        SaveDBImage(gDBConnManager.WorkerQuery(nDBConn, nStr), 'P_Picture', nFile);
+
+        nDBConn.FConn.CommitTrans;
+      except
+        nDBConn.FConn.RollbackTrans;
+      end;
+    finally
+      gDBConnManager.ReleaseConnection(nDBConn);
+    end;
+  end;
+end;
+//Desc: 构建图片路径
+function MakePicName: string;
+begin
+  while True do
+  begin
+    Result := gSysParam.FPicPath + IntToStr(gSysParam.FPicBase) + '.jpg';
+    if not FileExists(Result) then
+    begin
+      Inc(gSysParam.FPicBase);
+      Exit;
+    end;
+
+    DeleteFile(Result);
+    if FileExists(Result) then Inc(gSysParam.FPicBase)
+  end;
+end;
+{
+procedure CapturePicture(const nTunnel: PReaderHost; const nList: TStrings);
+const
+  cRetry = 2;
+  //重试次数
+var nStr,nTmp: string;
+    nIdx,nInt: Integer;
+    nLogin,nErr: Integer;
+    nPic: NET_DVR_JPEGPARA;
+    nInfo: TNET_DVR_DEVICEINFO;
+    nHost, nPort, nUser, nPwd: string;
+    nPicSize, nPicQuality: Integer;
+begin
+  nList.Clear;
+
+  if not Assigned(nTunnel.FOptions) then Exit;
+  nHost:= nTunnel.FOptions.Values[''];
+  nPort:= nTunnel.FOptions.Values[''];
+  nUser:= nTunnel.FOptions.Values[''];
+  nPwd := nTunnel.FOptions.Values[''];
+  nPicSize:= StrToIntDef(nTunnel.FOptions.Values[''], 1);
+  nPicQuality:= StrToIntDef(nTunnel.FOptions.Values[''], 1);
+
+  if not DirectoryExists(gSysParam.FPicPath) then
+    ForceDirectories(gSysParam.FPicPath);
+
+  if gSysParam.FPicBase >= 100 then
+    gSysParam.FPicBase := 0;
+
+  nLogin := -1;
+
+  NET_DVR_Init();
+
+  try
+    for nIdx:=1 to cRetry do
+    begin
+      nStr := 'NET_DVR_Login(IPAddr=%s,wDVRPort=%d,UserName=%s,PassWord=%s)';
+      nStr := Format(nStr,[nHost,nPort,nUser,nPwd]);
+
+      nLogin := NET_DVR_Login(PChar(nHost),
+                   nPort,
+                   PChar(nUser),
+                   PChar(nPwd), @nInfo);
+
+      nErr := NET_DVR_GetLastError;
+      if nErr = 0 then break;
+
+      if nIdx = cRetry then
+      begin
+        nStr := '登录摄像机[ %s.%d ]失败,错误码: %d';
+        nStr := Format(nStr, [nHost, nPort, nErr]);
+        WriteNearReaderLog(nStr);
+        Exit;
+      end;
+    end;
+
+    nPic.wPicSize := nPicSize;
+    nPic.wPicQuality := nPicQuality;
+    nStr := 'nPic.wPicSize=%d,nPic.wPicQuality=%d';
+    nStr := Format(nStr,[nPic.wPicSize,nPic.wPicQuality]);
+
+    for nIdx:=Low(nTunnel.FCameraTunnels) to High(nTunnel.FCameraTunnels) do
+    begin
+      if nTunnel.FCameraTunnels[nIdx] = MaxByte then continue;
+
+      for nInt:=1 to cRetry do
+      begin
+        nStr := MakePicName();
+        nTmp := 'NET_DVR_CaptureJPEGPicture(LoginID=%d,lChannel=%d,sPicFileName=%s)';
+        nTmp := Format(nTmp,[nLogin,nTunnel.FCameraTunnels[nIdx],nStr]);
+
+        NET_DVR_CaptureJPEGPicture(nLogin, nTunnel.FCameraTunnels[nIdx],
+                                   @nPic, PChar(nStr));
+
+        nErr := NET_DVR_GetLastError;
+
+        if nErr = 0 then
+        begin
+          nList.Add(nStr);
+          Break;
+        end;
+
+        if nIdx = cRetry then
+        begin
+          nStr := '抓拍图像[ %s.%d ]失败,错误码: %d';
+          nStr := Format(nStr, [nTunnel.FCamera.FHost,
+                   nTunnel.FCameraTunnels[nIdx], nErr]);
+          WriteNearReaderLog(nStr);
+        end;
+      end;
+    end;
+  finally
+    if nLogin > -1 then
+      NET_DVR_Logout(nLogin);
+    NET_DVR_Cleanup();
+  end;
+end;}
+
+//Date: 2017-6-2
+//Parm: 磁卡号;通道号
+//Desc: 对nCard执行验收操作
+procedure MakeTruckAcceptance(const nCard: string; nTunnel: string;const nHost: PReaderHost);
+var
+  nStr:string;
+  nDBConn: PDBWorker;
+  nIdx,nInt,nTmp:Integer;
+  nY_valid,nY_stockno:string;
+  nBills: TLadingBillItems;
+  nList: TStrings;
+  nCardType:string;
+  function SimpleTruckno(const nTruckno:WideString):string;
+  var
+    i:Integer;
+  begin
+    Result := '';
+    for i := 1 to Length(nTruckno) do
+    begin
+      if Ord(nTruckno[i])>127 then Continue;
+      Result := Result+nTruckno[i];
+    end;
+  end;
+begin
+  nDBConn := nil;
+  if not GetCardUsed(nCard, nCardType) then Exit;
+
+  with gParamManager.ActiveParam^ do
+  begin
+    try
+      nDBConn := gDBConnManager.GetConnection(FDB.FID, nIdx);
+      if not Assigned(nDBConn) then
+        begin
+          WriteNearReaderLog('连接'+FDB.FID+'数据库失败(DBConn Is Null).');
+          Exit;
+        end;
+        if not nDBConn.FConn.Connected then
+        nDBConn.FConn.Connected := True;
+
+        nStr := 'select * from %s where y_id=''%s''';
+        nStr := Format(nStr,[sTable_YSLines,nTunnel]);
+
+        with gDBConnManager.WorkerQuery(nDBConn, nStr) do
+        begin
+          if recordcount=0 then
+          begin
+            WriteNearReaderLog('验收通道'+nTunnel+'不存在');
+            Exit;
+          end;
+          nY_valid := FieldByName('Y_Valid').asstring;
+          if nY_valid=sflag_no then
+          begin
+            WriteNearReaderLog('验收通道'+nTunnel+'已关闭');
+            Exit;
+          end;
+          nY_stockno := FieldByName('Y_StockNo').asstring;
+        end;
+    finally
+      gDBConnManager.ReleaseConnection(nDBConn);
+    end;
+  end;
+
+  if not GetLadingOrders(nCard, sFlag_TruckBFM, nBills) then
+  begin
+    nStr := '读取磁卡[ %s ]订单信息失败.';
+    nStr := Format(nStr, [nCard]);
+    WriteNearReaderLog(nStr);
+    Exit;
+  end;
+  if Length(nBills) < 1 then
+  begin
+    nStr := '磁卡[ %s ]没有需要现场验收车辆.';
+    nStr := Format(nStr, [nCard]);
+
+    WriteNearReaderLog(nStr);
+    Exit;
+  end;
+
+  nStr := '';
+  nInt := 0;
+  for nIdx:=Low(nBills) to High(nBills) do
+  begin
+    with nBills[nIdx] do
+    begin
+      if nCardType=sFlag_Provide then
+      begin
+        if Pos(FStockNo,nY_stockno)=0 then
+        begin
+          nTmp := Length(nBills[0].FTruck);
+//          nStr := SimpleTruckno(nBills[0].FTruck) + '请更换验收通道';
+          nStr := '请更换验收通道';
+          gDisplayManager.Display(nTunnel, nStr);
+          nStr := SimpleTruckno(nBills[0].FTruck) + '请更换验收通道';
+          WriteHardHelperLog('在['+nTunnel+']通道刷卡无效，'+nStr+',订单物料['+FStockNo+']通道物料['+nY_stockno+']');
+          Exit;
+        end;
+      end;
+      FSelected := (FStatus = sFlag_TruckXH) or (FNextStatus = sFlag_TruckXH);
+      if FSelected then
+      begin
+        Inc(nInt);
+        Continue;
+      end;
+
+//      nStr := '%s    无法验收.';
+//      nStr := Format(nStr, [SimpleTruckno(FTruck), TruckStatusToStr(FNextStatus)]);
+      nStr := '请称量毛重';
+      gDisplayManager.Display(nTunnel, nStr);
+      nStr := '%s    无法验收.';
+      nStr := Format(nStr, [SimpleTruckno(FTruck), TruckStatusToStr(FNextStatus)]);
+      WriteNearReaderLog('在['+nTunnel+']通道刷卡无效，'+nStr+',订单物料['+FStockNo+']通道物料['+nY_stockno+']');
+    end;
+  end;
+
+  if nInt < 1 then
+  begin
+    WriteHardHelperLog(nStr);
+    Exit;
+  end;
+
+//  nStr := SimpleTruckno(nBills[0].FTruck) + '    刷卡完成';
+  nStr := '刷卡验收完成';
+  gDisplayManager.Display(nTunnel, nStr);
+  nStr := SimpleTruckno(nBills[0].FTruck) + '    刷卡完成';
+  WriteNearReaderLog('lixw-debug gDisplayManager.Display(nTunnel='+nTunnel+',nStr='+nStr+')');
+  if not SaveLadingOrders(sFlag_TruckXH, nBills) then
+  begin
+    nStr := '车辆[ %s ]验收失败.';
+    nStr := Format(nStr, [nBills[0].FTruck]);
+
+    WriteNearReaderLog(nStr);
+    Exit;
+  end;
+  {nList := TStringList.Create;
+  try
+    CapturePicture(nHost, nList);
+
+    for nIdx:=0 to nList.Count - 1 do
+      SavePicture(nTunnel+FormatDateTime('yyyymmdd',date), nBills[0].FTruck,
+                              nBills[0].FStockName, nList[nIdx]);
+  finally
+    nList.Free;
+  end;}
+end;
+
 //Date: 2012-4-24
 //Parm: 磁卡号;通道号
 //Desc: 对nCard执行袋装装车操作
@@ -1545,7 +1922,7 @@ begin
   for nIdx:=Low(nTrucks) to High(nTrucks) do
   with nTrucks[nIdx] do
   begin
-    if (FStatus = sFlag_TruckFH) or (FNextStatus = sFlag_TruckFH) then Continue;
+    if (FStatus = sFlag_TruckFH) or (FNextStatus = sFlag_TruckFH) or (FStatus = sFlag_TruckBFM) then Continue;
     //未装或已装
 
     nStr := '车辆[ %s ]下一状态为:[ %s ],无法放灰.';
@@ -1594,7 +1971,10 @@ end;
 //Parm: 主机;卡号
 //Desc: 对nHost.nCard新到卡号作出动作
 procedure WhenReaderCardIn(const nCard: string; const nHost: PReaderHost);
+var
+  nCardType: string;
 begin
+  if not GetCardUsed(nCard, nCardType) then Exit;
   if nHost.FType = rtOnce then
   begin
     if nHost.FFun = rfIn then
@@ -1608,12 +1988,27 @@ begin
       else
         MakeTruckOut(nCard, '', nHost.FPrinter, '');
     end else
-      MakeTruckLadingDai(nCard, nHost.FTunnel);
-  end else
-    
-  if nHost.FType = rtKeep then
+    begin
+      if nCardType = sFlag_Sale then
+      begin
+        MakeTruckLadingDai(nCard, nHost.FTunnel);
+      end
+      else if (nCardType = sFlag_Provide) or (nCardType = sFlag_other) then
+      begin
+        MakeTruckAcceptance(nCard,nhost.FTunnel,nHost);
+      end;
+    end;
+  end
+  else if nHost.FType = rtKeep then
   begin
-    MakeTruckLadingSan(nCard, nHost.FTunnel);
+    if nCardType = sFlag_Sale then
+    begin
+      MakeTruckLadingSan(nCard, nHost.FTunnel);
+    end
+    else if (nCardType = sFlag_Provide) or (nCardType = sFlag_other) then
+    begin
+      MakeTruckAcceptance(nCard,nhost.FTunnel,nHost);
+    end;
   end;
 end;
 

@@ -77,6 +77,8 @@ type
     FSaleArea   : string;                            //销售点
     FProvFirm   : string;                            //供应厂区
     FGPWSURL    : string;                            //集团公共web服务平台地址
+    FPicBase    : Integer;                           //图片索引
+    FPicPath    : string;                            //图片目录
   end;
   //系统参数
 
@@ -124,6 +126,8 @@ ResourceString
   sPlugDir            = 'Plugs\';                    //插件目录
   sInvalidConfig      = '配置文件无效或已经损坏';    //配置文件无效
   sCloseQuery         = '确定要退出程序吗?';         //主窗口退出
+
+  sCameraDir          = 'Camera\';                   //抓拍目录
   
 implementation
 
@@ -170,6 +174,9 @@ begin
 
         FSaleArea  := ReadString(FProgID, 'SaleArea', '');
         FProvFirm  := ReadString(FProgID, 'ProvFirm', '');
+
+        FPicBase := 0;
+        FPicPath := gPath + sCameraDir;
       end;
     end;
   finally

@@ -11,7 +11,7 @@ uses
   UFormNormal, cxGraphics, cxControls, cxLookAndFeels,
   cxLookAndFeelPainters, cxContainer, cxEdit, cxMaskEdit, cxDropDownEdit,
   cxLabel, cxCheckBox, cxTextEdit, dxLayoutControl, StdCtrls,
-  dxLayoutcxEditAdapters;
+  dxLayoutcxEditAdapters, cxCheckComboBox, ExtCtrls;
 
 type
   TfFormYSLine = class(TfFormNormal)
@@ -19,18 +19,27 @@ type
     LayItem1: TdxLayoutItem;
     CheckValid: TcxCheckBox;
     dxLayout1Item7: TdxLayoutItem;
-    EditStockName: TcxTextEdit;
-    dxLayout1Item8: TdxLayoutItem;
-    EditStockID: TcxComboBox;
-    dxLayout1Item21: TdxLayoutItem;
     EditName: TcxTextEdit;
     dxLayout1Item3: TdxLayoutItem;
+    chkcbbStockname: TcxCheckComboBox;
+    dxLayout1Item4: TdxLayoutItem;
+    editStockno: TcxTextEdit;
+    dxLayout1Item5: TdxLayoutItem;
+    editStockname: TcxTextEdit;
+    dxLayout1Item6: TdxLayoutItem;
+    Timer1: TTimer;
+    checkYSValid: TcxCheckBox;
+    dxLayout1Item8: TdxLayoutItem;
     procedure BtnOKClick(Sender: TObject);
-    procedure EditStockIDPropertiesChange(Sender: TObject);
+    function getStocknos:string;
+    procedure setStocknos(const nstrs:string);
+    procedure chkcbbStocknamePropertiesChange(Sender: TObject);
+    procedure Timer1Timer(Sender: TObject);
   protected
     { Protected declarations }
     FID: string;
     //标识
+    FStocknoList:Tstrings;
     procedure InitFormData(const nID: string);
     procedure GetData(Sender: TObject; var nData: string);
     function SetData(Sender: TObject; const nData: string): Boolean;
@@ -41,6 +50,8 @@ type
     class function CreateForm(const nPopedom: string = '';
       const nParam: Pointer = nil): TWinControl; override;
     class function FormID: integer; override;
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
   end;
 
 function ShowAddYSLineForm: Boolean;
@@ -109,6 +120,7 @@ end;
 procedure TfFormYSLine.InitFormData(const nID: string);
 var nStr: string;
     nIdx: Integer;
+    nItem:TcxCheckComboBoxItem;
 begin
   ResetHintAllForm(Self, 'T', sTable_YSLines);
   //重置表名称
@@ -116,20 +128,21 @@ begin
   if nID <> '' then
   begin
     EditID.Properties.ReadOnly := True;
+    EditID.Enabled := False;
     nStr := 'Select * From %s Where R_ID=''%s''';
     nStr := Format(nStr, [sTable_YSLines, nID]);
 
     if FDM.QueryTemp(nStr).RecordCount > 0 then
     begin
-      EditStockID.Text := FDM.SqlTemp.FieldByName('Z_StockNo').AsString;
+      editStockno.Text := FDM.SqlTemp.FieldByName('Y_StockNo').AsString;
       LoadDataToCtrl(FDM.SqlTemp, Self, '', SetData);
     end;
   end;
 
-  nStr := 'Select M_ID, M_Name From %s ';
+  nStr := 'Select M_ID, M_Name From %s where M_Weighning = 1';
   nStr := Format(nStr, [sTable_Materails]);
 
-  EditStockID.Properties.Items.Clear;
+  chkcbbStockname.Properties.Items.Clear;
   SetLength(gStockItems, 0);
 
   with FDM.QueryTemp(nStr) do
@@ -146,13 +159,17 @@ begin
       begin
         FID := Fields[0].AsString;
         FName := Fields[1].AsString;
-        EditStockID.Properties.Items.AddObject(FID + '.' + FName, Pointer(nIdx));
+        nItem := chkcbbStockname.Properties.Items.Add;
+        nItem.Description := FID + '.' + FName;
+        nItem.ShortDescription := FName;
+        FStocknoList.Add(Fid);
       end;
 
       Inc(nIdx);
       Next;
     end;
   end;
+  setStocknos(editStockno.Text);
 end;
 
 function TfFormYSLine.SetData(Sender: TObject; const nData: string): Boolean;
@@ -163,6 +180,12 @@ begin
   begin
     Result := True;
     CheckValid.Checked := nData <> sFlag_No;
+  end;
+  
+  if Sender = checkYSValid then
+  begin
+    Result := True;
+    checkYSValid.Checked := nData <> sFlag_No;
   end;
 end;
 
@@ -180,6 +203,17 @@ begin
       gCheckValid := false;
     end;
   end;
+
+  if Sender = checkYSValid then
+  begin
+    if checkYSValid.Checked   then
+    begin
+      nData := sFlag_Yes;
+    end else
+    begin
+      nData := sFlag_No;
+    end;
+  end;  
 end;
 
 function TfFormYSLine.OnVerifyCtrl(Sender: TObject; var nHint: string): Boolean;
@@ -199,39 +233,25 @@ begin
     EditName.Text := Trim(EditName.Text);
     Result := EditName.Text <> '';
     nHint := '请填写有效名称';
-  end else
-
-  if Sender = EditStockID then
-  begin
-    Result := EditStockID.ItemIndex >= 0;
-    nHint := '请选择品种';
   end;
+
+  Result := getStocknos<>'';
+  nHint := '请选择品种';
 end;
 
 procedure TfFormYSLine.BtnOKClick(Sender: TObject);
 var nIdx: Integer;
-    nList: TStrings;
     nStr,nEvent: string;
 begin
   if not IsDataValid then Exit;
 
-  nList := TStringList.Create;
-  try
-    nIdx := Integer(EditStockID.Properties.Items.Objects[EditStockID.ItemIndex]);
-    nList.Add(Format('Z_StockNo=''%s''', [gStockItems[nIdx].FID]));
-
-    //ext fields
-
-    if FID = '' then
-    begin
-      nStr := MakeSQLByForm(Self, sTable_YSLines, '', True, GetData, nList);
-    end else
-    begin
-      nStr := Format('R_ID=''%s''', [FID]);
-      nStr := MakeSQLByForm(Self, sTable_YSLines, nStr, False, GetData, nList);
-    end;
-  finally
-    nList.Free;
+  if FID = '' then
+  begin
+    nStr := MakeSQLByForm(Self, sTable_YSLines, '', True, GetData);
+  end else
+  begin
+    nStr := Format('R_ID=''%s''', [FID]);
+    nStr := MakeSQLByForm(Self, sTable_YSLines, nStr, False, GetData);
   end;
 
   FDM.ExecuteSQL(nStr);
@@ -254,12 +274,80 @@ begin
   ShowMsg('通道已保存,请等待刷新', sHint);
 end;
 
-procedure TfFormYSLine.EditStockIDPropertiesChange(Sender: TObject);
-var nIdx,i: Integer;
+destructor TfFormYSLine.Destroy;
 begin
-  if (not EditStockID.Focused) or (EditStockID.ItemIndex < 0) then Exit;
-  nIdx := Integer(EditStockID.Properties.Items.Objects[EditStockID.ItemIndex]);
-  EditStockName.Text := gStockItems[nIdx].FName;
+  FStocknoList.Free;
+  inherited;
+end;
+
+constructor TfFormYSLine.Create(AOwner: TComponent);
+begin
+  inherited;
+  Fstocknolist := TStringList.Create;
+end;
+
+function TfFormYSLine.getStocknos: string;
+var
+  i:Integer;
+  nItem:TcxCheckComboBoxItem;
+  nno:TStrings;
+begin
+  Result := '';
+  nno := TStringList.Create;
+  try
+    for i := 0 to chkcbbStockname.Properties.Items.Count-1 do
+    begin
+      nItem := chkcbbStockname.Properties.Items[i];
+      if chkcbbStockname.States[i]=cbsChecked then
+      begin
+        nno.Add(FStocknoList.Strings[i]);
+      end;
+    end;
+    Result := nno.CommaText;
+  finally
+    nno.Free;
+  end;
+end;
+
+procedure TfFormYSLine.chkcbbStocknamePropertiesChange(Sender: TObject);
+begin
+  inherited;
+  editStockno.Text := getStocknos;
+  editStockname.Text := chkcbbStockname.Text;
+end;
+
+procedure TfFormYSLine.setStocknos(const nstrs: string);
+var
+  i:Integer;
+  nItem:TcxCheckComboBoxItem;
+  nno:TStrings;
+  nTmp,nSelNo:string;
+begin
+  nno := TStringList.Create;
+  try
+    nno.CommaText := nstrs;
+    for i := 0 to chkcbbStockname.Properties.Items.Count-1 do
+    begin
+      nItem := chkcbbStockname.Properties.Items[i];
+      nTmp := FStocknoList.Strings[i];
+      if nno.IndexOf(nTmp)<>-1 then
+      begin
+        if Pos(nTmp,nItem.Description)>0 then
+        begin
+          chkcbbStockname.States[i] := cbsChecked;
+        end;
+      end;
+    end;
+  finally
+    nno.Free;
+  end;
+end;
+
+procedure TfFormYSLine.Timer1Timer(Sender: TObject);
+begin
+  timer1.Enabled := False;
+  dxLayout1Item5.Visible := False;
+  dxLayout1Item6.Visible := False;
 end;
 
 initialization

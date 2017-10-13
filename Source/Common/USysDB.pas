@@ -935,7 +935,7 @@ const
        'L_InvLocationId varChar(20),L_InvCenterId varChar(20),'+
        'L_PlanQty numeric(28, 12) not null Default ((0)),L_CW varChar(10),'+
        'L_Transporter varChar(20),L_vendpicklistid varChar(60),'+
-       'L_FYAX Char(1) not null default((0)),L_BDAX Char(1) not null default((0)),'+
+       'L_FYAX varChar(11) not null default((0)),L_BDAX varChar(11) not null default((0)),'+
        'L_FYNUM int not null default((0)),L_BDNUM int not null default((0)),'+
        'L_SalesType Char(1),L_FYDEL Char(1) not null default((0)),'+
        'L_FYDELNUM int not null default((0)),L_EmptyOut char(1) not null default(''N''),'+
@@ -1362,20 +1362,21 @@ const
   sSQL_NewYSLines = 'Create Table $Table(R_ID $Inc, Y_ID varChar(15),' +
        'Y_Name varChar(32), Y_StockNo varChar(20), Y_Stock varChar(80),' +
        'Y_StockType Char(1), Y_PeerWeight Integer,' +
-       'Y_QueueMax Integer, Y_VIPLine Char(1), Y_Valid Char(1), Y_Index Integer)';
+       'Y_QueueMax Integer, Y_VIPLine Char(1), Y_Valid Char(1), YS_Valid Char(1), Y_Index Integer)';
   {-----------------------------------------------------------------------------
    验收通道配置: YSLines
    *.R_ID: 记录号
-   *.Z_ID: 编号
-   *.Z_Name: 名称
-   *.Z_StockNo: 品种编号
-   *.Z_Stock: 品名
-   *.Z_StockType: 类型(袋,散)
-   *.Z_PeerWeight: 袋重
-   *.Z_QueueMax: 队列大小
-   *.Z_VIPLine: VIP通道
-   *.Z_Valid: 是否有效
-   *.Z_Index: 顺序索引
+   *.Y_ID: 编号
+   *.Y_Name: 名称
+   *.Y_StockNo: 品种编号
+   *.Y_Stock: 品名
+   *.Y_StockType: 类型(袋,散)
+   *.Y_PeerWeight: 袋重
+   *.Y_QueueMax: 队列大小
+   *.Y_VIPLine: VIP通道
+   *.Y_Valid: 通道有效
+   *.YS_Valid: 验收有效
+   *.Y_Index: 顺序索引
   -----------------------------------------------------------------------------}
 
   sSQL_NewDataTemp = 'Create Table $Table(T_SysID varChar(15))';

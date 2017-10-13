@@ -6,11 +6,9 @@ inherited fFrameYSLines: TfFrameYSLines
       OnClick = BtnAddClick
     end
     inherited BtnEdit: TToolButton
-      Visible = False
       OnClick = BtnEditClick
     end
     inherited BtnDel: TToolButton
-      Visible = False
       OnClick = BtnDelClick
     end
     inherited BtnRefresh: TToolButton
@@ -53,7 +51,7 @@ inherited fFrameYSLines: TfFrameYSLines
     object cxTextEdit1: TcxTextEdit [0]
       Left = 81
       Top = 93
-      Hint = 'T.wcb_Phone'
+      Hint = 'T.Y_name'
       ParentFont = False
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
@@ -78,9 +76,9 @@ inherited fFrameYSLines: TfFrameYSLines
       Width = 125
     end
     object cxTextEdit3: TcxTextEdit [2]
-      Left = 245
+      Left = 269
       Top = 93
-      Hint = 'T.wcb_Namepinyin'
+      Hint = 'T.Y_stock'
       ParentFont = False
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
@@ -89,9 +87,9 @@ inherited fFrameYSLines: TfFrameYSLines
       Width = 160
     end
     object cxTextEdit4: TcxTextEdit [3]
-      Left = 468
+      Left = 492
       Top = 93
-      Hint = 'T.wcb_Binddate'
+      Hint = 'T.Y_valid'
       ParentFont = False
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
@@ -109,17 +107,17 @@ inherited fFrameYSLines: TfFrameYSLines
       end
       inherited GroupDetail1: TdxLayoutGroup
         object dxLayout1Item1: TdxLayoutItem
-          Caption = #29289#26009#21697#31181':'
+          Caption = #36890#36947#21517#31216':'
           Control = cxTextEdit1
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item3: TdxLayoutItem
-          Caption = #22995#21517':'
+          Caption = #21697#31181#21517#31216':'
           Control = cxTextEdit3
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item5: TdxLayoutItem
-          Caption = #32465#23450#26085#26399':'
+          Caption = #26159#21542#26377#25928':'
           Control = cxTextEdit4
           ControlOptions.ShowBorder = False
         end

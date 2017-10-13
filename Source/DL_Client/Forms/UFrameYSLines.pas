@@ -83,8 +83,20 @@ end;
 
 //Desc: 删除
 procedure TfFrameYSLines.BtnDelClick(Sender: TObject);
+var nStr: string;
 begin
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nStr := SQLQuery.FieldByName('Y_Name').AsString;
+    nStr := Format('确定要删除验收通道[ %s ]吗?', [nStr]);
+    if not QueryDlg(nStr, sAsk) then Exit;
 
+    nStr := 'Delete From %s Where R_ID=%s';
+    nStr := Format(nStr, [sTable_YSLines, SQLQuery.FieldByName('R_ID').AsString]);
+
+    FDM.ExecuteSQL(nStr);
+    InitFormData(FWhere);
+  end;
 end;
 
 //Desc: 查询
@@ -94,9 +106,13 @@ begin
   if Sender = EditName then
   begin
     EditName.Text := Trim(EditName.Text);
-    if EditName.Text = '' then Exit;
+    if EditName.Text = '' then
+    begin
+      InitFormData('');
+      Exit;
+    end;
 
-    FWhere := Format('Z_Stock Like ''%%%s%%''', [EditName.Text]);
+    FWhere := Format('(Y_Stock Like ''%%%s%%'') or (Y_Stockno Like ''%%%s%%'')', [EditName.Text,EditName.Text]);
     InitFormData(FWhere);
   end;
 end;
