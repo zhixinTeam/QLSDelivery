@@ -14,7 +14,7 @@ uses
   cxMaskEdit, cxButtonEdit, cxTextEdit, ADODB, cxLabel, UBitmapPanel,
   cxSplitter, cxGridLevel, cxClasses, cxGridCustomView,
   cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid,
-  ComCtrls, ToolWin;
+  ComCtrls, ToolWin, StdCtrls;
 
 type
   TfFrameSaleDetailQuery = class(TfFrameNormal)
@@ -36,11 +36,13 @@ type
     dxLayout1Item4: TdxLayoutItem;
     EditBill: TcxButtonEdit;
     dxLayout1Item7: TdxLayoutItem;
+    N1: TMenuItem;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditTruckPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure mniN1Click(Sender: TObject);
+    procedure N1Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -51,6 +53,7 @@ type
     //交班条件
     FShadowWeight: Double;
     //影子重量
+    FAll: Boolean;
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
     function FilterColumnField: string; override;
@@ -137,6 +140,7 @@ begin
   Result := MacroValue(Result, [MI('$Bill', sTable_Bill),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
+  if not FAll then Result := Result + ' and ((L_MValue < 49) or (L_MValue is null))';
 end;
 
 //Desc: 过滤字段
@@ -201,6 +205,13 @@ begin
   finally
     FJBWhere := '';
   end;
+end;
+
+procedure TfFrameSaleDetailQuery.N1Click(Sender: TObject);
+begin
+  inherited;
+  if FAll = True then FAll := False else FAll := True;
+  InitFormData('');
 end;
 
 initialization

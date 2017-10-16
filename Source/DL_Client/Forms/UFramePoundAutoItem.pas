@@ -461,30 +461,6 @@ begin
       nStr:= TruckIn(nCard);
       LoadBillItems(FCardTmp);
       Exit;
-      {if (FCardUsed=sFlag_Provide) then
-      begin
-        if SavePurchaseOrders(sFlag_TruckIn, nBills) then
-        begin
-          ShowMsg('车辆进厂成功', sHint);
-          LoadBillItems(FCardTmp);
-          Exit;
-        end else
-        begin
-          ShowMsg('车辆进厂失败', sHint);
-        end;
-      end;
-      if (FCardUsed=sFlag_Sale) then
-      begin
-        if SaveLadingBills(nFoutData, sFlag_TruckIn, nBills) then
-        begin
-          ShowMsg('车辆进厂成功', sHint);
-          LoadBillItems(FCardTmp);
-          Exit;
-        end else
-        begin
-          ShowMsg('车辆进厂失败', sHint);
-        end;
-      end;}
     end; 
     {$ENDIF}
     if (FStatus <> sFlag_TruckBFP) and (FNextStatus = sFlag_TruckZT) then
@@ -665,6 +641,11 @@ begin
 
     FCardTmp := nCard;
     EditBill.Text := nCard;
+    if StrToFloat(EditValue.Text) > FPoundTunnel.FPort.FMinValue then
+    begin
+      Timer_ReadCard.Enabled:=True;
+      Exit;
+    end;
     LoadBillItems(nCard);
   except
     on E: Exception do

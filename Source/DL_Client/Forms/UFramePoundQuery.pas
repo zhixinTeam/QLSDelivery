@@ -14,7 +14,7 @@ uses
   cxCheckBox, cxMaskEdit, cxButtonEdit, cxTextEdit, ADODB, cxLabel,
   UBitmapPanel, cxSplitter, cxGridLevel, cxClasses, cxGridCustomView,
   cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid,
-  ComCtrls, ToolWin;
+  ComCtrls, ToolWin, StdCtrls;
 
 type
   TfFramePoundQuery = class(TfFrameNormal)
@@ -44,6 +44,7 @@ type
     dxLayout1Item9: TdxLayoutItem;
     N7: TMenuItem;
     N8: TMenuItem;
+    N6: TMenuItem;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditTruckPropertiesButtonClick(Sender: TObject;
@@ -55,6 +56,7 @@ type
     procedure BtnDelClick(Sender: TObject);
     procedure N4Click(Sender: TObject);
     procedure BtnEditClick(Sender: TObject);
+    procedure N6Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -63,6 +65,7 @@ type
     //时间区间
     FJBWhere: string;
     //交班查询
+    FAll: Boolean;
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
     procedure AfterInitFormData; override;
@@ -132,6 +135,7 @@ begin
   if nWhere <> '' then
     Result := Result + ' And (' + nWhere + ')';
   //xxxxx
+  if not FAll then Result := Result + ' and ((P_MValue < 49) or (P_MValue is null))';
 end;
 
 procedure TfFramePoundQuery.AfterInitFormData;
@@ -370,6 +374,13 @@ begin
       InitFormData(FWhere);
     end;
   end;
+end;
+
+procedure TfFramePoundQuery.N6Click(Sender: TObject);
+begin
+  inherited;
+  if FAll = True then FAll := False else FAll := True;
+  InitFormData('');
 end;
 
 initialization

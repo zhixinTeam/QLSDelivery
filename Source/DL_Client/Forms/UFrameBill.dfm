@@ -15,16 +15,16 @@ inherited fFrameBill: TfFrameBill
     end
   end
   inherited cxGrid1: TcxGrid
-    Top = 205
+    Top = 217
     Width = 1028
-    Height = 288
+    Height = 276
     inherited cxView1: TcxGridDBTableView
       PopupMenu = PMenu1
     end
   end
   inherited dxLayout1: TdxLayoutControl
     Width = 1028
-    Height = 138
+    Height = 150
     object EditCus: TcxButtonEdit [0]
       Left = 244
       Top = 36
@@ -211,7 +211,7 @@ inherited fFrameBill: TfFrameBill
     end
   end
   inherited cxSplitter1: TcxSplitter
-    Top = 197
+    Top = 209
     Width = 1028
   end
   inherited TitlePanel1: TZnBitmapPanel
@@ -290,6 +290,10 @@ inherited fFrameBill: TfFrameBill
     object N13: TMenuItem
       Caption = #21024#38500
       OnClick = N13Click
+    end
+    object N14: TMenuItem
+      Caption = #25968#25454#36824#21407
+      OnClick = N14Click
     end
   end
 end

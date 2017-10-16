@@ -222,14 +222,17 @@ begin
     nTmp := SQLQuery.FieldByName('T_StockNo').AsString;
     if Fields[0].AsString <> nTmp then
     begin
-//      nStr := '通道[ %s ]的水泥品种与待装品种不一致,详情如下:' + #13#10#13#10 +
-//              '※.通道品种: %s' + #13#10 +
-//              '※.待装品种: %s' + #13#10#13#10 +
-//              '禁止换道！';
-      nStr := '品种不一致，禁止换道!';
+      nStr := '通道[ %s ]的水泥品种与待装品种不一致,详情如下:' + #13#10#13#10 +
+              '※.通道品种: %s' + #13#10 +
+              '※.待装品种: %s' + #13#10#13#10 +
+              '是否换道！';
       nStr := Format(nStr, [nLine, Fields[1].AsString, nTmp]);
-      ShowMsg(nStr, sHint);
-      Exit;
+      if Application.MessageBox(PChar(nStr),PChar('提示'),MB_YESNO)= idNo then
+      begin
+        nStr := '品种不一致，禁止换道!';
+        ShowMsg(nStr, sHint);
+        Exit;
+      end;
     end;
   end;
 

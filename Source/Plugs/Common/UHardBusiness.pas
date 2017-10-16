@@ -1569,7 +1569,7 @@ begin
       NET_DVR_Logout(nLogin);
     NET_DVR_Cleanup();
   end;
-end;}
+end; }
 
 //Date: 2017-6-2
 //Parm: ´Å¿¨ºÅ;Í¨µÀºÅ

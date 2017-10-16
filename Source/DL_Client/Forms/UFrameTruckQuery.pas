@@ -13,7 +13,7 @@ uses
   dxLayoutControl, cxGridLevel, cxClasses, cxControls, cxGridCustomView,
   cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid,
   ComCtrls, ToolWin, cxMaskEdit, cxButtonEdit, cxTextEdit, Menus,
-  UBitmapPanel, cxSplitter, cxLookAndFeels, cxLookAndFeelPainters;
+  UBitmapPanel, cxSplitter, cxLookAndFeels, cxLookAndFeelPainters, StdCtrls;
 
 type
   TfFrameTruckQuery = class(TfFrameNormal)
@@ -34,11 +34,13 @@ type
     N2: TMenuItem;
     N3: TMenuItem;
     N4: TMenuItem;
+    N5: TMenuItem;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditTruckPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure N1Click(Sender: TObject);
+    procedure N5Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -46,6 +48,7 @@ type
     //时间区间
     FFilteDate: Boolean;
     //筛选日期
+    FAll: Boolean;
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
     function InitFormDataSQL(const nWhere: string): string; override;
@@ -102,12 +105,13 @@ begin
   Result := MacroValue(Result, [MI('$Bill', sTable_Bill),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
+  if not FAll then Result := Result + ' and ((L_MValue < 49) or (L_MValue is null))';
 end;
 
 procedure TfFrameTruckQuery.AfterInitFormData;
 begin
   FFilteDate := True;
-  inherited;         
+  inherited;
 end;
 
 //Desc: 日期筛选
@@ -162,6 +166,13 @@ begin
        InitFormData('L_OutFact Is not Null');
      end;
   end;
+end;
+
+procedure TfFrameTruckQuery.N5Click(Sender: TObject);
+begin
+  inherited;
+  if FAll = True then FAll := False else FAll := True;
+  InitFormData('');
 end;
 
 initialization

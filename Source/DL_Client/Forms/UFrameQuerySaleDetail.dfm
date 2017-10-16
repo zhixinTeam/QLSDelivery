@@ -43,9 +43,9 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
     end
   end
   inherited cxGrid1: TcxGrid
-    Top = 205
+    Top = 215
     Width = 1089
-    Height = 224
+    Height = 214
     inherited cxView1: TcxGridDBTableView
       PopupMenu = pmPMenu1
       DataController.Summary.Options = [soNullIgnore]
@@ -53,7 +53,7 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
   end
   inherited dxLayout1: TdxLayoutControl
     Width = 1089
-    Height = 138
+    Height = 148
     object cxtxtdt1: TcxTextEdit [0]
       Left = 627
       Top = 93
@@ -192,7 +192,7 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
     end
   end
   inherited cxSplitter1: TcxSplitter
-    Top = 197
+    Top = 207
     Width = 1089
   end
   inherited TitlePanel1: TZnBitmapPanel
@@ -220,6 +220,10 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
     object mniN1: TMenuItem
       Caption = #26102#38388#27573#26597#35810
       OnClick = mniN1Click
+    end
+    object N1: TMenuItem
+      Caption = #25968#25454#36824#21407
+      OnClick = N1Click
     end
   end
 end

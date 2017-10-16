@@ -63,11 +63,11 @@
   //华益读头
   {.$DEFINE GLPURCH} 
   //古浪
-  {$DEFINE YDKP} 
+  {.$DEFINE YDKP} 
   //永登、夏河、定西开票
   {.$DEFINE PLKP} 
   //平凉开票
-  {$DEFINE XHPZ} 
+  {.$DEFINE XHPZ} 
   //夏河、定西、平凉皮重
   {.$DEFINE ZXKP} 
   //漳县
@@ -79,7 +79,7 @@
   //兰州商砼水泥內倒
   {.$DEFINE QHSN} 
   //青海
-  {.$DEFINE MHSN} 
+  {$DEFINE MHSN} 
   //民和
   {$DEFINE MultiReplay}
   //计数器应答模式

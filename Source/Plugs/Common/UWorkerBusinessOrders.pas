@@ -927,15 +927,25 @@ begin
     begin
       FStatus := sFlag_TruckBFP;
       FNextStatus := sFlag_TruckXH;
-
+      {$IFDEF MHSN}
       nStr := 'Select YS_Valid From %s Where YS_Valid=''%s'' and Y_StockNo=''%s'' ';
       nStr := Format(nStr, [sTable_YSLines, sFlag_Yes, FStockNo]);
 
       with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-      if RecordCount < 0 then
+      if RecordCount < 1 then
       begin
         FNextStatus := sFlag_TruckBFM;
       end;
+      {$ELSE}
+      nStr := 'Select D_Value From %s Where ((D_Name=''%s'') or (D_Name=''%s'')) and D_Value=''%s'' ';
+      nStr := Format(nStr, [sTable_SysDict, sFlag_NFStock, sFlag_NFPurch, FStockNo]);
+
+      with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+      if RecordCount > 0 then
+      begin
+        FNextStatus := sFlag_TruckBFM;
+      end;
+      {$ENDIF}
       //现场不发货直接过重
       {$IFDEF GLPURCH}
       if (pos('熟料',FStockName)>0) then FNextStatus := sFlag_TruckBFM;

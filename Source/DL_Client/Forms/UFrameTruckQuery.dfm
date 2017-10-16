@@ -177,5 +177,9 @@ inherited fFrameTruckQuery: TfFrameTruckQuery
       Caption = #24050#20986#21378#36710#36742
       OnClick = N1Click
     end
+    object N5: TMenuItem
+      Caption = #25968#25454#36824#21407
+      OnClick = N5Click
+    end
   end
 end

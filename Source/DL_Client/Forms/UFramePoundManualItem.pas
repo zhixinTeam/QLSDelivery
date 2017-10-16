@@ -986,13 +986,13 @@ var
   nBool: Boolean;
   nStr:string;
 begin
-  {$IFNDEF QHSN}
-  if IsTunnelOK(FPoundTunnel.FID)=sFlag_No then
+  //{$IFNDEF QHSN}
+  {if IsTunnelOK(FPoundTunnel.FID)=sFlag_No then
   begin
     ShowMsg('≥µ¡æŒ¥’æŒ»,«Î…‘∫Û', sHint);
     Exit;
-  end;
-  {$ENDIF}
+  end;}
+  //{$ENDIF}
   nBool := False;
   try
     BtnSave.Enabled := False;

@@ -14,7 +14,7 @@ uses
   cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid,
   ComCtrls, ToolWin, cxTextEdit, cxMaskEdit, cxButtonEdit, Menus,
   UBitmapPanel, cxSplitter, cxLookAndFeels, cxLookAndFeelPainters,
-  cxCheckBox, dxLayoutcxEditAdapters;
+  cxCheckBox, dxLayoutcxEditAdapters, StdCtrls, cxRadioGroup;
 
 type
   TfFrameBill = class(TfFrameNormal)
@@ -52,6 +52,7 @@ type
     N11: TMenuItem;
     N12: TMenuItem;
     N13: TMenuItem;
+    N14: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnDelClick(Sender: TObject);
@@ -68,11 +69,13 @@ type
     procedure N10Click(Sender: TObject);
     procedure N11Click(Sender: TObject);
     procedure N13Click(Sender: TObject);
+    procedure N14Click(Sender: TObject);
   protected
     FStart,FEnd: TDate;
     //时间区间
     FUseDate: Boolean;
     //使用区间
+    FAll: Boolean;
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
     function FilterColumnField: string; override;
@@ -138,6 +141,7 @@ begin
   if CheckDelete.Checked then
        Result := MacroValue(Result, [MI('$Bill', sTable_BillBak)])
   else Result := MacroValue(Result, [MI('$Bill', sTable_Bill)]);
+  if not FAll then Result := Result + ' and ((L_MValue < 49) or (L_MValue is null))';
 end;
 
 procedure TfFrameBill.AfterInitFormData;
@@ -440,6 +444,13 @@ begin
     InitFormData(FWhere);
     ShowMsg('提货单已删除', sHint);
   end;
+end;
+
+procedure TfFrameBill.N14Click(Sender: TObject);
+begin
+  inherited;
+  if FAll = True then FAll := False else FAll := True;
+  InitFormData('');
 end;
 
 initialization

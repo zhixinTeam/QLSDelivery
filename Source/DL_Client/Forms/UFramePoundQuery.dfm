@@ -17,16 +17,16 @@ inherited fFramePoundQuery: TfFramePoundQuery
     end
   end
   inherited cxGrid1: TcxGrid
-    Top = 205
+    Top = 219
     Width = 976
-    Height = 377
+    Height = 363
     inherited cxView1: TcxGridDBTableView
       PopupMenu = PMenu1
     end
   end
   inherited dxLayout1: TdxLayoutControl
     Width = 976
-    Height = 138
+    Height = 152
     object cxTextEdit1: TcxTextEdit [0]
       Left = 269
       Top = 94
@@ -179,7 +179,7 @@ inherited fFramePoundQuery: TfFramePoundQuery
     end
   end
   inherited cxSplitter1: TcxSplitter
-    Top = 197
+    Top = 211
     Width = 976
   end
   inherited TitlePanel1: TZnBitmapPanel
@@ -234,6 +234,10 @@ inherited fFramePoundQuery: TfFramePoundQuery
       Tag = 30
       Caption = #26102#38388#27573#26597#35810
       OnClick = N2Click
+    end
+    object N6: TMenuItem
+      Caption = #25968#25454#36824#21407
+      OnClick = N6Click
     end
   end
 end
