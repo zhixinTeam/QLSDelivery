@@ -38,7 +38,7 @@ uses
   UFormWorkSet, UFrameUpPurchase, UFramePoundDevia, UFrameLSCard, UFormLSCard,
   UFormTransfer, UFrameQueryTransferDetail, UFrameSTCard, UFormSTCard,
   uFormGetWechartAccount, UFormQLSBill, UFormAXBaseLoadS, UFormAXBaseLoadP,
-  UFrameYSLines, UFormYSLine;
+  UFrameYSLines, UFormYSLine, UFrameStockMatch, UFormStockMatch;
 
 procedure InitSystemObject;
 procedure RunSystemObject;

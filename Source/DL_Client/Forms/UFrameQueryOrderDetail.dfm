@@ -233,5 +233,9 @@ inherited fFrameOrderDetailQuery: TfFrameOrderDetailQuery
       Visible = False
       OnClick = N3Click
     end
+    object N4: TMenuItem
+      Caption = #25968#25454#36824#21407
+      OnClick = N4Click
+    end
   end
 end

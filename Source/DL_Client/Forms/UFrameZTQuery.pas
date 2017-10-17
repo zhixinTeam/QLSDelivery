@@ -76,9 +76,9 @@ begin
 
   if (nWhere = '') then
   begin
-    Result := Result + 'Where ((L_HYDan<>'''') and (L_HYDan is not null)) and (L_Date>=''$ST'' and L_Date <''$End'')';
+    Result := Result + 'Where (L_Date>=''$ST'' and L_Date <''$End'')';
     nStr := ' And ';
-  end else nStr := ' Where ((L_HYDan<>'''') and (L_HYDan is not null)) and ';
+  end else nStr := ' Where ';
 
   if nWhere <> '' then
     Result := Result + nStr + '(' + nWhere + ')';

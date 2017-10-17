@@ -135,7 +135,7 @@ begin
   if nWhere <> '' then
     Result := Result + ' And (' + nWhere + ')';
   //xxxxx
-  if not FAll then Result := Result + ' and ((P_MValue < 49) or (P_MValue is null))';
+  if not FAll then Result := Result + ' and ((P_MValue < 49) or (P_MValue is null)) and ((P_PValue < 49) or (P_PValue is null))';
 end;
 
 procedure TfFramePoundQuery.AfterInitFormData;

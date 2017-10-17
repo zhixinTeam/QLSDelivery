@@ -39,6 +39,7 @@ type
     N1: TMenuItem;
     N2: TMenuItem;
     N3: TMenuItem;
+    N4: TMenuItem;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditTruckPropertiesButtonClick(Sender: TObject;
@@ -46,6 +47,7 @@ type
     procedure mniN1Click(Sender: TObject);
     procedure N2Click(Sender: TObject);
     procedure N3Click(Sender: TObject);
+    procedure N4Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -53,7 +55,8 @@ type
     FTimeS,FTimeE: TDate;
     //时间区间
     FJBWhere: string;
-    //交班条件 
+    //交班条件
+    FAll: Boolean; 
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
     function InitFormDataSQL(const nWhere: string): string; override;
@@ -114,6 +117,7 @@ begin
   Result := MacroValue(Result, [MI('$OD', sTable_OrderDtl),MI('$OO', sTable_Order),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
+  if not FAll then Result := Result + ' and ((D_MValue < 49) or (D_MValue is null)) and ((D_PValue < 49) or (D_PValue is null))';
 end;
 
 
@@ -203,6 +207,13 @@ begin
   end;
 
   N2.Click;
+end;
+
+procedure TfFrameOrderDetailQuery.N4Click(Sender: TObject);
+begin
+  inherited;
+  if FAll = True then FAll := False else FAll := True;
+  InitFormData('');
 end;
 
 initialization

@@ -68,7 +68,7 @@ inherited fFrameZTQuery: TfFrameZTQuery
     inherited TitleBar: TcxLabel
       Caption = #35013#36710#26597#35810
       Style.IsFontAssigned = True
-      AnchorX = 301
+      AnchorX = 351
       AnchorY = 11
     end
   end

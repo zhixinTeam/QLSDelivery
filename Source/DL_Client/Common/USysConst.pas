@@ -187,6 +187,8 @@ const
   cFI_FrameYSLines       = $1110;                    //采购验收通道
   cFI_FormYSLine         = $1111;                    //采购验收通道设置
   cFI_FormPurchReject    = $1112;                    //原材料拒收
+  cFI_FrameStockMatch    = $1113;                    //多品种共用道
+  cFI_FormStockMatch     = $1114;                    //多品种共用道设置
 
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
@@ -365,6 +367,7 @@ begin
   AddMenuModuleItem('MAIN_F04', cFI_FrameZTDispatch);
   AddMenuModuleItem('MAIN_F05', cFI_FormPurchase, mtForm);
   AddMenuModuleItem('MAIN_F06', cFI_FormSiteConfirm,mtForm);
+  AddMenuModuleItem('MAIN_F07', cFI_FrameStockMatch);
 
   AddMenuModuleItem('MAIN_G01', cFI_FormLadSan, mtForm);
   AddMenuModuleItem('MAIN_G02', cFI_FrameFangHuiQuery);
