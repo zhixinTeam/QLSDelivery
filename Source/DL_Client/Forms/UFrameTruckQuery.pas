@@ -105,7 +105,7 @@ begin
   Result := MacroValue(Result, [MI('$Bill', sTable_Bill),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
-  if not FAll then Result := Result + ' and ((L_MValue < 49) or (L_MValue is null))';
+  if not FAll then Result := Result + ' and ((L_MValue < 49) or (L_MValue is null)) and ((L_PValue < 49) or (L_PValue is null))';
 end;
 
 procedure TfFrameTruckQuery.AfterInitFormData;

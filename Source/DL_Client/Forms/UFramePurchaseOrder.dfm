@@ -109,6 +109,7 @@ inherited fFramePurchaseOrder: TfFramePurchaseOrder
     object EditTruck: TcxButtonEdit [6]
       Left = 445
       Top = 36
+      ParentFont = False
       Properties.Buttons = <
         item
           Default = True

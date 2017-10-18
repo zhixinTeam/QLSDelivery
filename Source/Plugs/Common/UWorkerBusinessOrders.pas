@@ -1160,6 +1160,18 @@ begin
               MI('$KDVal', FloatToStr(FValue))]);
       FListA.Add(nSQL);}
       //调整冻结量
+
+      if FNeiDao = sFlag_Yes then
+      begin
+        nSQL := MakeSQLByStr([SF('D_Status', sFlag_TruckOut),
+              SF('D_NextStatus', ''),
+              SF('D_Card', ''),
+              SF('D_OutFact', sField_SQLServer_Now, sfVal),
+              SF('D_OutMan', FIn.FBase.FFrom.FUser)
+              ], sTable_OrderDtl, SF('D_ID', FID), False);
+        FListA.Add(nSQL); //更新采购单
+      end;
+      //內倒更新为出厂状态
       
       nSQL := 'Select P_ID From %s Where P_Order=''%s'' ';
       nSQL := Format(nSQL, [sTable_PoundLog, FID]);
