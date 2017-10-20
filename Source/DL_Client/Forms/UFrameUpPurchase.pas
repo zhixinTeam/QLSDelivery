@@ -104,7 +104,7 @@ begin
             MI('$OrderDtl', sTable_OrderDtlBak),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))])
   else}
-    nStr := nStr + ' and (D_YSResult = ''%s'' or D_YSResult is null)';//过滤拒收状态
+    nStr := nStr + ' and (D_YSResult = ''Y'' or D_YSResult is null)';//过滤拒收状态
     nStr := MacroValue(nStr, [MI('$Order', sTable_Order),
             MI('$OrderDtl', sTable_OrderDtl),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);

@@ -165,6 +165,9 @@ begin
   try
     Result := False;
     //default return
+    nPacker := gBusinessPackerManager.LockPacker(sBus_BusinessMessage);
+    nPacker.InitData(@nIn, True, False);
+    //init
     nPacker.UnPackIn(nData, @nIn);
     
     FChannel := gChannelManager.LockChannel(cBus_Channel_Business, mtSoap);
@@ -195,6 +198,7 @@ begin
       end;
     end;
   finally
+    gBusinessPackerManager.RelasePacker(nPacker);
     gChannelManager.ReleaseChannel(FChannel);
   end;
 end;

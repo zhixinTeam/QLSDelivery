@@ -112,7 +112,7 @@ begin
   begin
     Result := Result + ' Where (' + FJBWhere + ')';
   end;
-  Result := Result + ' and (D_YSResult = ''%s'' or D_YSResult is null)';//过滤拒收状态
+  Result := Result + ' and (D_YSResult = ''Y'' or D_YSResult is null)';//过滤拒收状态
   Result := Result + ' and D_OutFact is not null ';//未出厂不统计
   Result := MacroValue(Result, [MI('$OD', sTable_OrderDtl),MI('$OO', sTable_Order),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);

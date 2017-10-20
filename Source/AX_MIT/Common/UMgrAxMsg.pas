@@ -670,11 +670,17 @@ begin
   finally
     FSyncCS.Leave;
   end;
-
+  try
   if nBool then
   begin
     CallRemoteWorker(sCLI_BusinessMessage, FXMLBuilder.WriteToString, nCIU.FRemoteUrl, nData.FMsgNo, @nOut);
     WriteLog('SendAxMsgThread');
+  end;
+  except
+    on e:Exception do
+    begin
+      WriteLog('SendAxMsgThread: ' + e.Message);
+    end;
   end;
 end;
 
