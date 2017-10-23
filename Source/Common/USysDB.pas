@@ -305,7 +305,7 @@ ResourceString
 
   sTable_Transfer     = 'P_Transfer';                //短倒明细单
   sTable_TransferBak  = 'P_TransferBak';             //短倒明细单
-  
+
   sTable_CusAccount   = 'Sys_CustomerAccount';       //客户账户
   sTable_InOutMoney   = 'Sys_CustomerInOutMoney';    //资金明细
   sTable_CusCredit    = 'Sys_CustomerCredit';        //客户信用（客户）
@@ -334,6 +334,7 @@ ResourceString
 
   sTable_InventDim       = 'Sys_InventDim';          //维度信息
   sTable_InventCenter    = 'Sys_InventCenter';       //生产线基础表
+  sTable_ForceCenterID   = 'Sys_ForceCenterID';       //强制生产线表
   sTable_InventLocation  = 'Sys_InventLocation';     //仓库基础表
   sTable_CusContCredit   = 'Sys_CustContCredit';     //客户信用（客户-合同）
   sTable_CustPresLog     = 'Sys_CustPresLog';        //信用额度增减(客户)
@@ -1647,7 +1648,8 @@ const
        'R_ZMJNAME varChar(20), R_ZMJVALUE varChar(20),'+
        'R_C3S varChar(20), R_C3A varChar(20),'+
        'R_SHR3D varChar(20), R_SHR7D varChar(20),'+
-       'R_C2S varChar(20),R_CenterID varChar(20))';
+       'R_C2S varChar(20),R_CenterID varChar(20), '+
+       'R_CusID varChar(20), R_CusGroup varChar(20), R_ValidDate varChar(30))';
   {-----------------------------------------------------------------------------
    检验记录:StockRecord
    *.R_ID:记录编号
@@ -1704,6 +1706,9 @@ const
    *.R_BatQuaStart: 批次量
    *.R_BatQuaEnd: 预警量
    *.R_TotalValue: 已发量
+   *.R_CusID: VIP客户号
+   *.R_CusGroup: VIP客户所在组
+   *.R_ValidDate: 试样编号有效截止日期
   -----------------------------------------------------------------------------}
 
   sSQL_NewStockHuaYan = 'Create Table $Table(H_ID $Inc, H_No varChar(15),' +
@@ -1792,6 +1797,23 @@ const
    *.I_Name：生产线名称
    *.I_DataReaID：公司账套
   -----------------------------------------------------------------------------}
+
+  sSQL_NewForceCenterID = 'Create Table $Table(R_ID $Inc, F_ID varChar(15), ' +
+   'F_Name varChar(100), F_StockNo varChar(20), F_Stock varChar(100), F_StockType Char(1), ' +
+   'F_CenterID varChar(20), F_Valid  Char(1), F_CusGroup varChar(100))';
+  {-----------------------------------------------------------------------------
+   强制生产线:
+   *.R_ID: 记录号
+   *.F_ID: 客户编号
+   *.F_Name: 客户名称
+   *.F_StockNo: 水泥编号
+   *.F_Stock: 水泥名称
+   *.F_StockType: 水泥种类
+   *.F_CenterID: 生产线
+   *.F_Valid: 有效标志
+   *.F_CusGroup: 客户所在组
+  -----------------------------------------------------------------------------}
+
   sSQL_NewInvCenGroup ='Create Table $Table(ID $Inc, G_ItemGroupID varChar(20),' +
        'G_InventCenterID varChar(60), DataAreaID varChar(3))';
   {-----------------------------------------------------------------------------
@@ -2176,6 +2198,7 @@ begin
 
   AddSysTableItem(sTable_InventDim, sSQL_NewInventDim,'');
   AddSysTableItem(sTable_InventCenter, sSQL_NewInventCenter,'');
+  AddSysTableItem(sTable_ForceCenterID, sSQL_NewForceCenterID,'');
   AddSysTableItem(sTable_InventLocation, sSQL_NewInventLocation,'');
   AddSysTableItem(sTable_CusContCredit, sSQL_NewCusConCredit,'');
   AddSysTableItem(sTable_CustPresLog, sSQL_NewCustPresLog,'');

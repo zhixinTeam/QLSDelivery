@@ -229,7 +229,7 @@ begin
     EditCName.Text := GetCustomerExtQls(gCusID);
     EditLading.ItemIndex := StrToIntDef(GetLadingWay(gZhiKa),0);
     EditType.ItemIndex := 0;
-    InitCenter(nStockNO,gType,cbxCenterID);
+    InitCenter(nStockNO,gCusID,cbxCenterID);
   end else
   begin
     ShowMsg(nStr, sHint); Exit;

@@ -460,7 +460,7 @@ begin
     Result := True;
     Exit;
   end; //通道喷码已发送
-  
+
   Result := False;
   nPrinter := GetPrinter(nTunnel);
 
@@ -469,7 +469,7 @@ begin
     nHint := Format('通道[ %s ]没有配置喷码机.', [nTunnel]);
     Exit;
   end;
-  
+
   nDriver := nil;
   try
     nDriver := LockDriver(nPrinter.FDriver);
@@ -689,7 +689,7 @@ type
   public
     class function DriverName: string; override;
   end;
-  
+
 class function TPrinterZero.DriverName: string;
 begin
   Result := 'zero';
@@ -867,7 +867,7 @@ begin
 
   Sleep(800);
   //for delay
-  
+
   nData := Char($1B) + Char($41) + Char($2C) +Char($22);
   nData := nData + Char(2 + 31) + Char($0D);
   FClient.Socket.Write(nData, Indy8BitEncoding);
@@ -878,12 +878,63 @@ begin
   Result := True;
 end;
 
+//------------------------------------------------------------------------------
+type
+  TPrinterDDJD = class(TCodePrinterBase)
+  protected
+    function PrintCode(const nCode: string;
+     var nHint: string): Boolean; override;
+  public
+    class function DriverName: string; override;
+  end;
+
+class function TPrinterDDJD.DriverName: string;
+begin
+  Result := 'ddjd';//甘肃大地机电
+end;
+
+//Desc: 打印编码
+function TPrinterDDJD.PrintCode(const nCode: string;
+  var nHint: string): Boolean;
+  var nData: string;
+    nCrc: TByteWord;
+    nBuf: TIdBytes;
+    nDatatemp: string;
+    nstr: string  ;
+begin
+  //protocol: 11 43 datas 0D 0A
+  nData := Char($11) + Char($43);
+  nData := nData + nCode;
+  nData := nData + Char($0D) + Char($0A);
+
+  FClient.Socket.Write(nData, Indy8BitEncoding);
+
+  SetLength(nBuf, 0);
+  FClient.Socket.ReadBytes(nBuf, 1, False);
+
+  nstr:= BytesToString(nBuf,Indy8BitEncoding);
+
+  nDatatemp :=  Char($DD);
+
+
+  if nstr <> nDatatemp then
+   begin
+      nHint := '喷码机应答错误!';
+      Result := False;
+      Exit;
+   end;
+
+
+  Result := True;
+end;
+
 initialization
   gCodePrinterManager := TCodePrinterManager.Create;
   gCodePrinterManager.RegDriver(TPrinterZero);
   gCodePrinterManager.RegDriver(TPrinterJY);
   gCodePrinterManager.RegDriver(TPrinterWSD);
   gCodePrinterManager.RegDriver(TPrinterSGB);
+  gCodePrinterManager.RegDriver(TPrinterDDJD);
 finalization
   FreeAndNil(gCodePrinterManager);
 end.

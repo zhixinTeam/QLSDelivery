@@ -67,6 +67,8 @@ const
   cFI_FrameSaleJS       = $0069;                     //销售结算
 
   cFI_FrameTrucks       = $0070;                     //车辆档案
+  cFI_FrameForceCenterID= $0071;                     //生产线管理查询
+  cFI_FormForceCenterID = $0072;                     //生产线管理
 
   cFI_FrameProvider     = $0102;                     //供应
   cFI_FrameProvideLog   = $0105;                     //供应日志
@@ -386,17 +388,18 @@ begin
   AddMenuModuleItem('MAIN_L06', cFI_FrameSaleDetailQuery);
   AddMenuModuleItem('MAIN_L07', cFI_FrameSaleTotalQuery);
   AddMenuModuleItem('MAIN_L08', cFI_FrameZhiKaDetail);
-  AddMenuModuleItem('MAIN_L09', cFI_FrameOrderDetailQuery); 
+  AddMenuModuleItem('MAIN_L09', cFI_FrameOrderDetailQuery);
 
   AddMenuModuleItem('MAIN_H01', cFI_FormTruckIn, mtForm);
   AddMenuModuleItem('MAIN_H02', cFI_FormTruckOut, mtForm);
   AddMenuModuleItem('MAIN_H03', cFI_FrameTruckQuery);
 
   AddMenuModuleItem('MAIN_J01', cFI_FrameTrucks);
+  AddMenuModuleItem('MAIN_J02', cFI_FrameForceCenterID);
 
   AddMenuModuleItem('MAIN_M01', cFI_FrameProvider);
   AddMenuModuleItem('MAIN_M02', cFI_FrameMaterails);
-  AddMenuModuleItem('MAIN_M03', cFI_FrameMakeOCard); 
+  AddMenuModuleItem('MAIN_M03', cFI_FrameMakeOCard);
   AddMenuModuleItem('MAIN_M04', cFI_FrameOrder);
   AddMenuModuleItem('MAIN_M08', cFI_FrameOrderDetail);
   AddMenuModuleItem('MAIN_M09', cFI_FrameOrderBase);

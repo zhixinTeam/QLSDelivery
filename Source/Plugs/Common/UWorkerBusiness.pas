@@ -52,6 +52,8 @@ type
     FReriNo:string;
     FValue:Double;
     FZLVal:Double;
+    FCusID:string;
+    FValidDate:string;
   end;
 
   TWorkerBusinessCommander = class(TMITDBWorker)
@@ -122,6 +124,7 @@ type
     function SyncVehicleNoAX(var nData: string):Boolean;//同步车号到AX
     function SyncEmptyOutBillAX(var nData: string):Boolean;//同步空车出厂交货单
     function GetSampleID(var nData: string):Boolean;//获取试样编号
+    function GetSampleIDVIP(var nData: string):Boolean;//获取特殊试样编号
     function GetCenterID(var nData: string):Boolean;//获取生产线ID
     function GetTriangleTrade(var nData: string):Boolean;//本地订单表中获取是否三角贸易
     function GetCustNo(var nData: string):Boolean;//获取最终客户ID和公司ID
@@ -436,6 +439,7 @@ begin
    cBC_GetPurOrder         : Result := GetAXPurOrder(nData);
    cBC_GetPurOrdLine       : Result := GetAXPurOrdLine(nData);
    cBC_GetSampleID         : Result := GetSampleID(nData);
+   cBC_GetSampleIDVIP      : Result := GetSampleIDVIP(nData);//特殊客户取试样编号
    cBC_GetCenterID         : Result := GetCenterID(nData);
    cBC_GetTprGem           : Result := GetAXTPRESTIGEMANAGE(nData);
    cBC_GetTprGemCont       : Result := GetAXTPRESTIGEMBYCONT(nData);
@@ -3134,6 +3138,7 @@ begin
     except
       on e:Exception do
       begin
+        WriteLog('AX接口异常,发送值：'+nStr);
         nStr := FieldByName('L_ID').AsString+'提货单同步失败.';
         WriteLog('AX接口异常：'+nStr+#13#10+e.Message);
       end;
@@ -4570,7 +4575,7 @@ begin
   FOut.FData := '';
 
   nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
-          '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL from %s a,%s b '+
+          '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL, R_ValidDate from %s a,%s b '+
           'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_CenterID=''%s'' '+
           'and R_BatValid=''%s'' order by a.R_ID';
   nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, FIn.FExtParam, sFlag_Yes]);
@@ -4580,9 +4585,9 @@ begin
 //          'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_BatValid=''%s'' order by a.R_ID';
 //  nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, sFlag_Yes]);
 //  {$ENDIF}
-  
+
   WriteLog(nStr);
-  
+
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
   if RecordCount > 0 then
   begin
@@ -4595,6 +4600,7 @@ begin
       FHuaYan[nIdx].FReriNo:= Fields[0].AsString;
       FHuaYan[nIdx].FValue:= Fields[1].AsFloat;
       FHuaYan[nIdx].FZLVal:= Fields[2].AsFloat;
+      FHuaYan[nIdx].FValidDate:= Fields[3].AsString;
       Inc(nIdx);
       Next;
     end;
@@ -4602,10 +4608,11 @@ begin
 
   for nIdx := Low(FHuaYan) to High(FHuaYan) do
   begin
-    if FHuaYan[nIdx].FValue <= FHuaYan[nIdx].FZLVal then
+    if (StrToDateTimeDef(FHuaYan[nIdx].FValidDate,Now + 1) < Now)
+       or (FHuaYan[nIdx].FValue <= FHuaYan[nIdx].FZLVal) then
     begin
       nStr := 'update %s set R_BatValid=''%s'',R_TotalValue=(%.2f) where R_SerialNo=''%s'' ';
-      nStr := Format(nStr,[sTable_StockRecord, sFlag_Yes, FHuaYan[nIdx].FZLVal, FHuaYan[nIdx].FReriNo]);
+      nStr := Format(nStr,[sTable_StockRecord, sFlag_No, FHuaYan[nIdx].FZLVal, FHuaYan[nIdx].FReriNo]);
       gDBConnManager.WorkerExec(FDBConn,nStr);
     end else
     begin
@@ -4634,6 +4641,64 @@ begin
       FOut.FData:=Fields[0].AsString;
       FOut.FExtParam:=Fields[1].AsString;
       Result:=True;
+    end;
+  end;
+end;
+
+function TWorkerBusinessCommander.GetSampleIDVIP(var nData: string):Boolean;//获取特殊试样编号
+var
+  nStr:string;
+  nIdx:Integer;
+begin
+  Result := True;
+  SetLength(FHuaYan, 0);
+  FOut.FData := '';
+
+  nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
+          '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL, '+
+          ' R_CusID, R_ValidDate from %s a,%s b,%s c '+
+          'where a.R_CusGroup = c.F_CusGroup and c.F_Stock= ''%s'' and c.F_ID = ''%s'' '+
+          'and a.R_PID = b.P_ID and R_BatValid=''%s'' order by a.R_ID';
+  nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, sTable_ForceCenterID,
+                 FIn.FData, FIn.FExtParam, sFlag_Yes]);
+
+  WriteLog('特殊客户试样编号SQL:'+nStr);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    SetLength(FHuaYan, RecordCount);
+    nIdx:=0;
+    First;
+
+    while not eof do
+    begin
+      FHuaYan[nIdx].FReriNo:= Fields[0].AsString;
+      FHuaYan[nIdx].FValue:= Fields[1].AsFloat;
+      FHuaYan[nIdx].FZLVal:= Fields[2].AsFloat;
+      FHuaYan[nIdx].FCusID:= Fields[3].AsString;
+      FHuaYan[nIdx].FValidDate:= Fields[4].AsString;
+      Inc(nIdx);
+      Next;
+    end;
+  end;
+
+  for nIdx := Low(FHuaYan) to High(FHuaYan) do
+  begin
+    if (StrToDateTimeDef(FHuaYan[nIdx].FValidDate,Now + 1) < Now)
+       or (FHuaYan[nIdx].FValue <= FHuaYan[nIdx].FZLVal) then
+    begin
+      nStr := 'update %s set R_BatValid=''%s'',R_TotalValue=(%.2f) where R_SerialNo=''%s'' ';
+      nStr := Format(nStr,[sTable_StockRecord, sFlag_No, FHuaYan[nIdx].FZLVal, FHuaYan[nIdx].FReriNo]);
+      gDBConnManager.WorkerExec(FDBConn,nStr);
+    end else
+    begin
+      nStr := 'update %s set R_TotalValue=(%.2f) where R_SerialNo=''%s'' ';
+      nStr := Format(nStr,[sTable_StockRecord, FHuaYan[nIdx].FZLVal, FHuaYan[nIdx].FReriNo]);
+      gDBConnManager.WorkerExec(FDBConn,nStr);
+      FOut.FData:=FHuaYan[nIdx].FReriNo;
+      Result:=True;
+      Exit;
     end;
   end;
 end;

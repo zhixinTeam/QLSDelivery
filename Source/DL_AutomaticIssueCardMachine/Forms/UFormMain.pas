@@ -10,14 +10,14 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters,
   cxContainer, cxEdit, cxLabel, ExtCtrls, CPort, StdCtrls, Buttons,Uszttce_api,
-  UHotKeyManager,uReadCardThread;
+  UHotKeyManager,uReadCardThread, USysBusiness;
 
 type
   TCardType = (ctTTCE,ctRFID);
-  
+
   TfFormMain = class(TForm)
     LabelStock: TcxLabel;
-    LabelNum: TcxLabel;
+    LabelQueue: TcxLabel;
     LabelHint: TcxLabel;
     ComPort1: TComPort;
     TimerReadCard: TTimer;
@@ -37,6 +37,7 @@ type
     Image3: TImage;
     imgPurchaseCard: TImage;
     LabelCus: TcxLabel;
+    LabelCenterID: TcxLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure ComPort1RxChar(Sender: TObject; Count: Integer);
@@ -58,6 +59,9 @@ type
     FSzttceApi:TSzttceApi;
     FDownLoadWay:Integer;
     //数据下载途径
+    FLines: TZTLineItems;
+    FTrucks: TZTTruckItems;
+    //队列数据
     FHotKeyMgr: THotKeyManager;
     FHotKey: Cardinal;
 
@@ -85,7 +89,7 @@ implementation
 
 uses
   IniFiles, ULibFun, CPortTypes, USysLoger, USysDB, USmallFunc, UDataModule,
-  UFormConn,USysConst,UClientWorker,UMITPacker,USysModule,USysBusiness, uNewCard,
+  UFormConn,USysConst,UClientWorker,UMITPacker,USysModule, uNewCard,
   UDataReport,UFormInputbox, UCardTypeSelect,UFormBarcodePrint, uZXNewPurchaseCard,
   UFormBase, uNewCardQls;
 
@@ -178,7 +182,7 @@ begin
   if not Assigned(FDR) then
   begin
     FDR := TFDR.Create(Application);
-  end;  
+  end;
   imgPrint.Visible := False;
   imgCard.Visible := gSysParam.FCanCreateCard;
   imgPurchaseCard.Visible := not gSysParam.FCanCreateCard;
@@ -273,8 +277,9 @@ begin
     LabelTruck.Caption := '车牌号码:';
     LabelOrder.Caption := '销售订单:';
     LabelStock.Caption := '品种名称:';
-    LabelNum.Caption := '开放道数:';
+    LabelQueue.Caption := '车辆队列:';
     LabelTon.Caption := '提货数量:';
+    LabelCenterID.Caption := '生 产 线:';
     LabelCus.Caption := '客户名称:';
     LabelHint.Caption := '请您刷卡';
     if FCardType=ctttce then FSzttceApi.ResetMachine;
@@ -318,6 +323,7 @@ procedure TfFormMain.QueryCard(const nCard: string);
 var nVal: Double;
     nStr,nStock,nBill,nVip,nLine,nPoundQueue,nTruck: string;
     nDate: TDateTime;
+    nIdx:Integer;
 begin
 //  mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
 //  mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
@@ -381,18 +387,19 @@ begin
       LabelStock.Caption := '品种名称: ' + FieldByName('L_StockName').AsString;
       LabelTon.Caption := '提货数量: ' + FieldByName('L_Value').AsString + '吨';
       LabelCus.Caption := '客户名称:' + FieldByName('L_CusName').AsString;
+      LabelCenterID.Caption := '生 产 线:' + FieldByName('L_InvCenterId').AsString;
 //      imgPrint.Visible := True;
     end;
 
     //--------------------------------------------------------------------------
-    nStr := 'Select Count(*) From %s ' +
-            'Where Z_StockNo=''%s'' And Z_Valid=''%s'' And Z_VipLine=''%s''';
-    nStr := Format(nStr, [sTable_ZTLines, nStock, sFlag_Yes,nVip]);
-
-    with FDM.QuerySQL(nStr) do
-    begin
-      LabelNum.Caption := '开放道数: ' + Fields[0].AsString + '个';
-    end;
+//    nStr := 'Select Count(*) From %s ' +
+//            'Where Z_StockNo=''%s'' And Z_Valid=''%s'' And Z_VipLine=''%s''';
+//    nStr := Format(nStr, [sTable_ZTLines, nStock, sFlag_Yes,nVip]);
+//
+//    with FDM.QuerySQL(nStr) do
+//    begin
+//      LabelNum.Caption := '开放道数: ' + Fields[0].AsString + '个';
+//    end;
 
     //--------------------------------------------------------------------------
     nStr := 'Select T_line,T_InTime,T_Valid From %s ZT ' +
@@ -420,6 +427,26 @@ begin
       //通道号
     end;
 
+    if nLine = '' then
+    begin
+      try
+        if LoadTruckQueue(FLines, FTrucks, False) then
+        begin
+          for nIdx:=Low(FTrucks) to High(FTrucks) do
+          begin
+            nStr := nStr + ',' + FTrucks[nIdx].FTruck;
+            if FTrucks[nIdx].FTruck = nTruck then
+            begin
+              nLine := FTrucks[nIdx].FLine;
+              Break;
+            end;
+          end;
+        end;
+      except
+      end;
+    end;
+    WriteLog('队列车牌号:'+nStr);
+
     if nLine <> '' then
     begin
       nStr := 'Select Z_Valid,Z_Name From %s Where Z_ID=''%s'' ';
@@ -433,10 +460,15 @@ begin
         Exit;
         end else
         begin
+        LabelQueue.Caption := '车辆队列:' + FieldByName('Z_Name').AsString;
         LabelHint.Caption := '系统内您的车辆已入厂,请到' + FieldByName('Z_Name').AsString + '提货.';
         Exit;
         end;
       end;
+    end
+    else
+    begin
+      LabelQueue.Caption := '车辆队列:' + '未进队,请稍后.';
     end;
 
     nStr := 'Select D_Value From $DT Where D_Memo = ''$PQ''';
@@ -638,7 +670,7 @@ begin
     nTop := nIni.ReadInteger('screen','top',0);
     nWidth := nIni.ReadInteger('screen','width',1024);
     nHeight := nIni.ReadInteger('screen','height',768);
-    nItemHeigth := nHeight div 9;
+    nItemHeigth := nHeight div 10;
 
     LabelTruck.Height := nItemHeigth;
     LabelDec.Height := nItemHeigth;
@@ -646,7 +678,8 @@ begin
     LabelOrder.Height := nItemHeigth;
     LabelTon.Height := nItemHeigth;
     LabelStock.Height := nItemHeigth;
-    LabelNum.Height := nItemHeigth;
+    LabelQueue.Height := nItemHeigth;
+    LabelCenterID.Height := nItemHeigth;
     LabelHint.Height := nItemHeigth;
     LabelCus.Height := nItemHeigth;
     imgCard.Height := nItemHeigth;

@@ -48,6 +48,7 @@ const
   cBC_LogoffCard              = $0025;   //注销磁卡
   cBC_GetSampleID             = $0026;   //获取试样编号
   cBC_GetCenterID             = $0027;   //获取生产线ID
+  cBC_GetSampleIDVIP          = $0028;   //获取特殊试样编号
 
   cBC_GetPostBills            = $0030;   //获取岗位交货单
   cBC_SavePostBills           = $0031;   //保存岗位交货单

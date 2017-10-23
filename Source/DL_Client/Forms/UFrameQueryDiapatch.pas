@@ -192,7 +192,7 @@ end;
 
 //Desc: 定道装车
 procedure TfFrameQueryDispatch.N3Click(Sender: TObject);
-var nStr,nLine,nTmp: string;
+var nStr,nLine,nTmp,nCenterID: string;
 begin
   if cxView1.DataController.GetSelectedCount < 1 then
   begin
@@ -208,7 +208,7 @@ begin
   if (nLine = '') or (CompareText(nStr, nLine) = 0) then Exit;
   //null or same
 
-  nStr := 'Select Z_StockNo,Z_Stock From %s Where Z_ID=''%s''';
+  nStr := 'Select Z_StockNo,Z_Stock, Z_CenterID From %s Where Z_ID=''%s''';
   nStr := Format(nStr, [sTable_ZTLines, nLine]);
 
   with FDM.QueryTemp(nStr) do
@@ -234,6 +234,7 @@ begin
         Exit;
       end;
     end;
+    nCenterID := Fields[2].AsString;
   end;
 
   nStr := 'Update %s Set T_Line=''%s'' Where R_ID=%s';
@@ -241,6 +242,11 @@ begin
           SQLQuery.FieldByName('R_ID').AsString]);
   FDM.ExecuteSQL(nStr);
 
+  nStr := 'Update %s Set L_InvCenterId=''%s'' Where L_Truck=''%s'' and L_ID=''%s'' ';
+  nStr := Format(nStr, [sTable_Bill, nCenterID,
+          SQLQuery.FieldByName('T_Truck').AsString, SQLQuery.FieldByName('T_Bill').AsString]);
+  FDM.ExecuteSQL(nStr);
+  //更新生产线
   nTmp := SQLQuery.FieldByName('T_Line').AsString;
   if nTmp = '' then nTmp := '空';
 

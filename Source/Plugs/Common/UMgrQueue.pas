@@ -29,6 +29,7 @@ type
     FIndex      : Integer;
     FTrucks     : TList;
     FRealCount  : Integer;     //实位车数
+    FCenterID   : string;      //生产线
   end;//装车线
 
   PTruckItem = ^TTruckItem;
@@ -54,6 +55,7 @@ type
     FNormal     : Integer;     //正常总装
     FBuCha      : Integer;     //补差总装
     FStarted    : Boolean;     //是否启动
+    FCenID      : string;      //生产线
   end;
 
   TQueueParam = record
@@ -114,7 +116,7 @@ type
     procedure MakePoolTruckIn(const nIdx: Integer; const nLine: PLineItem);
     //车辆入队
     procedure InvalidTruckOutofQueue;
-    function IsLineTruckLeast(const nLine: PLineItem; nIsReal: Boolean): Boolean;
+    function IsLineTruckLeast(const nLine: PLineItem; nIsReal: Boolean;nCenterID:string =''): Boolean;
     procedure SortTruckList(const nList: TList);
     //队列处理
     function RealTruckInQueue(const nTruck: string): Boolean;
@@ -124,6 +126,8 @@ type
     //车辆判定
     procedure TruckOutofQueue(const nTruck: string);
     //车辆出队
+    function GetTruckCenterID(const nTruck, nBill: string): string;
+    //获取车辆生产线
   public
     constructor Create(AOwner: TTruckQueueManager);
     destructor Destroy; override;
@@ -408,7 +412,7 @@ function TTruckQueueManager.GetLine(const nLineID: string): Integer;
 var nIdx: Integer;
 begin
   Result := -1;
-              
+
   for nIdx:=FLines.Count - 1 downto 0 do
   if CompareText(nLineID, PLineItem(FLines[nIdx]).FLineID) = 0 then
   begin
@@ -982,6 +986,7 @@ begin
         FIsVIP      := FieldByName('Z_VIPLine').AsString;
         FIsValid    := FieldByName('Z_Valid').AsString <> sFlag_No;
         FIndex      := FieldByName('Z_Index').AsInteger;
+        FCenterID   := FieldByName('Z_CenterID').AsString;
       end;
 
       Next;
@@ -1111,8 +1116,10 @@ begin
         FBuCha      := FieldByName('T_BuCha').AsInteger;
         FIsBuCha    := FNormal > 0;
         FDai        := 0;
+        FCenID      := GetTruckCenterID(FieldByName('T_Truck').AsString,
+                       FieldByName('T_Bill').AsString);
       end;
-      
+
       Inc(nIdx);
       Next;
     end; //可进厂和已在队列车辆缓冲池
@@ -1202,6 +1209,11 @@ begin
         if BillInLine(FTruckPool[i].FBill, FTrucks, True) >= 0 then Continue;
         //2.交货单已经在队列中
 
+        if Length(FTruckPool[i].FCenID) > 0 then //强制指定生产线
+        begin
+          if FTruckPool[i].FCenID <> FCenterID then  Continue;
+        end;
+
         MakePoolTruckIn(i, FOwner.Lines[nIdx]);
         //本队列车辆优先,全部进队
         Result := True;
@@ -1266,7 +1278,7 @@ begin
       if not IsStockMatch(FTruckPool[i].FStockNo, FOwner.Lines[nIdx]) then Continue;
       //3.交货单与通道品种不匹配
 
-      if not IsLineTruckLeast(FOwner.Lines[nIdx], FTruckPool[i].FIsReal) then
+      if not IsLineTruckLeast(FOwner.Lines[nIdx], FTruckPool[i].FIsReal,FTruckPool[i].FCenID) then
         Continue;
       //4.队列车辆不是最少
 
@@ -1276,6 +1288,11 @@ begin
 
       if BillInLine(FTruckPool[i].FBill, FTrucks, True) >= 0 then Continue;
       //6.交货单已经在队列中
+
+      if Length(FTruckPool[i].FCenID) > 0 then //强制指定生产线
+        begin
+          if FTruckPool[i].FCenID <> FCenterID then  Continue;
+        end;
 
       MakePoolTruckIn(i, FOwner.Lines[nIdx]);
       //车辆进队列
@@ -1308,12 +1325,12 @@ begin
   if nTruck.FIsReal then
     nLine.FRealCount := nLine.FRealCount + 1;
   //实位车辆计数
-  
+
   if (nTruck.FDai <= 0) and (nLine.FPeerWeight > 0) then
   begin
     nTruck.FDai := Trunc(nTruck.FValue * 1000 / nLine.FPeerWeight);
     //dai number
-  end;   
+  end;
 
   if (nLine.FPeerWeight > 0) and
      (nTruck.FInFact or (nTruck.FIsVIP = sFlag_TypeShip)) then
@@ -1353,7 +1370,7 @@ begin
     begin
       Result := False;
       Exit;
-    end; //有其它单提货量更大     
+    end; //有其它单提货量更大
   end;
 end;
 
@@ -1471,7 +1488,7 @@ begin
       {$IFDEF DEBUG}
       WriteLog(Format('车辆[ %s ]无效出队.', [nTruck.FTruck]));
       {$ENDIF}
-      
+
       Dispose(nTruck);
       nLine.FTrucks.Delete(i);
 
@@ -1486,14 +1503,14 @@ begin
         nLine.FRealCount := nLine.FRealCount + 1;
       //重新计算队列中的实位车辆
     end;
-  end;   
+  end;
 end;
 
 //Date: 2012-4-25
 //Parm: 装车线;实位车辆
 //Desc: 判断nLine的队列车辆否为同品种通道中最少
 function TTruckQueueDBReader.IsLineTruckLeast(const nLine: PLineItem;
-  nIsReal: Boolean): Boolean;
+  nIsReal: Boolean;nCenterID:string =''): Boolean;
 var nIdx: Integer;
 begin
   Result := True;
@@ -1515,7 +1532,10 @@ begin
 
     if not IsStockMatch(FStockNo, nLine) then Continue;
     //5.两个通道品种不匹配
-
+    if Length(nCenterID) > 0 then //强制指定生产线
+    begin
+      if nCenterID <> FCenterID then  Continue;
+    end;
     Result := False;
     Break;
   end;
@@ -1544,6 +1564,28 @@ begin
       nList[nInt] := nList[nIdx];
       nList[nIdx] := nTruck;
     end;
+  end;
+end;
+
+function TTruckQueueDBReader.GetTruckCenterID(const nTruck,
+  nBill: string): string;
+var nStr: string;
+    nDBWorker: PDBWorker;
+begin
+  Result := '';
+  nDBWorker := nil;
+  try
+    nStr := ' Select L_InvCenterId From %s  ' +
+            ' Where L_Truck=''%s'' And L_ID=''%s'' ';
+    nStr := Format(nStr, [sTable_Bill, nTruck, nBill]);
+
+    with gDBConnManager.SQLQuery(nStr, nDBWorker, '') do
+    if RecordCount > 0 then
+    begin
+      Result := FieldByName('L_InvCenterId').AsString;
+    end;
+  finally
+    gDBConnManager.ReleaseConnection(nDBWorker);
   end;
 end;
 

@@ -379,6 +379,11 @@ begin
   end;
   {$ENDIF}
 
+  if not IsDealerLadingIDExit(EditJXSTHD.Text) then
+  begin
+    ShowMsg('经销商提货单号重复', sHint); Exit;
+  end;
+
   FSampleID := cbxSampleID.Text;
   nStocks := TStringList.Create;
   nList := TStringList.Create;

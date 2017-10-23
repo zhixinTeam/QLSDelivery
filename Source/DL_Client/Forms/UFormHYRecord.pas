@@ -118,6 +118,10 @@ type
     dxLayoutControl1Item9: TdxLayoutItem;
     dxLayoutControl1Group4: TdxLayoutGroup;
     cbxSgzl: TcxComboBox;
+    cbxCusGroup: TcxComboBox;
+    dxLayoutControl1Item12: TdxLayoutItem;
+    cxValidDate: TcxDateEdit;
+    dxLayoutControl1Item14: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditIDPropertiesButtonClick(Sender: TObject;
@@ -157,9 +161,17 @@ implementation
 uses
   IniFiles, ULibFun, UFormCtrl, UAdjustForm, USysDB, USysConst, UDataReport;
 
+type
+  TCusItem = record
+    FID   : string;
+    FName : string;
+  end;
+
 var
   gForm: TfFormHYRecord = nil;
   //全局使用
+  gCusItem: array of TCusItem;
+  //客户列表
 
 //------------------------------------------------------------------------------
 //Desc: 添加
@@ -220,7 +232,7 @@ var nIni: TIniFile;
 begin
   ResetHintAllForm(Self, 'E', sTable_StockRecord);
   //重置表名称
-  
+
   nIni := TIniFile.Create(gPath + sFormConfig);
   try
     LoadFormConfig(Self, nIni);
@@ -288,6 +300,7 @@ end;
 procedure TfFormHYRecord.GetData(Sender: TObject; var nData: string);
 begin
   if Sender = EditDate then nData := DateTime2Str(EditDate.Date);
+  if Sender = cxValidDate then nData := DateTime2Str(cxValidDate.Date);
 end;
 
 function TfFormHYRecord.SetData(Sender: TObject; const nData: string): Boolean;
@@ -295,6 +308,12 @@ begin
   if Sender = EditDate then
   begin
     EditDate.Date := Str2DateTime(nData);
+    Result := True;
+  end else
+  if Sender = cxValidDate then
+  begin
+    if Length(nData) > 0 then
+    cxValidDate.Date := Str2DateTime(nData);
     Result := True;
   end else Result := False;
 end;
@@ -319,7 +338,7 @@ begin
     FDM.FillStringsData(EditStock.Properties.Items, nStr, -1, '、');
     AdjustStringsItem(EditStock.Properties.Items, False);
   end;
-  
+
   if cbxHhcl.Properties.Items.Count < 1 then
   begin
     nStr := 'Select D_Value from %s where D_Name=''%s'' ';
@@ -368,6 +387,26 @@ begin
           cbxCenterID.Properties.Items.Add(Fields[0].AsString);
         Next;
       end;
+    end;
+  end;
+
+  if cbxCusGroup.Properties.Items.Count < 1 then
+  begin
+    nStr := 'Select distinct(F_CusGroup) From %s '; //获取已存在VIP用户组
+    nStr := Format(nStr, [sTable_ForceCenterID]);
+    with FDM.QueryTemp(nStr) do
+    if RecordCount > 0 then
+    begin
+      First;
+      while not Eof do
+      begin
+        cbxCusGroup.Properties.Items.Add(Fields[0].AsString);
+        Next;
+      end;
+    end
+    else
+    begin
+      dxLayoutControl1Item12.Visible := False;//认为此功能没有使用
     end;
   end;
 
@@ -459,7 +498,7 @@ begin
   end;
 
 
-  
+
   if FRecordID = '' then
   begin
     nStr := 'Select Count(*) From %s Where R_SerialNo=''%s''';

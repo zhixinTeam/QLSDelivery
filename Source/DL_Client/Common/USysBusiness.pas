@@ -206,6 +206,8 @@ function GetOrderRestValue(nTotalValue: Double; nRecId: string): string;
 //获取订单剩余量
 function GetOrderLimValue: Double;
 //获取订单量开单限值
+function IsDealerLadingIDExit(const nDealerID: string): Boolean;
+//检查经销商单号是否已存在
 function IsWeekValid(const nWeek: string; var nHint: string): Boolean;
 //周期是否有效
 function IsWeekHasEnable(const nWeek: string): Boolean;
@@ -1978,6 +1980,21 @@ begin
   if RecordCount > 0 then
     Result := Format('%.2f', [nTotalValue - Fields[0].AsFloat])
   else Result := '0.00';
+end;
+
+function IsDealerLadingIDExit(const nDealerID: string): Boolean;
+var nStr: string;
+begin
+  Result := True;
+  if nDealerID = '' then
+    Exit;
+
+  nStr := 'Select L_JXSTHD From %s Where L_JXSTHD=''%s''';
+  nStr := Format(nStr, [sTable_Bill, nDealerID]);
+
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+    Result := False;
 end;
 
 //Desc: 检测nWeek是否存在或过期

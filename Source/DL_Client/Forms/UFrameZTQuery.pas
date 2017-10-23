@@ -20,6 +20,7 @@ type
     dxLayout1Item2: TdxLayoutItem;
     pm1: TPopupMenu;
     N1: TMenuItem;
+    N2: TMenuItem;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditTruckPropertiesButtonClick(Sender: TObject;
@@ -27,9 +28,14 @@ type
     procedure EditTruckKeyPress(Sender: TObject; var Key: Char);
     procedure N1Click(Sender: TObject);
     procedure BtnAddClick(Sender: TObject);
+    procedure N2Click(Sender: TObject);
   private
     { Private declarations }
     FStart,FEnd: TDate;
+    FTimeS,FTimeE: TDate;
+    //时间区间
+    FJBWhere: string;
+    //交班条件
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
     function InitFormDataSQL(const nWhere: string): string; override;
@@ -58,6 +64,9 @@ procedure TfFrameZTQuery.OnCreateFrame;
 begin
   inherited;
   InitDateRange(Name, FStart, FEnd);
+  FTimeS := Str2DateTime(Date2Str(Now) + ' 00:00:00');
+  FTimeE := Str2DateTime(Date2Str(Now) + ' 00:00:00');
+  FJBWhere := '';
 end;
 
 procedure TfFrameZTQuery.OnDestroyFrame;
@@ -73,16 +82,23 @@ begin
 
   Result := 'Select * From $Bill ';
   //提货单
-
-  if (nWhere = '') then
+  if FJBWhere = '' then
   begin
-    Result := Result + 'Where (L_Date>=''$ST'' and L_Date <''$End'')';
-    nStr := ' And ';
-  end else nStr := ' Where ';
+    if (nWhere = '') then
+    begin
+      Result := Result + 'Where ((L_HYDan<>'''') and (L_HYDan is not null)) ' +
+                ' and (L_LadeTime>=''$ST'' and L_LadeTime <''$End'')';
+      nStr := ' And ';
+    end else nStr := ' Where ((L_HYDan<>'''') and (L_HYDan is not null)) and ';
 
-  if nWhere <> '' then
-    Result := Result + nStr + '(' + nWhere + ')';
-  //xxxxx
+    if nWhere <> '' then
+      Result := Result + nStr + '(' + nWhere + ')';
+    //xxxxx
+  end
+  else
+  begin
+    Result := Result + ' Where (' + FJBWhere + ')';
+  end;
 
   Result := MacroValue(Result, [
             MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
@@ -134,6 +150,18 @@ var nP: TFormCommandParam;
 begin
   nP.FCommand := cCmd_EditData;
   CreateBaseFormItem(cFI_FormWorkSet, '', @nP);
+end;
+
+procedure TfFrameZTQuery.N2Click(Sender: TObject);
+begin
+  if ShowDateFilterForm(FTimeS, FTimeE, True) then
+  try
+    FJBWhere := '(L_LadeTime>=''%s'' and L_LadeTime <''%s'') and ((L_HYDan<>'''') and (L_HYDan is not null))';
+    FJBWhere := Format(FJBWhere, [DateTime2Str(FTimeS), DateTime2Str(FTimeE)]);
+    InitFormData('');
+  finally
+    FJBWhere := '';
+  end;
 end;
 
 initialization

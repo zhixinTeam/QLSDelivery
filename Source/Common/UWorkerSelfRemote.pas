@@ -51,12 +51,14 @@ type
   public
     function GetFlagStr(const nFlag: Integer): string; override;
     class function FunctionName: string; override;
+    function GetFixedServiceURL:string;override;
   end;
   
   TClientBusinessHardware = class(TRemote2MITWorker)
   public
     function GetFlagStr(const nFlag: Integer): string; override;
     class function FunctionName: string; override;
+    function GetFixedServiceURL:string;override;
   end;
 
 function CallRemoteWorker(const nCLIWorkerName: string; const nData,nExt: string;
@@ -127,7 +129,7 @@ begin
   begin
     FRemoteMITUL := FParam;
     FPacker.InitData(nIn, True, False);
-    
+
     with FFrom do
     begin
       FUser   := gSysParam.FAppFlag;
@@ -146,7 +148,7 @@ begin
     PWorkerBusinessCommand(nOut).FData := nStr;
     WriteLog(nStr);
     Exit;
-  end;  
+  end;
 
   FPacker.UnPackOut(nStr, nOut);
   with PBWDataBase(nOut)^ do
@@ -322,6 +324,22 @@ begin
   end;
 end;
 
+function TClientBusinessSaleBill.GetFixedServiceURL:string;
+var
+  nStr:string;
+begin
+  Result := '';
+  nStr := 'select d_value from %s where d_name=''%s''';
+  nStr := Format(nStr,[sTable_SysDict,sFlag_MITSrvURL]);
+  with FDM.QuerySQL(nStr) do
+  begin
+    if RecordCount>0 then
+    begin
+      Result := FieldByName('d_value').AsString;
+    end;
+  end;
+end;
+
 //------------------------------------------------------------------------------
 class function TClientBusinessHardware.FunctionName: string;
 begin
@@ -335,6 +353,22 @@ begin
   case nFlag of
    cWorker_GetPackerName : Result := sBus_BusinessCommand;
    cWorker_GetMITName    : Result := sBus_HardwareCommand;
+  end;
+end;
+
+function TClientBusinessHardware.GetFixedServiceURL:string;
+var
+  nStr:string;
+begin
+  Result := '';
+  nStr := 'select d_value from %s where d_name=''%s''';
+  nStr := Format(nStr,[sTable_SysDict,sFlag_MITSrvURL]);
+  with FDM.QuerySQL(nStr) do
+  begin
+    if RecordCount>0 then
+    begin
+      Result := FieldByName('d_value').AsString;
+    end;
   end;
 end;
 

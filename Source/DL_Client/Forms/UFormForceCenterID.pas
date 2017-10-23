@@ -1,8 +1,8 @@
 {*******************************************************************************
-  作者: dmzn@163.com 2010-3-14
+  作者: juner11212436@163.com 2017-10-20
   描述: 装车线管理
 *******************************************************************************}
-unit UFormZTLine;
+unit UFormForceCenterID;
 
 interface
 
@@ -14,43 +14,25 @@ uses
   dxLayoutcxEditAdapters;
 
 type
-  TfFormZTLine = class(TfFormNormal)
+  TfFormForceCenterID = class(TfFormNormal)
     EditName: TcxTextEdit;
     dxLayout1Item5: TdxLayoutItem;
-    EditID: TcxTextEdit;
-    LayItem1: TdxLayoutItem;
-    EditMax: TcxTextEdit;
-    dxLayout1Item4: TdxLayoutItem;
     CheckValid: TcxCheckBox;
     dxLayout1Item7: TdxLayoutItem;
-    EditStockName: TcxTextEdit;
-    dxLayout1Item8: TdxLayoutItem;
-    dxLayout1Group2: TdxLayoutGroup;
-    dxLayout1Group3: TdxLayoutGroup;
-    cxLabel2: TcxLabel;
-    dxLayout1Item10: TdxLayoutItem;
-    dxLayout1Group4: TdxLayoutGroup;
-    EditPeer: TcxTextEdit;
-    dxLayout1Item19: TdxLayoutItem;
-    dxLayout1Item20: TdxLayoutItem;
-    cxLabel4: TcxLabel;
-    dxLayout1Group9: TdxLayoutGroup;
     EditStockID: TcxComboBox;
     dxLayout1Item21: TdxLayoutItem;
-    EditType: TcxComboBox;
-    dxLayout1Item3: TdxLayoutItem;
-    dxLayout1Item22: TdxLayoutItem;
-    cxLabel5: TcxLabel;
-    dxLayout1Group10: TdxLayoutGroup;
-    dxLayout1Group12: TdxLayoutGroup;
     cbxCenterID: TcxComboBox;
     dxLayout1Item6: TdxLayoutItem;
-    cbxLocationID: TcxComboBox;
-    dxLayout1Item9: TdxLayoutItem;
+    EditID: TcxComboBox;
+    dxLayout1Item4: TdxLayoutItem;
+    EditStock: TcxTextEdit;
+    dxLayout1Item8: TdxLayoutItem;
+    cbxCusGroup: TcxComboBox;
+    dxLayout1Item3: TdxLayoutItem;
     procedure BtnOKClick(Sender: TObject);
     procedure EditStockIDPropertiesChange(Sender: TObject);
-    procedure cbxLocationIDPropertiesChange(Sender: TObject);
     procedure cbxCenterIDPropertiesChange(Sender: TObject);
+    procedure EditIDPropertiesChange(Sender: TObject);
   protected
     { Protected declarations }
     FID: string;
@@ -59,6 +41,7 @@ type
     procedure GetData(Sender: TObject; var nData: string);
     function SetData(Sender: TObject; const nData: string): Boolean;
     //数据处理
+    function IsRepeat(const nCusID, nStockNo: string) : Boolean;
   public
     { Public declarations }
     function OnVerifyCtrl(Sender: TObject; var nHint: string): Boolean; override;
@@ -67,8 +50,8 @@ type
     class function FormID: integer; override;
   end;
 
-function ShowAddZTLineForm: Boolean;
-function ShowEditZTLineForm(const nID: string): Boolean;
+function ShowAddForceCenterIDForm: Boolean;
+function ShowEditForceCenterIDForm(const nID: string): Boolean;
 //入口函数
 
 implementation
@@ -89,7 +72,7 @@ type
     FID   : string;
     FName : string;
   end;
-  TLocationItem = record
+  TCusItem = record
     FID   : string;
     FName : string;
   end;
@@ -101,15 +84,15 @@ var
   //通道钩选属性
   gCenterItem: array of TCenterItem;
   //生产线列表
-  gLocationItem: array of TLocationItem;
-  //仓库列表
+  gCusItem: array of TCusItem;
+  //客户列表
 
-function ShowAddZTLineForm: Boolean;
+function ShowAddForceCenterIDForm: Boolean;
 begin
-  with TfFormZTLine.Create(Application) do
+  with TfFormForceCenterID.Create(Application) do
   try
     FID := '';
-    Caption := '装车线 - 添加';
+    Caption := '生产线关联 - 添加';
 
     InitFormData('');
     Result := ShowModal = mrOk;
@@ -118,12 +101,12 @@ begin
   end;
 end;
 
-function ShowEditZTLineForm(const nID: string): Boolean;
+function ShowEditForceCenterIDForm(const nID: string): Boolean;
 begin
-  with TfFormZTLine.Create(Application) do
+  with TfFormForceCenterID.Create(Application) do
   try
     FID := nID;
-    Caption := '装车线 - 修改';
+    Caption := '生产线关联 - 修改';
 
     InitFormData(nID);
     Result := ShowModal = mrOk;
@@ -132,35 +115,39 @@ begin
   end;
 end;
 
-class function TfFormZTLine.FormID: integer;
+class function TfFormForceCenterID.FormID: integer;
 begin
-  Result := cFI_FormZTLine;
+  Result := cFI_FormForceCenterID;
 end;
 
-class function TfFormZTLine.CreateForm(const nPopedom: string;
+class function TfFormForceCenterID.CreateForm(const nPopedom: string;
   const nParam: Pointer): TWinControl;
 begin
   Result := nil;
 end;
 
 //------------------------------------------------------------------------------
-procedure TfFormZTLine.InitFormData(const nID: string);
+procedure TfFormForceCenterID.InitFormData(const nID: string);
 var nStr: string;
     nIdx: Integer;
 begin
-  ResetHintAllForm(Self, 'T', sTable_ZTLines);
+  ResetHintAllForm(Self, 'F', sTable_ForceCenterID);
   //重置表名称
   if nID <> '' then
   begin
+    nIdx := StrToIntDef(nID,0);
     EditID.Properties.ReadOnly := True;
-    nStr := 'Select * From %s Where Z_ID=''%s''';
-    nStr := Format(nStr, [sTable_ZTLines, nID]);
+    nStr := 'Select * From %s Where R_ID=%d';
+    nStr := Format(nStr, [sTable_ForceCenterID, nIdx]);
 
     if FDM.QueryTemp(nStr).RecordCount > 0 then
     begin
-      EditStockID.Text := FDM.SqlTemp.FieldByName('Z_StockNo').AsString;
-      cbxCenterID.Text := FDM.SqlTemp.FieldByName('Z_CenterID').AsString;
-      cbxLocationID.Text:= FDM.SqlTemp.FieldByName('Z_LocationID').AsString;
+      EditID.Text:= FDM.SqlTemp.FieldByName('F_ID').AsString;
+      EditName.Text:= FDM.SqlTemp.FieldByName('F_Name').AsString;
+      EditStockID.Text := FDM.SqlTemp.FieldByName('F_StockNo').AsString;
+      EditStock.Text := FDM.SqlTemp.FieldByName('F_Stock').AsString;
+      cbxCenterID.Text := FDM.SqlTemp.FieldByName('F_CenterID').AsString;
+      cbxCusGroup.Text := FDM.SqlTemp.FieldByName('F_CusGroup').AsString;
       LoadDataToCtrl(FDM.SqlTemp, Self, '', SetData);
     end;
   end;
@@ -224,41 +211,62 @@ begin
     end;
   end;
 
-  nStr := 'Select I_LocationID,I_Name From %s '; //仓库列表
-  nStr := Format(nStr, [sTable_InventLocation]);
+  nStr := 'Select C_ID, C_Name From %s '; //客户列表
+  nStr := Format(nStr, [sTable_Customer]);
 
-  cbxLocationID.Properties.Items.Clear;
-  SetLength(gLocationItem, 0);
-
+  EditID.Properties.Items.Clear;
+  SetLength(gCusItem, 0);
   with FDM.QueryTemp(nStr) do
   begin
     if RecordCount < 1 then Exit;
-    SetLength(gLocationItem, RecordCount);
+    SetLength(gCusItem, RecordCount);
 
     nIdx := 0;
     First;
 
+    try
+      EditID.Properties.BeginUpdate;
+      while not Eof do
+      begin
+        with gCusItem[nIdx] do
+        begin
+          FID := Fields[0].AsString;
+          FName := Fields[1].AsString;
+          EditID.Properties.Items.AddObject(FID + '.' + FName, Pointer(nIdx));
+        end;
+        Inc(nIdx);
+        Next;
+      end;
+    finally
+      EditID.Properties.EndUpdate();
+    end;
+  end;
+
+  nStr := 'Select distinct(F_CusGroup) From %s '; //获取已存在用户组
+  nStr := Format(nStr, [sTable_ForceCenterID]);
+
+  cbxCusGroup.Properties.Items.Clear;
+
+  with FDM.QueryTemp(nStr) do
+  begin
+    if RecordCount < 1 then Exit;
+
+    First;
+
     while not Eof do
     begin
-      with gLocationItem[nIdx] do
-      begin
-        FID := Fields[0].AsString;
-        FName := Fields[1].AsString;
-        cbxLocationID.Properties.Items.AddObject(FID + '.' + FName, Pointer(nIdx));
-      end;
-
-      Inc(nIdx);
+      cbxCusGroup.Properties.Items.Add(Fields[0].AsString);
       Next;
     end;
   end;
 end;
 
-procedure TfFormZTLine.EditStockIDPropertiesChange(Sender: TObject);
+procedure TfFormForceCenterID.EditStockIDPropertiesChange(Sender: TObject);
 var nIdx,i: Integer;
 begin
   if (not EditStockID.Focused) or (EditStockID.ItemIndex < 0) then Exit;
   nIdx := Integer(EditStockID.Properties.Items.Objects[EditStockID.ItemIndex]);
-  EditStockName.Text := gStockItems[nIdx].FName;
+  EditStock.Text := gStockItems[nIdx].FName;
   cbxCenterID.Properties.Items.Clear;
   for i:= Low(gCenterItem) to High(gCenterItem) do
   begin
@@ -267,22 +275,10 @@ begin
   end;
 end;
 
-function TfFormZTLine.SetData(Sender: TObject; const nData: string): Boolean;
+function TfFormForceCenterID.SetData(Sender: TObject; const nData: string): Boolean;
 begin
   Result := False;
 
-  if Sender = EditType then
-  begin
-    Result := True;
-    if nData = sFlag_TypeVIP then
-      EditType.ItemIndex := 1 else
-    if nData = sFlag_TypeZT then
-      EditType.ItemIndex := 2 else
-    if nData = sFlag_TypeShip then
-      EditType.ItemIndex := 3
-    else EditType.ItemIndex := 0;
-  end else
-  
   if Sender = CheckValid then
   begin
     Result := True;
@@ -290,17 +286,8 @@ begin
   end;
 end;
 
-procedure TfFormZTLine.GetData(Sender: TObject; var nData: string);
+procedure TfFormForceCenterID.GetData(Sender: TObject; var nData: string);
 begin
-  if Sender = EditType then
-  begin
-    case EditType.ItemIndex of
-     0: nData := sFlag_TypeCommon;
-     1: nData := sFlag_TypeVIP;
-     2: nData := sFlag_TypeZT;
-     3: nData := sFlag_TypeShip else nData := sFlag_TypeCommon;
-    end;
-  end else
 
   if Sender = CheckValid then
   begin
@@ -316,7 +303,7 @@ begin
   end;
 end;
 
-function TfFormZTLine.OnVerifyCtrl(Sender: TObject; var nHint: string): Boolean;
+function TfFormForceCenterID.OnVerifyCtrl(Sender: TObject; var nHint: string): Boolean;
 var nVal: Integer;
 begin
   Result := True;
@@ -325,7 +312,7 @@ begin
   begin
     EditID.Text := Trim(EditID.Text);
     Result := EditID.Text <> '';
-    nHint := '请填写有效编号';
+    nHint := '请选择客户编号';
   end else
 
   if Sender = EditName then
@@ -341,70 +328,60 @@ begin
     nHint := '请选择品种';
   end else
 
-  if Sender = EditMax then
-  begin
-    Result := IsNumber(EditMax.Text, False);
-    nHint := '队列数为大于零的整数';
-    if not Result then Exit;
-
-    nVal := StrToInt(EditMax.Text);
-    Result := (nVal > 0) and (nVal <= 50);
-    nHint := '队列数在1-50之间'
-  end else
-
   if Sender= cbxCenterID then
   begin
     cbxCenterID.Text:=Trim(cbxCenterID.Text);
     Result:=cbxCenterID.Text<>'';
     nHint:= '请选择生产线';
-  end else
-
-  {if Sender= cbxLocationID then
-  begin
-    cbxLocationID.Text:=Trim(cbxLocationID.Text);
-    Result:=cbxLocationID.Text<>'';
-    nHint:= '请选择仓库';
-  end else}
-  if Sender = EditPeer then
-  begin
-    Result := IsNumber(EditPeer.Text, False) and (StrToInt(EditPeer.Text) > 0);
-    nHint := '袋重为大于0的整数';
-    if not Result then Exit;
   end;
 
 end;
 
-procedure TfFormZTLine.BtnOKClick(Sender: TObject);
+procedure TfFormForceCenterID.BtnOKClick(Sender: TObject);
 var nIdx: Integer;
     nList: TStrings;
-    nStr,nEvent: string;
+    nStr, nCusID, nStockNo: string;
 begin
   if not IsDataValid then Exit;
 
+  nIdx := Integer(EditID.Properties.Items.Objects[EditID.ItemIndex]);
+  nCusID := gCusItem[nIdx].FID;
+
+  nIdx := Integer(EditStockID.Properties.Items.Objects[EditStockID.ItemIndex]);
+  nStockNo := gStockItems[nIdx].FID;
+
+  if FID = '' then
+  if IsRepeat(nCusID, nStockNo) then
+  begin
+    ShowMsg('该条记录已存在', sHint);
+    Exit;
+  end;
+
   nList := TStringList.Create;
   try
-    nIdx := Integer(EditStockID.Properties.Items.Objects[EditStockID.ItemIndex]);
-    nList.Add(Format('Z_StockNo=''%s''', [gStockItems[nIdx].FID]));
+    nList.Add(Format('F_ID=''%s''', [nCusID]));
+
+    nList.Add(Format('F_StockNo=''%s''', [nStockNo]));
+
     for nIdx:= Low(gCenterItem) to High(gCenterItem) do
     begin
       if gCenterItem[nIdx].FID+'.'+gCenterItem[nIdx].FName=Trim(cbxCenterID.Text) then
       begin
-        nList.Add(Format('Z_CenterID=''%s''', [gCenterItem[nIdx].FID]));
+        nList.Add(Format('F_CenterID=''%s''', [gCenterItem[nIdx].FID]));
         Break;
       end;
     end;
-    {nIdx := Integer(cbxLocationID.Properties.Items.Objects[cbxLocationID.ItemIndex]);
-    nList.Add(Format('Z_LocationID=''%s''', [gLocationItem[nIdx].FID])); }
 
-    //ext fields
+    nList.Add(Format('F_CusGroup=''%s''', [cbxCusGroup.Text]));
 
     if FID = '' then
     begin
-      nStr := MakeSQLByForm(Self, sTable_ZTLines, '', True, GetData, nList);
+      nStr := MakeSQLByForm(Self, sTable_ForceCenterID, '', True, GetData, nList);
     end else
     begin
-      nStr := Format('Z_ID=''%s''', [FID]);
-      nStr := MakeSQLByForm(Self, sTable_ZTLines, nStr, False, GetData, nList);
+      nIdx := StrToInt(FID);
+      nStr := Format('R_ID=%d', [nIdx]);
+      nStr := MakeSQLByForm(Self, sTable_ForceCenterID, nStr, False, GetData, nList);
     end;
   finally
     nList.Free;
@@ -413,33 +390,10 @@ begin
   FDM.ExecuteSQL(nStr);
   ModalResult := mrOk;
 
-  //--------------
-  if   gCheckValid = false then
-  begin
-       nEvent := '通道 [ %s ] 关闭';
-       nEvent := Format(nEvent, [EditID.Text]);
-       FDM.WriteSysLog(sFlag_TruckQueue, 'UFromZTline', nEvent);
-  end;
-  if   gCheckValid = true  then
-  begin
-       nEvent := '通道 [ %s ] 开启';
-       nEvent := Format(nEvent, [EditID.Text]);
-       FDM.WriteSysLog(sFlag_TruckQueue, 'UFromZTline',nEvent);
-  end;
-  //--写入操作通道日志
-  ShowMsg('通道已保存,请等待刷新', sHint);
+  ShowMsg('数据保存成功', sHint);
 end;
 
-procedure TfFormZTLine.cbxLocationIDPropertiesChange(Sender: TObject);
-var nIdx:Integer;
-begin
-  inherited;
-  if (not cbxLocationID.Focused) or (cbxLocationID.ItemIndex < 0) then Exit;
-  nIdx := Integer(cbxLocationID.Properties.Items.Objects[cbxLocationID.ItemIndex]);
-  //cbxLocationID.Text:=gLocationItem[nIdx].FID;
-end;
-
-procedure TfFormZTLine.cbxCenterIDPropertiesChange(Sender: TObject);
+procedure TfFormForceCenterID.cbxCenterIDPropertiesChange(Sender: TObject);
 var nIdx:Integer;
 begin
   inherited;
@@ -448,6 +402,30 @@ begin
   //cbxCenterID.Text:=gCenterItem[nIdx].FID;
 end;
 
+procedure TfFormForceCenterID.EditIDPropertiesChange(Sender: TObject);
+var nIdx: Integer;
+begin
+  if (not EditID.Focused) or (EditID.ItemIndex < 0) then Exit;
+  nIdx := Integer(EditID.Properties.Items.Objects[EditID.ItemIndex]);
+  EditName.Text := gCusItem[nIdx].FName;
+end;
+
+function TfFormForceCenterID.IsRepeat(const nCusID,
+  nStockNo: string): Boolean;
+var nStr: string;
+begin
+  Result := False;
+
+  nStr := 'Select F_ID From %s Where F_ID=''%s'' and F_StockNo=''%s''';
+  nStr := Format(nStr, [sTable_ForceCenterID, nCusID, nStockNo]);
+
+  with FDM.QueryTemp(nStr) do
+  begin
+    if RecordCount < 1 then Exit;
+    Result := True;
+  end;
+end;
+
 initialization
-  gControlManager.RegCtrl(TfFormZTLine, TfFormZTLine.FormID);
+  gControlManager.RegCtrl(TfFormForceCenterID, TfFormForceCenterID.FormID);
 end.

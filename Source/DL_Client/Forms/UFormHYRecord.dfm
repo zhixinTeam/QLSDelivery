@@ -1,9 +1,9 @@
 object fFormHYRecord: TfFormHYRecord
-  Left = 330
-  Top = 77
+  Left = 340
+  Top = 25
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  ClientHeight = 572
+  ClientHeight = 629
   ClientWidth = 488
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -22,7 +22,7 @@ object fFormHYRecord: TfFormHYRecord
     Left = 0
     Top = 0
     Width = 488
-    Height = 572
+    Height = 629
     Align = alClient
     TabOrder = 0
     TabStop = False
@@ -30,8 +30,8 @@ object fFormHYRecord: TfFormHYRecord
     AutoControlTabOrders = False
     LookAndFeel = FDM.dxLayoutWeb1
     object BtnOK: TButton
-      Left = 332
-      Top = 538
+      Left = 337
+      Top = 578
       Width = 70
       Height = 23
       Caption = #20445#23384
@@ -39,8 +39,8 @@ object fFormHYRecord: TfFormHYRecord
       OnClick = BtnOKClick
     end
     object BtnExit: TButton
-      Left = 407
-      Top = 538
+      Left = 412
+      Top = 578
       Width = 70
       Height = 23
       Caption = #21462#28040
@@ -48,7 +48,7 @@ object fFormHYRecord: TfFormHYRecord
       OnClick = BtnExitClick
     end
     object EditID: TcxButtonEdit
-      Left = 93
+      Left = 99
       Top = 36
       Hint = 'E.R_SerialNo'
       HelpType = htKeyword
@@ -65,7 +65,7 @@ object fFormHYRecord: TfFormHYRecord
     end
     object wPanel: TPanel
       Left = 23
-      Top = 218
+      Top = 268
       Width = 424
       Height = 240
       Align = alClient
@@ -206,11 +206,11 @@ object fFormHYRecord: TfFormHYRecord
         Caption = #28903' '#22833' '#37327':'
       end
       object Label34: TLabel
-        Left = -1
+        Left = 24
         Top = 160
-        Width = 78
+        Width = 54
         Height = 12
-        Caption = #27700#28342#24615#38124'('#8549'):'
+        Caption = #28216' '#31163' '#38041':'
         Transparent = True
       end
       object Label41: TLabel
@@ -746,7 +746,7 @@ object fFormHYRecord: TfFormHYRecord
       end
     end
     object EditDate: TcxDateEdit
-      Left = 93
+      Left = 99
       Top = 86
       Hint = 'E.R_Date'
       ParentFont = False
@@ -755,7 +755,7 @@ object fFormHYRecord: TfFormHYRecord
       Width = 200
     end
     object EditMan: TcxTextEdit
-      Left = 344
+      Left = 350
       Top = 86
       Hint = 'E.R_Man'
       ParentFont = False
@@ -763,7 +763,7 @@ object fFormHYRecord: TfFormHYRecord
       Width = 120
     end
     object EditQuaStart: TcxTextEdit
-      Left = 93
+      Left = 99
       Top = 111
       Hint = 'E.R_BatQuaStart'
       ParentFont = False
@@ -771,8 +771,8 @@ object fFormHYRecord: TfFormHYRecord
       Width = 121
     end
     object cxComboBox2: TcxComboBox
-      Left = 93
-      Top = 161
+      Left = 99
+      Top = 186
       Hint = 'E.R_BatValid'
       ParentFont = False
       Properties.Items.Strings = (
@@ -783,7 +783,7 @@ object fFormHYRecord: TfFormHYRecord
       Width = 121
     end
     object EditStock: TcxComboBox
-      Left = 93
+      Left = 99
       Top = 61
       Hint = 'E.R_PID'
       ParentFont = False
@@ -792,7 +792,7 @@ object fFormHYRecord: TfFormHYRecord
       Width = 200
     end
     object EditQuaEnd: TcxTextEdit
-      Left = 93
+      Left = 99
       Top = 136
       Hint = 'E.R_BatQuaEnd'
       ParentFont = False
@@ -800,12 +800,28 @@ object fFormHYRecord: TfFormHYRecord
       Width = 121
     end
     object cbxCenterID: TcxComboBox
-      Left = 344
+      Left = 350
       Top = 61
       Hint = 'E.R_CenterID'
       ParentFont = False
       TabOrder = 10
       Width = 120
+    end
+    object cbxCusGroup: TcxComboBox
+      Left = 99
+      Top = 161
+      Hint = 'E.R_CusGroup'
+      ParentFont = False
+      TabOrder = 11
+      Width = 121
+    end
+    object cxValidDate: TcxDateEdit
+      Left = 99
+      Top = 211
+      Hint = 'E.R_ValidDate'
+      ParentFont = False
+      TabOrder = 12
+      Width = 121
     end
     object dxLayoutControl1Group_Root: TdxLayoutGroup
       ShowCaption = False
@@ -862,9 +878,19 @@ object fFormHYRecord: TfFormHYRecord
           Control = EditQuaEnd
           ControlOptions.ShowBorder = False
         end
+        object dxLayoutControl1Item12: TdxLayoutItem
+          Caption = #25351#23450#23458#25143#32452':'
+          Control = cbxCusGroup
+          ControlOptions.ShowBorder = False
+        end
         object dxLayoutControl1Item6: TdxLayoutItem
           Caption = #26159#21542#29983#25928':'
           Control = cxComboBox2
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayoutControl1Item14: TdxLayoutItem
+          Caption = #29983#25928#25130#27490#26085#26399
+          Control = cxValidDate
           ControlOptions.ShowBorder = False
         end
       end

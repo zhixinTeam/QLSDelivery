@@ -1940,7 +1940,7 @@ var nStr,nSQL,nTmp: string;
     nDBZhiKa:TDataSet;
     nHint,nReiNo: string;
     nTriaTrade: string;
-    nTriCusID, nCompanyId: string;
+    nTriCusID, nCompanyId,nCusGroup: string;
 begin
   Result := False;
   AnalyseBillItems(FIn.FData, nBills);
@@ -2134,31 +2134,51 @@ begin
               SF('L_CW', FKw)
               ], sTable_Bill, SF('L_ID', FID), False);
       {$ELSE}
-      nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
-              'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
-      nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
-      with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-      if RecordCount > 0 then
+      if Length(FSampleID) > 0 then//人工选择式样编号
+        nReiNo := FSampleID
+      else
       begin
-        FCenterID:= FieldByName('Z_CenterID').AsString;
-        FKw:= FieldByName('Z_Name').AsString;
-      end;
+        nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
+                'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
+        nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
+        with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+        if RecordCount > 0 then
+        begin
+          FCenterID:= FieldByName('Z_CenterID').AsString;
+          FKw:= FieldByName('Z_Name').AsString;
+        end;
 
-      if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
-        FStockName, FCenterID, @nOut) then
-      begin
-        WriteLog(nOut.FData);
-        raise Exception.Create(nOut.FData);
-      end;
-      if nOut.FData='' then
-      begin
-        nData := '岗位[ %s ]试样编号使用完毕.';
-        nData := Format(nData, [PostTypeToStr(FIn.FExtParam)]);
-        WriteLog(nData);
-        Exit;
-      end;
+        nStr := 'select F_CusGroup from %s '+
+                'where F_StockNo = ''%s'' and F_ID = ''%s'' ';
+        nStr := Format(nStr, [sTable_ForceCenterID,FStockNo,FCusID]);
+        with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+        if RecordCount > 0 then//特殊客户特殊处理
+        begin
+          if not TWorkerBusinessCommander.CallMe(cBC_GetSampleIDVIP,
+            FStockName, FCusID, @nOut) then
+          begin
+            WriteLog(nOut.FData);
+            raise Exception.Create(nOut.FData);
+          end;
+          nReiNo:=nOut.FData;  //获取特殊式样编号
+        end;
 
-      nReiNo:=nOut.FData;  //获取式样编号
+        if nReiNo = '' then//不是特殊客户或者未获取到试样编号
+        if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
+          FStockName, FCenterID, @nOut) then
+        begin
+          WriteLog(nOut.FData);
+          raise Exception.Create(nOut.FData);
+        end;
+        if nOut.FData='' then
+        begin
+          nData := '岗位[ %s ]试样编号使用完毕.';
+          nData := Format(nData, [PostTypeToStr(FIn.FExtParam)]);
+          WriteLog(nData);
+          Exit;
+        end;
+        nReiNo:=nOut.FData;  //获取式样编号
+      end;
       WriteLog('['+FID+']GetSampleID: '+nReiNo);
 
       nSQL := MakeSQLByStr([SF('L_Status', FStatus),
@@ -2198,31 +2218,51 @@ begin
               SF('L_CW', FKw)
               ], sTable_Bill, SF('L_ID', FID), False);
       {$ELSE}
-      nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
-              'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
-      nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
-      with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-      if RecordCount > 0 then
+      if Length(FSampleID) > 0 then//人工选择式样编号
+        nReiNo := FSampleID
+      else
       begin
-        FCenterID:= FieldByName('Z_CenterID').AsString;
-        FKw:= FieldByName('Z_Name').AsString;
-      end;
+        nStr := 'select Z_Name,Z_CenterID from %s a,%s b '+
+                'where a.Z_ID = b.T_Line and b.T_Bill = ''%s'' ';
+        nStr := Format(nStr, [sTable_ZTLines,sTable_ZTTrucks,FID]);
+        with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+        if RecordCount > 0 then
+        begin
+          FCenterID:= FieldByName('Z_CenterID').AsString;
+          FKw:= FieldByName('Z_Name').AsString;
+        end;
 
-      if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
-        FStockName, FCenterID, @nOut) then
-      begin
-        WriteLog(nOut.FData);
-        raise Exception.Create(nOut.FData);
-      end;
-      if nOut.FData='' then
-      begin
-        nData := '岗位[ %s ]试样编号使用完毕.';
-        nData := Format(nData, [PostTypeToStr(FIn.FExtParam)]);
-        WriteLog(nData);
-        Exit;
-      end;
+        nStr := 'select F_CusGroup from %s '+
+                'where F_StockNo = ''%s'' and F_ID = ''%s'' ';
+        nStr := Format(nStr, [sTable_ForceCenterID,FStockNo,FCusID]);
+        with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+        if RecordCount > 0 then//特殊客户特殊处理
+        begin
+          if not TWorkerBusinessCommander.CallMe(cBC_GetSampleIDVIP,
+            FStockName, FCusID, @nOut) then
+          begin
+            WriteLog(nOut.FData);
+            raise Exception.Create(nOut.FData);
+          end;
+          nReiNo:=nOut.FData;  //获取特殊式样编号
+        end;
 
-      nReiNo:=nOut.FData; //获取式样编号
+        if nReiNo = '' then//不是特殊客户或者未获取到试样编号
+        if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
+          FStockName, FCenterID, @nOut) then
+        begin
+          WriteLog(nOut.FData);
+          raise Exception.Create(nOut.FData);
+        end;
+        if nOut.FData='' then
+        begin
+          nData := '岗位[ %s ]试样编号使用完毕.';
+          nData := Format(nData, [PostTypeToStr(FIn.FExtParam)]);
+          WriteLog(nData);
+          Exit;
+        end;
+        nReiNo:=nOut.FData;  //获取式样编号
+      end;
       WriteLog('['+FID+']GetSampleID: '+nReiNo);
 
       nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckFH),

@@ -47,6 +47,15 @@ type
 
   TZTLineItems = array of TZTLineItem;
   TZTTruckItems = array of TZTTruckItem;
+
+  TCenterItem = record
+    FName : string;
+    FLineCount: Integer;//符合条件生产线数量
+    FTruckCount: Integer;//符合条件生产线车辆数量
+  end;
+
+var  gCenterItem: array of TCenterItem;
+  //生产线列表
   
 //------------------------------------------------------------------------------
 function AdjustHintToRead(const nHint: string): string;
@@ -291,7 +300,7 @@ function LoadAXPlanInfo(const nID: string; var nHint: string): TDataset;
 //载入提货信息
 function GetCustomerExtQls(const nCusID:string): string;
 //获取客户扩展信息QLS
-procedure InitCenter(const nStockNo,nType: string; const nCbx:TcxComboBox);
+procedure InitCenter(const nStockNo,nCusID: string; const nCbx:TcxComboBox);
 //初始化生产线ID
 function GetLadingWay(const nID:string): string;
 //获取提货方式
@@ -2728,19 +2737,110 @@ begin
 end;
 
 //初始化生产线
-procedure InitCenter(const nStockNo,nType: string; const nCbx:TcxComboBox);
+procedure InitCenter(const nStockNo,nCusID: string; const nCbx:TcxComboBox);
 var
   nStr,nItemGID:string;
+  nIdx: Integer;
+  nFl: Single;
 begin
   nCbx.Properties.Items.Clear;
   nCbx.Text := '';
-  nStr := 'Select Z_CenterID From %s Where Z_StockNo=''%s'' and Z_Valid=''%s'' ';
+  SetLength(gCenterItem, 0);
+  nStr := 'Select Z_CenterId,COUNT(*) as Num From %s Where Z_StockNo=''%s'' '+
+          'and Z_Valid=''%s'' group by Z_CenterId order by Num ';
   nStr := Format(nStr, [sTable_ZTLines, nStockNo, sFlag_Yes]);
   with FDM.QueryTemp(nStr) do
   begin
     if RecordCount < 1 then Exit;
-    nCbx.Text:= Fields[0].AsString;
+
+    if RecordCount >= 1 then//存在符合条件生产线
+    begin
+      SetLength(gCenterItem,RecordCount);
+
+      nIdx := 0;
+      First;
+
+      while not Eof do
+      begin
+        with gCenterItem[nIdx] do
+        begin
+          FName := Fields[0].AsString;
+          FLineCount := Fields[1].AsInteger;
+        end;
+
+        Inc(nIdx);
+        Next;
+      end;
+    end;
   end;
+
+  nStr := 'Select F_CenterID From %s Where F_StockNo=''%s'' and F_ID=''%s'' and F_Valid=''%s'' ';
+  nStr := Format(nStr, [sTable_ForceCenterID, nStockNo, nCusID, sFlag_Yes]);
+  with FDM.QueryTemp(nStr) do
+  begin
+
+    if RecordCount = 1 then//VIP客户 强制指定有生产线且只有一条
+    begin
+      for nIdx := Low(gCenterItem) to High(gCenterItem) do
+      begin
+        if Fields[0].AsString = gCenterItem[nIdx].FName then
+        begin
+          WriteLog('生产线匹配:'+nCusID+'强制生产线'+Fields[0].AsString);
+          nCbx.Text:= Fields[0].AsString;
+        end;
+      end;
+      if nCbx.Text = '' then
+        Exit;
+      //客户为VIP客户但未匹配成功仍退出
+    end
+  end;
+
+  if Length(nCbx.Text) > 0 then
+    Exit;
+
+  for nIdx := Low(gCenterItem) to High(gCenterItem) do
+  begin
+    nStr := 'Select L_InvCenterId, COUNT(*) as Num From %s a , %s b ' +
+            ' Where a.L_ID=b.T_Bill and a.L_InvCenterId=''%s'' '+
+            ' group by L_InvCenterId order by Num ';
+    nStr := Format(nStr, [sTable_Bill, sTable_ZTTrucks, gCenterItem[nIdx].FName]);
+    with FDM.QueryTemp(nStr) do
+    begin
+
+      if RecordCount <= 0 then//查询该品种所属生产线是否有车，无车直接指定到该生产线
+      begin
+        WriteLog('生产线匹配:'+'生产线'+gCenterItem[nIdx].FName+'没有车辆,指定到此生产线');
+        nCbx.Text:= gCenterItem[nIdx].FName;
+        Break;
+      end
+      else
+      begin
+        gCenterItem[nIdx].FTruckCount := Fields[1].AsInteger;
+      end;
+    end;
+  end;
+
+  if Length(nCbx.Text) > 0 then
+    Exit;
+
+  nFl := 0;
+  for nIdx := Low(gCenterItem) to High(gCenterItem) do
+  begin
+    try
+      if nIdx = Low(gCenterItem) then
+      begin
+       nFl:= gCenterItem[nIdx].FTruckCount / gCenterItem[nIdx].FTruckCount;
+       nCbx.Text := gCenterItem[nIdx].FName;
+      end
+      else
+      begin
+        if gCenterItem[nIdx].FTruckCount / gCenterItem[nIdx].FTruckCount <= nFl then
+          nCbx.Text := gCenterItem[nIdx].FName;
+      end;
+    except
+    end;
+  end;
+  //查询负载最小生产线
 end;
 
 //获取提货方式

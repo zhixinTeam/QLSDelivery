@@ -79,5 +79,9 @@ inherited fFrameZTQuery: TfFrameZTQuery
       Caption = #25171#21360#23567#31080
       OnClick = N1Click
     end
+    object N2: TMenuItem
+      Caption = #26102#38388#27573#26597#35810
+      OnClick = N2Click
+    end
   end
 end
