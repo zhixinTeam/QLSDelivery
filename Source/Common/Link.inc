@@ -69,7 +69,7 @@
   //平凉开票
   {.$DEFINE XHPZ} 
   //夏河、定西、平凉皮重
-  {.$DEFINE ZXKP} 
+  {$DEFINE ZXKP} 
   //漳县
   {.$DEFINE GGJC} 
   //甘谷、兰州商砼自动出厂
@@ -79,7 +79,7 @@
   //兰州商砼水泥內倒
   {.$DEFINE QHSN} 
   //青海
-  {$DEFINE MHSN} 
+  {.$DEFINE MHSN} 
   //民和
   {$DEFINE MultiReplay}
   //计数器应答模式

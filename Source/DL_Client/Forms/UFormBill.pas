@@ -583,7 +583,12 @@ begin
   {$IFDEF ZXKP}
   if not CheckTruckOK(Trim(EditTruck.Text)) then
   begin
-    ShowMsg(EditTruck.Text+'禁止开单',sHint);
+    ShowMsg(EditTruck.Text+'刚出厂，禁止开单',sHint);
+    Exit;
+  end;
+  if not CheckTruckBilling(Trim(EditTruck.Text)) then
+  begin
+    ShowMsg(EditTruck.Text+'非法，禁止开单',sHint);
     Exit;
   end;
   {$ENDIF}
@@ -631,6 +636,13 @@ begin
       Values['Value'] := FloatToStr(FValue);
       Values['TransPrice'] := FloatToStr(FTransPrice);
       Values['RECID'] := FRecID;
+      {$IFDEF ZXKP}
+      if not CheckTruckCount(FStockName) then
+      begin
+        ShowMsg('厂内车辆达到上限，禁止开单',sHint);
+        Exit;
+      end;
+      {$ENDIF}
       {$IFDEF YDKP}//开票录入试样编号
       if cbxSampleID.Enabled=True then
       begin

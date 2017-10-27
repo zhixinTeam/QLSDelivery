@@ -34,6 +34,9 @@ type
     VIP2: TMenuItem;
     N8: TMenuItem;
     N9: TMenuItem;
+    N10: TMenuItem;
+    N11: TMenuItem;
+    N12: TMenuItem;
     procedure EditNamePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnAddClick(Sender: TObject);
@@ -47,6 +50,8 @@ type
     procedure VIP1Click(Sender: TObject);
     procedure VIP2Click(Sender: TObject);
     procedure N8Click(Sender: TObject);
+    procedure N11Click(Sender: TObject);
+    procedure N12Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -280,6 +285,40 @@ begin
       ShowMsg('短倒业务磁卡保存成功', sHint);
 
     InitFormData(FWhere);
+  end;
+end;
+
+procedure TfFrameTrucks.N11Click(Sender: TObject);
+var nStr: string;
+begin
+  inherited;
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nStr := 'Update %s Set T_Billing=''%s'' Where R_ID=%s';
+    nStr := Format(nStr, [sTable_Truck, sFlag_No,
+      SQLQuery.FieldByName('R_ID').AsString]);
+    //xxxxxx
+
+    FDM.ExecuteSQL(nStr);
+    InitFormData(FWhere);
+    ShowMsg('禁止开单设置生效', sHint);
+  end;
+end;
+
+procedure TfFrameTrucks.N12Click(Sender: TObject);
+var nStr: string;
+begin
+  inherited;
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nStr := 'Update %s Set T_Billing=''%s'' Where R_ID=%s';
+    nStr := Format(nStr, [sTable_Truck, sFlag_Yes,
+      SQLQuery.FieldByName('R_ID').AsString]);
+    //xxxxxx
+
+    FDM.ExecuteSQL(nStr);
+    InitFormData(FWhere);
+    ShowMsg('允许开单设置生效', sHint);
   end;
 end;
 

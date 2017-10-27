@@ -157,5 +157,16 @@ inherited fFrameTrucks: TfFrameTrucks
       Visible = False
       OnClick = VIP2Click
     end
+    object N10: TMenuItem
+      Caption = '-'
+    end
+    object N11: TMenuItem
+      Caption = #31105#27490#24320#21333
+      OnClick = N11Click
+    end
+    object N12: TMenuItem
+      Caption = #20801#35768#24320#21333
+      OnClick = N12Click
+    end
   end
 end

@@ -440,8 +440,8 @@ begin
         ShowMsg('车辆进厂失败', sHint);
       end;
     end;
-    {$ELSE}
-    if GetAutoInFactory(FStockNo) and (FNextStatus=sFlag_TruckNone) then
+    //{$ELSE}
+    {if GetAutoInFactory(FStockNo) and (FNextStatus=sFlag_TruckNone) then
     begin
       if SavePurchaseOrders(sFlag_TruckIn, nBills) then
       begin
@@ -452,6 +452,36 @@ begin
       begin
         ShowMsg('车辆进厂失败', sHint);
       end;
+    end; }
+    {$ENDIF}
+    
+    {$IFDEF PLKP}
+    if (FNextStatus=sFlag_TruckNone) then
+    begin
+      if (FCardUsed=sFlag_Provide) then
+      begin
+        if SavePurchaseOrders(sFlag_TruckIn, nBills) then
+        begin
+          ShowMsg('车辆进厂成功', sHint);
+          LoadBillItems(FCardTmp);
+          Exit;
+        end else
+        begin
+          ShowMsg('车辆进厂失败', sHint);
+        end;
+      end else
+      begin
+        if SaveLadingBills(nFoutData, sFlag_TruckIn, nBills) then
+        begin
+          ShowMsg('车辆进厂成功', sHint);
+          LoadBillItems(FCardTmp);
+          Exit;
+        end else
+        begin
+          ShowMsg('车辆进厂失败', sHint);
+        end;
+      end;
+
     end;
     {$ENDIF}
     
@@ -461,7 +491,7 @@ begin
       nStr:= TruckIn(nCard);
       LoadBillItems(FCardTmp);
       Exit;
-    end; 
+    end;
     {$ENDIF}
     if (FStatus <> sFlag_TruckBFP) and (FNextStatus = sFlag_TruckZT) then
       FNextStatus := sFlag_TruckBFP;

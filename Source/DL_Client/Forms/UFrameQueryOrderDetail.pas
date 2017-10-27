@@ -117,7 +117,9 @@ begin
   Result := MacroValue(Result, [MI('$OD', sTable_OrderDtl),MI('$OO', sTable_Order),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
+  {$IFDEF MHSN}
   if not FAll then Result := Result + ' and ((D_MValue < 49) or (D_MValue is null)) and ((D_PValue < 49) or (D_PValue is null))';
+  {$ENDIF}
 end;
 
 

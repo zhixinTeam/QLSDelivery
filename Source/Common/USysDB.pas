@@ -1201,7 +1201,7 @@ const
        'T_CompanyID varChar(10),T_XTECB varChar(10),T_VendAccount varChar(20),'+
        'T_Driver varChar(10), T_SaleID varChar(20), T_RecID bigint not null default ((0)),'+
        'T_MatePID varChar(15), T_MateID varChar(15), T_MateName varChar(80),' +
-       'T_SrcAddr varChar(150), T_DestAddr varChar(150)' +
+       'T_SrcAddr varChar(150), T_DestAddr varChar(150), T_Billing Char(1) not null default (''Y'')' +
        ')';
   {-----------------------------------------------------------------------------
    车辆信息:Truck
@@ -1247,6 +1247,7 @@ const
    *.T_SaleID:订单号
    *.T_RecID：订单行编码
    ---------------------------------------------------------------------------//
+   *.T_Billing: 是否允许开单 Y：是 N：否
   -----------------------------------------------------------------------------}
 
   sSQL_NewPoundLog = 'Create Table $Table(R_ID $Inc, P_ID varChar(15),' +

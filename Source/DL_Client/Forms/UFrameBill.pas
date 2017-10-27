@@ -141,7 +141,9 @@ begin
   if CheckDelete.Checked then
        Result := MacroValue(Result, [MI('$Bill', sTable_BillBak)])
   else Result := MacroValue(Result, [MI('$Bill', sTable_Bill)]);
+  {$IFDEF MHSN}
   if not FAll then Result := Result + ' and ((L_MValue < 49) or (L_MValue is null))';
+  {$ENDIF}
 end;
 
 procedure TfFrameBill.AfterInitFormData;

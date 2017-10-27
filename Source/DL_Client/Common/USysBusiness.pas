@@ -290,6 +290,10 @@ procedure InitCenter(const nStockNo,nType: string; const nCbx:TcxComboBox);
 //初始化生产线ID
 function CheckTruckOK(const nTruck:string):Boolean;
 //检查车辆上次出厂是否超过一个小时
+function CheckTruckBilling(const nTruck:string):Boolean;     
+//检查车辆是否运行开单
+function CheckTruckCount(const nStockName: string):Boolean;
+//检查厂内车辆数是否达到上限
 procedure InitSampleID(const nStockName,nType,nCenterID: string; const nCbx:TcxComboBox);
 //初始化试样编号
 function GetSumTonnage(const nSampleID: string):Double;
@@ -2901,6 +2905,53 @@ begin
     begin
       if CompareDateTime(Now,FieldByName('L_OutFactAdd').AsDateTime) < 1 then Result:=False;
     end;
+  end;
+end;
+
+//检查车辆是否运行开单
+function CheckTruckBilling(const nTruck:string):Boolean;
+var
+  nStr:string;
+begin
+  Result:=True;
+  nStr := 'Select T_Billing From %s Where T_Truck = ''%s'' ';
+  nStr := Format(nStr, [sTable_Truck, nTruck]);
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+  begin
+    if FieldByName('T_Billing').AsString = sFlag_No then Result := False;
+  end;
+end;
+
+//检查厂内车辆数是否达到上限
+function CheckTruckCount(const nStockName: string):Boolean;
+var
+  nStr,nSTD:string;
+begin
+  Result:=True;
+  if Pos('熟料', nStockName) < 1 then Exit;
+
+  nStr := 'Select D_Value From %s Where D_Name = ''%s'' and D_Memo=''InFactCountSTD'' ';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_SysParam]);
+  with FDM.QueryTemp(nStr) do
+  begin
+    if RecordCount > 0 then
+    begin
+      nSTD := FieldByName('D_Value').AsString;
+    end else
+    begin
+      nSTD := '0';
+    end;
+  end;
+  if not IsNumber(nSTD,False) then nSTD:='0';
+  if nSTD = '0' then Exit;
+  
+  nStr := 'Select Count(*) as ZL From %s  where T_Stock = ''%s'' ';
+  nStr := Format(nStr, [sTable_ZTTrucks, nStockName]);
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+  begin
+    if FieldByName('ZL').AsInteger >= StrToInt(nSTD) then Result:=False;
   end;
 end;
 
