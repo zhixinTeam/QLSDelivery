@@ -65,6 +65,8 @@
   //古浪
   {.$DEFINE YDKP} 
   //永登、夏河、定西开票
+  {.$DEFINE YDSN} 
+  //永登
   {.$DEFINE PLKP} 
   //平凉开票
   {.$DEFINE XHPZ} 

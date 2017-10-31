@@ -488,8 +488,12 @@ begin
     if nStr <> FLastQueueVoice then
     begin
       if IsNetPlayVoice and Assigned(gNetVoiceHelper) then
-           gNetVoiceHelper.PlayVoice(nStr)
-      else gVoiceHelper.PlayVoice(nStr);
+      begin
+        gNetVoiceHelper.PlayVoice(nStr);
+        {$IFDEF ZXKP}
+        gNetVoiceHelper.PlayVoice(nStr, 'dt2');
+        {$ENDIF}
+      end else gVoiceHelper.PlayVoice(nStr);
       FLastQueueVoice := nStr;
     end;
   finally
@@ -1208,12 +1212,12 @@ begin
 
         if BillInLine(FTruckPool[i].FBill, FTrucks, True) >= 0 then Continue;
         //2.交货单已经在队列中
-
+        {$IFDEF CXSY}
         if Length(FTruckPool[i].FCenID) > 0 then //强制指定生产线
         begin
           if FTruckPool[i].FCenID <> FCenterID then  Continue;
         end;
-
+        {$ENDIF}
         MakePoolTruckIn(i, FOwner.Lines[nIdx]);
         //本队列车辆优先,全部进队
         Result := True;
@@ -1277,9 +1281,13 @@ begin
 
       if not IsStockMatch(FTruckPool[i].FStockNo, FOwner.Lines[nIdx]) then Continue;
       //3.交货单与通道品种不匹配
-
+      {$IFDEF CXSY}
       if not IsLineTruckLeast(FOwner.Lines[nIdx], FTruckPool[i].FIsReal,FTruckPool[i].FCenID) then
         Continue;
+      {$ELSE}
+      if not IsLineTruckLeast(FOwner.Lines[nIdx], FTruckPool[i].FIsReal) then
+        Continue;
+      {$ENDIF}
       //4.队列车辆不是最少
 
       if not (FTruckPool[i].FIsReal or RealTruckInQueue(FTruckPool[i].FTruck)) then
@@ -1288,12 +1296,12 @@ begin
 
       if BillInLine(FTruckPool[i].FBill, FTrucks, True) >= 0 then Continue;
       //6.交货单已经在队列中
-
+      {$IFDEF CXSY}
       if Length(FTruckPool[i].FCenID) > 0 then //强制指定生产线
         begin
           if FTruckPool[i].FCenID <> FCenterID then  Continue;
         end;
-
+      {$ENDIF}
       MakePoolTruckIn(i, FOwner.Lines[nIdx]);
       //车辆进队列
 

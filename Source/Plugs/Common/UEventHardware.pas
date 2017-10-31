@@ -153,8 +153,10 @@ end;
 
 procedure THardwareWorker.BeforeStartServer;
 begin
+  {$IFNDEF YDSN}
   gTruckQueueManager.StartQueue(gParamManager.ActiveParam.FDB.FID);
   //truck queue
+  {$ENDIF}
 
   gHardwareHelper.OnProce := WhenReaderCardArrived;
   gHardwareHelper.StartRead;
@@ -176,9 +178,10 @@ begin
   gMultiJSManager.SaveDataProc := WhenSaveJS;
   gMultiJSManager.StartJS;
   //counter
-
+  {$IFNDEF YDSN}
   gERelayManager.ControlStart;
   //erelay
+  {$ENDIF}
 
   gRemotePrinter.StartPrinter;
   //printer
@@ -188,10 +191,10 @@ begin
   if Assigned(gNetVoiceHelper) then
     gNetVoiceHelper.StartVoice;
   //NetVoice
-
+  {$IFNDEF YDSN}
   gCardManager.StartSender;
-
   //led display
+  {$ENDIF}
   gDisplayManager.StartDisplay;
   //small led
   gProberManager.StartProber;
@@ -207,9 +210,9 @@ begin
   if Assigned(gNetVoiceHelper) then
     gNetVoiceHelper.StopVoice;
   //NetVoice
-
+  {$IFNDEF YDSN}
   gERelayManager.ControlStop;
-
+  {$ENDIF}
   //erelay
   gMultiJSManager.StopJS;
   //counter
@@ -232,14 +235,16 @@ begin
 
   gDisplayManager.StopDisplay;
   //small led
-
+  {$IFNDEF YDSN}
   gCardManager.StopSender;
-
   //led
+  {$ENDIF}
   gProberManager.StopProber;
   //TruckProbe
+  {$IFNDEF YDSN}
   gTruckQueueManager.StopQueue;
   //queue
+  {$ENDIF}
 end;
 
 end.

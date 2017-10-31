@@ -308,6 +308,20 @@ begin
     LabInfo.Caption := nHint;
     Exit;
   end;
+  {$IFDEF ZXKP}
+  if not CheckTruckOK(Trim(EditTruck.Text)) then
+  begin
+    ShowMsg(EditTruck.Text+'刚出厂，禁止开单',sHint);
+    Exit;
+  end;
+  if not CheckTruckBilling(Trim(EditTruck.Text)) then
+  begin
+    ShowMsg(EditTruck.Text+'非法，禁止开单',sHint);
+    Exit;
+  end;
+  {$ENDIF}
+  
+  {$IFDEF CXSY}
   if cbxCenterID.Text= '' then
   begin
     ShowMsg('生产线为空！请联系管理员', sHint); Exit;
@@ -316,6 +330,7 @@ begin
   begin
     ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
   end;
+  {$ENDIF}
   if gSysParam.FUserID = '' then gSysParam.FUserID := 'AICM';
   nCenterID := cbxCenterID.Text;
   nSampleID := '';
@@ -350,6 +365,13 @@ begin
       Values['Value'] := EditValue.text;
       Values['RECID'] := gRecID;
       Values['SampleID'] := '';
+      {$IFDEF ZXKP}
+      if not CheckTruckCount(Trim(EditSName.text)) then
+      begin
+        ShowMsg('厂内车辆达到上限，禁止开单',sHint);
+        Exit;
+      end;
+      {$ENDIF}
     end;
 
     nList.Add(PackerEncodeStr(nTmp.Text));

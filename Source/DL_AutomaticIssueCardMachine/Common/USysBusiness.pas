@@ -10,7 +10,7 @@ uses
   Windows, DB, Classes, Controls, SysUtils, UBusinessPacker, UBusinessWorker,
   UBusinessConst, ULibFun, UAdjustForm, UFormCtrl, UDataModule, UDataReport,
   UFormBase, cxMCListBox, UMgrPoundTunnels, UMgrCamera, USysConst, HKVNetSDK,
-  USysDB, USysLoger, cxDropDownEdit;
+  USysDB, USysLoger, cxDropDownEdit, DateUtils;
 
 type
   TLadingStockItem = record
@@ -304,6 +304,12 @@ procedure InitCenter(const nStockNo,nCusID: string; const nCbx:TcxComboBox);
 //初始化生产线ID
 function GetLadingWay(const nID:string): string;
 //获取提货方式
+function CheckTruckOK(const nTruck:string):Boolean;
+//检查车辆上次出厂是否超过一个小时
+function CheckTruckBilling(const nTruck:string):Boolean;     
+//检查车辆是否运行开单
+function CheckTruckCount(const nStockName: string):Boolean;
+//检查厂内车辆数是否达到上限
 
 
 function CallBusinessCommand(const nCmd: Integer; const nData,nExt: string;
@@ -2857,6 +2863,85 @@ begin
     begin
       Result := Fields[0].AsString;
     end;
+  end;
+end;
+
+//检查车辆上次出厂是否超过一个小时
+function CheckTruckOK(const nTruck:string):Boolean;
+var
+  nStr,nJGSJ:string;
+begin
+  Result:=True;
+  nStr := 'Select D_Value From %s Where D_Name = ''%s'' and D_Memo=''InFactAndBill'' ';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_SysParam]);
+  with FDM.QueryTemp(nStr) do
+  begin
+    if RecordCount > 0 then
+    begin
+      nJGSJ := FieldByName('D_Value').AsString;
+    end else
+    begin
+      nJGSJ := '0';
+    end;
+  end;
+  if not IsNumber(nJGSJ,False) then nJGSJ:='0';
+
+  nStr := 'Select top 1 L_OutFact,DATEADD(MINUTE,'+nJGSJ+',L_OutFact) as L_OutFactAdd From %s '+
+          'Where (L_OutFact is not null) and L_EmptyOut<>''%s'' and L_Truck=''%s'' order by R_ID desc ';
+  nStr := Format(nStr, [sTable_Bill, sFlag_Yes, nTruck]);
+  with FDM.QueryTemp(nStr) do
+  begin
+    if RecordCount > 0 then
+    begin
+      if CompareDateTime(Now,FieldByName('L_OutFactAdd').AsDateTime) < 1 then Result:=False;
+    end;
+  end;
+end;
+
+//检查车辆是否运行开单
+function CheckTruckBilling(const nTruck:string):Boolean;
+var
+  nStr:string;
+begin
+  Result:=True;
+  nStr := 'Select T_Billing From %s Where T_Truck = ''%s'' ';
+  nStr := Format(nStr, [sTable_Truck, nTruck]);
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+  begin
+    if FieldByName('T_Billing').AsString = sFlag_No then Result := False;
+  end;
+end;
+
+//检查厂内车辆数是否达到上限
+function CheckTruckCount(const nStockName: string):Boolean;
+var
+  nStr,nSTD:string;
+begin
+  Result:=True;
+  if Pos('熟料', nStockName) < 1 then Exit;
+
+  nStr := 'Select D_Value From %s Where D_Name = ''%s'' and D_Memo=''InFactCountSTD'' ';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_SysParam]);
+  with FDM.QueryTemp(nStr) do
+  begin
+    if RecordCount > 0 then
+    begin
+      nSTD := FieldByName('D_Value').AsString;
+    end else
+    begin
+      nSTD := '0';
+    end;
+  end;
+  if not IsNumber(nSTD,False) then nSTD:='0';
+  if nSTD = '0' then Exit;
+  
+  nStr := 'Select Count(*) as ZL From %s  where T_Stock = ''%s'' ';
+  nStr := Format(nStr, [sTable_ZTTrucks, nStockName]);
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+  begin
+    if FieldByName('ZL').AsInteger >= StrToInt(nSTD) then Result:=False;
   end;
 end;
 
