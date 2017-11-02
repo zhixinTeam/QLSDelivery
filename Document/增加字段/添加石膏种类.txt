@@ -1,0 +1,3 @@
+insert into sys_dict (D_Name,D_Value) values ('HuYanSgzl','脱硫石膏')
+
+insert into sys_dict (D_Name,D_Value) values ('HuYanSgzl','天然石膏')

@@ -1,0 +1,1 @@
+insert into sys_dict (D_Name,D_Desc,D_Value,D_Memo) values ('PoundWuCha','¿Õ³µ³ö³§Îó²î','100','EmpTruckWuCha')

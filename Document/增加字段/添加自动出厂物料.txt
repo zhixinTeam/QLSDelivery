@@ -1,0 +1,5 @@
+insert into sys_dict (D_Name,D_Desc,D_Value,D_Memo) values ('AutoOutStock','自动出厂物料','10.02.007','粘土')
+
+insert into sys_dict (D_Name,D_Desc,D_Value,D_Memo) values ('NeiDaoPurch','內倒物料','10.02.007','粘土')
+
+

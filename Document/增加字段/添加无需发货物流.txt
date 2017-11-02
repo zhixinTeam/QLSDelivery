@@ -1,0 +1,10 @@
+insert into Sys_Dict (D_Name,D_Desc,D_Value,D_Memo) values ('NoFaHuoStock','现场无需发货','31.04.001','水泥助磨剂')
+
+insert into Sys_Dict (D_Name,D_Desc,D_Value,D_Memo) values ('NoFaHuoPurch','现场无需发货','31.04.001','水泥助磨剂')
+
+insert into Sys_Dict (D_Name,D_Desc,D_Value,D_Memo) values ('NoFaHuoPurch','现场无需发货','31.05.001','氨水')
+
+insert into Sys_Dict (D_Name,D_Desc,D_Value,D_Memo) values ('NoFaHuoPurch','现场无需发货','20.01.001','原煤')
+
+
+

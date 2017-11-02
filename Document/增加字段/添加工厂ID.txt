@@ -1,0 +1,1 @@
+insert into Sys_Dict (D_Name,D_Desc,D_Value) values ('FactoryId','¹¤³§ID','8aac0f915b087b7a015b0d8d742c0001')
