@@ -711,31 +711,6 @@ begin
     if FBillItems[0].FType = sFlag_San then
     begin
       {$IFDEF YDKP}
-        {$IFDEF XHPZ}
-        nNet := GetTruckEmptyValue(FUIData.FTruck, nPrePUse);
-        nVal := nNet * 1000 - FUIData.FPData.FValue * 1000;
-
-        if (nNet > 0) and (Abs(nVal) > gSysParam.FPoundSanF) then
-        begin
-          nStr := '车辆[%s]实时皮重误差较大,请通知司机检查车厢';
-          nStr := Format(nStr, [FUIData.FTruck]);
-          PlayVoice(nStr);
-
-          nStr := '车辆[ %s ]实时皮重误差较大,详情如下:' + #13#10#13#10 +
-                  '※.实时皮重: %.2f吨' + #13#10 +
-                  '※.历史皮重: %.2f吨' + #13#10 +
-                  '※.误差量: %.2f公斤' + #13#10#13#10 +
-                  '是否继续保存?';
-          nStr := Format(nStr, [FUIData.FTruck, FUIData.FPData.FValue,
-                  nNet, nVal]);
-          if not QueryDlg(nStr, sAsk) then
-          begin
-            FIsSaveing := True;
-            Result:=True;
-            Exit;
-          end;
-        end;
-        {$ELSE}
         nNet := GetTruckEmptyValue(FUIData.FTruck, nPrePUse);
         if (FloatRelation(FUIData.FPData.FValue,nNet,rtGreater,100)) and (nNet>0) then
         begin
@@ -747,7 +722,6 @@ begin
           Result := True;
           Exit;
         end;
-        {$ENDIF}
       {$ELSE}
       nNet := GetTruckEmptyValue(FUIData.FTruck, nPrePUse);
       nVal := nNet * 1000 - FUIData.FPData.FValue * 1000;
@@ -919,31 +893,6 @@ begin
     end else
     begin
       {$IFDEF YDKP}
-        {$IFDEF XHPZ}
-        nNet := GetTruckEmptyValue(FUIData.FTruck, nPrePUse);
-        nVal := nNet * 1000 - FUIData.FPData.FValue * 1000;
-
-        if (nNet > 0) and (Abs(nVal) > gSysParam.FPoundSanF) then
-        begin
-          nStr := '车辆[%s]实时皮重误差较大,请通知司机检查车厢';
-          nStr := Format(nStr, [FUIData.FTruck]);
-          PlayVoice(nStr);
-
-          nStr := '车辆[ %s ]实时皮重误差较大,详情如下:' + #13#10#13#10 +
-                  '※.实时皮重: %.2f吨' + #13#10 +
-                  '※.历史皮重: %.2f吨' + #13#10 +
-                  '※.误差量: %.2f公斤' + #13#10#13#10 +
-                  '是否继续保存?';
-          nStr := Format(nStr, [FUIData.FTruck, FUIData.FPData.FValue,
-                  nNet, nVal]);
-          if not QueryDlg(nStr, sAsk) then
-          begin
-            FIsSaveing := True;
-            Result:=True;
-            Exit;
-          end;
-        end;
-        {$ELSE}
         if FBillItems[0].FType = sFlag_San then
         begin
           nNet := GetTruckEmptyValue(FUIData.FTruck, nPrePUse);
@@ -983,7 +932,6 @@ begin
             end;
           end;
         end;
-        {$ENDIF}
       {$ELSE}
       nNet := FUIData.FMData.FValue;
       nVal := nNet * 1000 - FUIData.FPData.FValue * 1000;

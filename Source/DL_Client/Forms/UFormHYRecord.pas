@@ -181,7 +181,9 @@ begin
   begin
     FRecordID := '';
     Caption := '检验记录 - 添加';
-
+    {$IFNDEF CXSY}
+    dxLayoutControl1Item14.Visible:= False;
+    {$ENDIF}
     InitFormData('');
     Result := ShowModal = mrOK;
     Free;
@@ -195,7 +197,9 @@ begin
   begin
     FRecordID := nID;
     Caption := '检验记录 - 修改';
-
+    {$IFNDEF CXSY}
+    dxLayoutControl1Item14.Visible:= False;
+    {$ENDIF}
     InitFormData(nID);
     Result := ShowModal = mrOK;
     Free;
@@ -216,6 +220,9 @@ begin
   with gForm  do
   begin
     FRecordID := nID;
+    {$IFNDEF CXSY}
+    dxLayoutControl1Item14.Visible:= False;
+    {$ENDIF}
     InitFormData(nID);
     if not Showing then Show;
   end;

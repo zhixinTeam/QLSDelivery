@@ -192,6 +192,7 @@ const
   cFI_FrameStockMatch    = $1113;                    //多品种共用道
   cFI_FormStockMatch     = $1114;                    //多品种共用道设置
 
+
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
   cCmd_ViewSysLog       = $0003;                     //系统日志

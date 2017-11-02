@@ -323,7 +323,7 @@ procedure TfFormMain.QueryCard(const nCard: string);
 var nVal: Double;
     nStr,nStock,nBill,nVip,nLine,nPoundQueue,nTruck: string;
     nDate: TDateTime;
-    nIdx:Integer;
+    nIdx, nRID:Integer;
 begin
 //  mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
 //  mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
@@ -377,7 +377,7 @@ begin
       nBill  := FieldByName('L_ID').AsString;
       nVip   := FieldByName('L_IsVip').AsString;
       nTruck := FieldByName('L_Truck').AsString;
-      nStock := FieldByName('L_StockNo').AsString;
+      nStock := FieldByName('L_StockNo').AsString + FieldByName('L_Type').AsString;
       FHYDan := FieldByName('L_HYDan').AsString;
       FStockName := FieldByName('L_StockName').AsString;
 
@@ -402,7 +402,7 @@ begin
 //    end;
 
     //--------------------------------------------------------------------------
-    nStr := 'Select T_line,T_InTime,T_Valid From %s ZT ' +
+    nStr := 'Select R_ID,T_line,T_InTime,T_Valid From %s ZT ' +
              'Where T_HKBills like ''%%%s%%'' ';
     nStr := Format(nStr, [sTable_ZTTrucks, nBill]);
 
@@ -419,6 +419,9 @@ begin
         LabelHint.Caption := '您已超时出队,请到服务大厅办理入队手续.';
         Exit;
       end;
+
+      nRID := FieldByName('R_ID').AsInteger;
+      //序号
 
       nDate := FieldByName('T_InTime').AsDateTime;
       //进队时间
@@ -487,7 +490,7 @@ begin
 
     with FDM.QuerySQL(nStr) do
     begin
-    if  FieldByName('D_Value').AsString = 'Y' then
+      if  FieldByName('D_Value').AsString = 'Y' then
       begin
         if nPoundQueue <> 'Y' then
         begin
@@ -499,18 +502,24 @@ begin
                   ' Where T_InQueue Is Null And ' +
                   ' T_Valid=''$Yes'' And T_StockNo=''$SN'' And P_PDate<''$IT'' And T_Vip=''$VIP''';
         end;
-      end else
-      begin
-        nStr := 'Select Count(*) From $TB Where T_InQueue Is Null And ' +
-                'T_Valid=''$Yes'' And T_StockNo=''$SN'' And T_InTime<''$IT'' And T_Vip=''$VIP''';
-      end;
-
-      nStr := MacroValue(nStr, [MI('$TB', sTable_ZTTrucks),
+        nStr := MacroValue(nStr, [MI('$TB', sTable_ZTTrucks),
             MI('$Yes', sFlag_Yes), MI('$SN', nStock),
             MI('$IT', DateTime2Str(nDate)),MI('$VIP', nVip)]);
+      end else
+      begin
+        {nStr := 'Select Count(*) From $TB Where T_InQueue Is Null And ' +
+                'T_Valid=''$Yes'' And T_StockNo=''$SN'' And T_InTime<''$IT'' And T_Vip=''$VIP'''; }
+                
+        nStr := 'Select Count(*) From $TB Where T_InQueue Is Null And ' +
+                'T_Valid=''$Yes'' And T_StockNo=''$SN'' And T_Vip=''$VIP'' And R_ID<''$IT''';
+
+        nStr := MacroValue(nStr, [MI('$TB', sTable_ZTTrucks),
+            MI('$Yes', sFlag_Yes), MI('$SN', nStock),
+            MI('$VIP', nVip), MI('$IT', IntToStr(nRID))]);
+      end;
     end;
     //xxxxx
-
+    WriteLog(nStr);
     with FDM.QuerySQL(nStr) do
     begin
       if Fields[0].AsInteger < 1 then

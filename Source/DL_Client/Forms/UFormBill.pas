@@ -700,12 +700,13 @@ begin
         end;
       end;
       {$ENDIF}
+      
       {$IFDEF PLKP}//开票录入试样编号
       if cbxSampleID.Enabled=True then
       begin
         if LoadNoSampleID(FStockNO) then
         begin
-          FSampleID:='';
+          FSampleID:='I';
         end else
         begin
           if cbxSampleID.ItemIndex < 0 then
@@ -719,70 +720,7 @@ begin
       begin
         FSampleID:='';
       end;
-      if FSampleID <> '' then
-      begin
-        FSumTon:=GetSumTonnage(FSampleID);
-        cxLabel1.Caption:=Floattostr(FSumTon);
-        if GetSampleTonnage(FSampleID, nBatQuaS, nBatQuaE) then
-        begin
-          if FSumTon-nBatQuaS>0 then
-          begin
-            ShowMsg('试样编号['+FSampleID+']已超量',sHint);
-            if UpdateSampleValid(FSampleID) then
-              InitSampleID(FStockName,FType,nCenterID,cbxSampleID);
-            Exit;
-          end;
-
-          nPlanW:=FValue;
-          FSumTon:=FSumTon+nPlanW;
-          if nBatQuaS-FSumTon<=nBatQuaE then    //到预警量
-          begin
-            nStr:='试样编号['+FSampleID+']已到预警量,是否继续保存？';
-            if not QueryDlg(nStr, sAsk) then
-            begin
-              if UpdateSampleValid(FSampleID) then
-              InitSampleID(FStockName,FType,nCenterID,cbxSampleID);
-              Exit;
-            end;
-          end;
-          if FSumTon-nBatQuaS>0 then
-          begin
-            ShowMsg('试样编号['+FSampleID+']已超量',sHint);
-            Exit;
-          end;
-        end else
-        begin
-          ShowMsg('试样编号['+FSampleID+']已失效',sHint);
-          Exit;
-        end;
-      end;
-      {$ENDIF}
-      {$IFDEF QHSN}//开票录入试样编号
-      if cbxSampleID.Enabled=True then
-      begin
-        if LoadNoSampleID(FStockNO) then
-        begin
-          FSampleID:='';
-        end else
-        begin
-          if (Pos('熟料',FStockName)<=0) then
-          begin
-            FSampleID:='';
-          end else
-          begin
-            if cbxSampleID.ItemIndex < 0 then
-            begin
-              ShowMsg('请选择试样编号！',sHint);
-              Exit;
-            end;
-            FSampleID:=cbxSampleID.Text;
-          end;
-        end;
-      end else
-      begin
-        FSampleID:='';
-      end;
-      if FSampleID <> '' then
+      if (FSampleID <> '') and (FSampleID <> 'I') then
       begin
         FSumTon:=GetSumTonnage(FSampleID);
         cxLabel1.Caption:=Floattostr(FSumTon);

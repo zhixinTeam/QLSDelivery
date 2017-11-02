@@ -2162,7 +2162,7 @@ begin
   nDBWorker := nil;
   try
     nStr := 'select sum(PostedQty+Received-Deducted+Registered-Picked-ReservPhysical) as Yuliang from %s a '+
-            'where itemid=''%s'' and xtinventventerid=''%s'' and dataareaid=''%s'' ';
+            'where itemid=''%s'' and xtInventCenterId=''%s'' and dataareaid=''%s'' ';
     nStr := Format(nStr, [sTable_AX_InventSum, FIn.FData, FIn.FExtParam, gCompanyAct]);
     //xxxxx
     WriteLog(nStr);
@@ -3346,7 +3346,6 @@ begin
     nHYDan:=FieldByName('L_HYDan').AsString;
     if nHYDan='' then
     begin
-      //WriteLog(FieldByName('L_StockName').AsString);
       if (Pos('ÊìÁÏ',FieldByName('L_StockName').AsString)>0) then
       begin
         nHYDan:='I';
@@ -4608,8 +4607,12 @@ begin
 
   for nIdx := Low(FHuaYan) to High(FHuaYan) do
   begin
+    {$IFDEF CXSY}
     if (StrToDateTimeDef(FHuaYan[nIdx].FValidDate,Now + 1) < Now)
        or (FHuaYan[nIdx].FValue <= FHuaYan[nIdx].FZLVal) then
+    {$ELSE}
+    if (FHuaYan[nIdx].FValue <= FHuaYan[nIdx].FZLVal) then
+    {$ENDIF}
     begin
       nStr := 'update %s set R_BatValid=''%s'',R_TotalValue=(%.2f) where R_SerialNo=''%s'' ';
       nStr := Format(nStr,[sTable_StockRecord, sFlag_No, FHuaYan[nIdx].FZLVal, FHuaYan[nIdx].FReriNo]);

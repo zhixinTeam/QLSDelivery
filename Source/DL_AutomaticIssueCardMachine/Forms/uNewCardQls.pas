@@ -439,9 +439,12 @@ begin
     SetBillCard(FNewBillID, EditTruck.Text,nNewCardNo, True);
   end;
   Result := True;
-  //if nPrint then  //平凉使用
-//  if PrintYesNo then
-//    PrintBillReport(FNewBillID, False);
+  {$IFDEF PLKP}
+  if nPrint then  //平凉使用
+  {$ELSE}
+  if PrintYesNo then
+  {$ENDIF}
+    PrintBillReport(FNewBillID, False);
   //print report
 
   //if IFPrintFYD then

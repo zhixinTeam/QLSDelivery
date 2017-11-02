@@ -80,16 +80,15 @@ var nStr: string;
 begin
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
 
-  Result := 'Select * From $Bill ';
+  Result := 'Select (Select Z_WorkOrder From S_ZTWorkSet Where Z_StartTime < convert(varchar(10),L_LadeTime,108) and Z_EndTime >= convert(varchar(10),L_LadeTime,108)) as L_Baici,* From $Bill ';
   //提货单
   if FJBWhere = '' then
   begin
     if (nWhere = '') then
     begin
-      Result := Result + 'Where ((L_HYDan<>'''') and (L_HYDan is not null)) ' +
-                ' and (L_LadeTime>=''$ST'' and L_LadeTime <''$End'')';
+      Result := Result + 'Where (L_LadeTime>=''$ST'' and L_LadeTime <''$End'')';
       nStr := ' And ';
-    end else nStr := ' Where ((L_HYDan<>'''') and (L_HYDan is not null)) and ';
+    end else nStr := ' Where ';
 
     if nWhere <> '' then
       Result := Result + nStr + '(' + nWhere + ')';

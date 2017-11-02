@@ -2,6 +2,7 @@
   作者: dmzn@163.com 2009-6-22
   描述: 开提货单
 *******************************************************************************}
+{$I Link.Inc}
 unit UFrameBill;
 
 interface
@@ -53,6 +54,7 @@ type
     N12: TMenuItem;
     N13: TMenuItem;
     N14: TMenuItem;
+    N15: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnDelClick(Sender: TObject);
@@ -70,6 +72,7 @@ type
     procedure N11Click(Sender: TObject);
     procedure N13Click(Sender: TObject);
     procedure N14Click(Sender: TObject);
+    procedure N15Click(Sender: TObject);
   protected
     FStart,FEnd: TDate;
     //时间区间
@@ -453,6 +456,36 @@ begin
   inherited;
   if FAll = True then FAll := False else FAll := True;
   InitFormData('');
+end;
+
+procedure TfFrameBill.N15Click(Sender: TObject);
+var nStr,nID,nSeal: string;
+begin
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nStr := SQLQuery.FieldByName('L_Project').AsString;
+    nSeal := nStr;
+    if not ShowInputBox('请输入新化验单客户名称:', '修改', nSeal, 100) then Exit;
+
+    if (nSeal = '') or (nStr = nSeal) then Exit;
+    //无效或一致
+    nID := SQLQuery.FieldByName('L_ID').AsString;
+
+    nStr := '确定要将交货单[ %s ]的化验单客户名称改为[ %s ]吗?';
+    nStr := Format(nStr, [nID, nSeal]);
+    if not QueryDlg(nStr, sAsk) then Exit;
+
+    nStr := 'Update %s Set L_Project=''%s'' Where L_ID=''%s''';
+    nStr := Format(nStr, [sTable_Bill, nSeal, nID]);
+    FDM.ExecuteSQL(nStr);
+
+    nStr := '修改化验单客户名称[ %s -> %s ].';
+    nStr := Format(nStr, [SQLQuery.FieldByName('L_Project').AsString, nSeal]);
+    FDM.WriteSysLog(sFlag_BillItem, nID, nStr, False);
+
+    InitFormData(FWhere);
+    ShowMsg('化验单客户名称修改成功', sHint);
+  end;
 end;
 
 initialization

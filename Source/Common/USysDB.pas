@@ -267,6 +267,7 @@ ResourceString
   sTable_SerialBase   = 'Sys_SerialBase';            //编码种子
   sTable_SerialStatus = 'Sys_SerialStatus';          //编号状态
   sTable_WorkePC      = 'Sys_WorkePC';               //验证授权
+  sTable_ManualEvent  = 'Sys_ManualEvent';           //人工干预
 
   sTable_Customer     = 'S_Customer';                //客户信息
   sTable_CustomerExt  = 'S_CustomerExt';             //客户扩展
@@ -380,7 +381,7 @@ ResourceString
   sTable_AX_PurOrder  = 'purchtable';                //采购订单
   sTable_AX_PurOrdLine= 'Purchline';                 //采购订单行
   sTable_AX_CompArea  = 'XT_COMPACTAREA';            //销售区域
-  sTable_AX_InventSum = 'ERP_VInventSumDim';         //生产线余量
+  sTable_AX_InventSum = 'XT_VInventSumDim';         //生产线余量
   sTable_XT_MsgTables = 'XT_ERPToWRZSSendDataInfo';  //AX消息中间表
   sTable_XT_TRANSPLAN = 'EXTTRANSPLANLOG';           //AX提货单表
 
@@ -487,6 +488,28 @@ const
    *.W_ReqMan,W_ReqTime: 接入申请
    *.W_RatifyMan,W_RatifyTime: 批准
    *.W_Valid: 有效(Y/N)
+  -----------------------------------------------------------------------------}
+
+  sSQL_NewManualEvent = 'Create Table $Table(R_ID $Inc, E_ID varChar(32),' +
+       'E_From varChar(32), E_Key varChar(32), E_Event varChar(200), ' +
+       'E_Solution varChar(100), E_Result varChar(12),E_Departmen varChar(32),' +
+       'E_Date DateTime, E_ManDeal varChar(32), E_DateDeal DateTime, ' +
+       'E_ParamA Integer, E_ParamB varChar(128), E_Memo varChar(512))';
+  {-----------------------------------------------------------------------------
+   人工干预事件: ManualEvent
+   *.R_ID: 编号
+   *.E_ID: 流水号
+   *.E_From: 来源
+   *.E_Key: 记录标识
+   *.E_Event: 事件
+   *.E_Solution: 处理方案(格式如: Y=通过;N=禁止) 
+   *.E_Result: 处理结果(Y/N)
+   *.E_Departmen: 处理部门
+   *.E_Date: 发生时间
+   *.E_ManDeal,E_DateDeal: 处理人
+   *.E_ParamA: 附加参数, 整型
+   *.E_ParamB: 附加参数, 字符串
+   *.E_Memo: 备注信息
   -----------------------------------------------------------------------------}
 
   sSQL_NewSyncItem = 'Create Table $Table(R_ID $Inc, S_Table varChar(100),' +
@@ -2139,6 +2162,7 @@ begin
   AddSysTableItem(sTable_SerialStatus, sSQL_NewSerialStatus,'');
   AddSysTableItem(sTable_StockMatch, sSQL_NewStockMatch,'');
   AddSysTableItem(sTable_WorkePC, sSQL_NewWorkePC,'');
+  AddSysTableItem(sTable_ManualEvent, sSQL_NewManualEvent,'');
 
   AddSysTableItem(sTable_Customer, sSQL_NewCustomer,'');
   AddSysTableItem(sTable_CustomerExt, sSQL_NewCustomerExt,'');

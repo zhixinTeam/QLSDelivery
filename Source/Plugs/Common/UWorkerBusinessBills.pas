@@ -1842,7 +1842,7 @@ begin
           'L_StockName,L_Truck,L_Value,L_Price,L_ZKMoney,L_Status,' +
           'L_NextStatus,L_Card,L_IsVIP,L_PValue,L_MValue,L_SalesType,'+
           'L_EmptyOut,L_LineRecID,L_InvLocationId,L_InvCenterId,'+
-          'L_IfNeiDao,L_TriaTrade,L_TransPrice From $Bill b ';
+          'L_IfNeiDao,L_TriaTrade,L_TransPrice,L_HYDan From $Bill b ';
   //xxxxx
 
   if nIsBill then
@@ -1913,6 +1913,7 @@ begin
       FNeiDao       := FieldByName('L_IfNeiDao').AsString;
       FTriaTrade    := FieldByName('L_TriaTrade').AsString;
 
+      FSampleID     := FieldByName('L_HYDan').AsString;
       FSelected := True;
 
       Inc(nIdx);
@@ -2123,6 +2124,14 @@ begin
       if nInt >= 0 then //已称皮
            FNextStatus := sFlag_TruckBFM
       else FNextStatus := sFlag_TruckOut;
+
+      nStr := 'Select D_Value From %s Where D_Name=''%s'' and D_Value=''%s'' ';
+      nStr := Format(nStr, [sTable_SysDict, sFlag_NoSampleID, FStockNo]);
+      with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+      begin
+        if RecordCount > 0 then FSampleID:= 'I';
+      end;
+
       {$IFDEF YDKP}
       nSQL := MakeSQLByStr([SF('L_Status', FStatus),
               SF('L_NextStatus', FNextStatus),
@@ -2172,8 +2181,8 @@ begin
         end;
         if nOut.FData='' then
         begin
-          nData := '岗位[ %s ]试样编号使用完毕.';
-          nData := Format(nData, [PostTypeToStr(FIn.FExtParam)]);
+          nData := '[%s]岗位[ %s ]试样编号使用完毕.';
+          nData := Format(nData, [FStockName, PostTypeToStr(FIn.FExtParam)]);
           WriteLog(nData);
           Exit;
         end;
@@ -2207,6 +2216,13 @@ begin
     for nIdx:=Low(nBills) to High(nBills) do
     with nBills[nIdx] do
     begin
+      nStr := 'Select D_Value From %s Where D_Name=''%s'' and D_Value=''%s'' ';
+      nStr := Format(nStr, [sTable_SysDict, sFlag_NoSampleID, FStockNo]);
+      with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+      begin
+        if RecordCount > 0 then FSampleID:= 'I';
+      end;
+      
       {$IFDEF YDKP}
       nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckFH),
               SF('L_NextStatus', sFlag_TruckBFM),
