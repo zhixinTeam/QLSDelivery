@@ -2161,7 +2161,8 @@ begin
   Result := False;
   nDBWorker := nil;
   try
-    nStr := 'select sum(PostedQty+Received-Deducted+Registered-Picked-ReservPhysical) as Yuliang from %s a '+
+    //nStr := 'select sum(PostedQty+Received-Deducted+Registered-Picked-ReservPhysical) as Yuliang from %s '+
+    nStr := 'select sum(PostedQty+Received-Deducted+Registered-Picked) as Yuliang from %s '+
             'where itemid=''%s'' and xtInventCenterId=''%s'' and dataareaid=''%s'' ';
     nStr := Format(nStr, [sTable_AX_InventSum, FIn.FData, FIn.FExtParam, gCompanyAct]);
     //xxxxx
@@ -3459,7 +3460,7 @@ var nID,nIdx: Integer;
     nSQL: string;
     nService: BPM2ERPServiceSoap;
     nMsg:Integer;
-    nsWeightTime:string;
+    nsWeightDate,nsWeightTime:string;
     nDtA, nDtB : TDateTime;
 begin
   Result := False;
@@ -3478,11 +3479,17 @@ begin
       nDtB := FieldByName('D_MDate').AsDateTime;
       nIdx := CompareDateTime(nDtA,nDtB);
       if nIdx > 0 then
-        nsWeightTime:=formatdatetime('yyyy-mm-dd hh:mm:ss',nDtA)
-      else
+      begin
+        nsWeightDate:=formatdatetime('yyyy-mm-dd',nDtA);
+        nsWeightTime:=formatdatetime('yyyy-mm-dd hh:mm:ss',nDtA);
+      end else
+      begin
+        nsWeightDate:=formatdatetime('yyyy-mm-dd',nDtB);
         nsWeightTime:=formatdatetime('yyyy-mm-dd hh:mm:ss',nDtB);
+      end;
     except
-      nsWeightTime:=formatdatetime('yyyy-mm-dd hh:mm:ss',nDtB);
+      nsWeightDate:=formatdatetime('yyyy-mm-dd',nDtA);
+      nsWeightTime:=formatdatetime('yyyy-mm-dd hh:mm:ss',nDtA);
     end;
     if nsWeightTime<>'' then
     begin
@@ -3500,9 +3507,9 @@ begin
     nStr := nStr+'<VehicleNum>'+FieldByName('D_Truck').AsString+'</VehicleNum>';
     nStr := nStr+'<WeightMan>'+FieldByName('D_MMan').AsString+'</WeightMan>';
     nStr := nStr+'<WeightTime>'+nsWeightTime+'</WeightTime>';
-    nStr := nStr+'<WeightDate>'+FieldByName('D_MDate').AsString+'</WeightDate>';
+    nStr := nStr+'<WeightDate>'+nsWeightDate+'</WeightDate>';
     nStr := nStr+'<description></description>';
-    nStr := nStr+'<WeighingNum>'+copy(FieldByName('P_ID').AsString,2,10)+'</WeighingNum>';
+    nStr := nStr+'<WeighingNum>'+FieldByName('P_ID').AsString+'</WeighingNum>';
     nStr := nStr+'<tabletransporter></tabletransporter>';
     nStr := nStr+'<COMPANYID>'+gCompanyAct+'</COMPANYID>';
     nStr := nStr+'<TransportBill></TransportBill>';

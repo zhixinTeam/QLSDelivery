@@ -2,6 +2,7 @@
   作者: dmzn@163.com 2012-5-3
   描述: 用户自助查询
 *******************************************************************************}
+{$I Link.Inc}
 unit UFormMain;
 
 interface
@@ -91,7 +92,7 @@ uses
   IniFiles, ULibFun, CPortTypes, USysLoger, USysDB, USmallFunc, UDataModule,
   UFormConn,USysConst,UClientWorker,UMITPacker,USysModule, uNewCard,
   UDataReport,UFormInputbox, UCardTypeSelect,UFormBarcodePrint, uZXNewPurchaseCard,
-  UFormBase, uNewCardQls;
+  UFormBase, uNewCardQls, UFormHYPrint;
 
 type
   TReaderType = (ptT800, pt8142);
@@ -183,7 +184,11 @@ begin
   begin
     FDR := TFDR.Create(Application);
   end;
-  imgPrint.Visible := False;
+  {$IFDEF PLKP}
+    imgPrint.Visible := True;
+  {$ELSE}
+    imgPrint.Visible := False;
+  {$ENDIF}
   imgCard.Visible := gSysParam.FCanCreateCard;
   imgPurchaseCard.Visible := not gSysParam.FCanCreateCard;
 end;
@@ -567,8 +572,35 @@ end;
 procedure TfFormMain.imgPrintClick(Sender: TObject);
 var
   nP: TFormCommandParam;
-  nHyDan,nStockname:string;
+  nLID,nHyDan,nStockname:string;
 begin
+  {$IFDEF PLKP}
+  CreateBaseFormItem(cFI_FormHYPrint, '', @nP);
+  if (nP.FCommand = cCmd_ModalResult) and (nP.FParamA = mrOK) then
+  begin
+    nHyDan := nP.FParamB;
+    nStockname := nP.FParamC;
+    nLID := nP.FParamD;
+    if Length(nHyDan) <= 1 then
+    begin
+      ShowMsg('当前品种无需打印化验单。',sHint);
+      Exit;
+    end;
+
+    if not Assigned(FDR) then
+    begin
+      FDR := TFDR.Create(Application);
+    end;
+
+    if PrintHYReport(nLID, False) then
+    begin
+      ShowMsg('打印成功，请在下方出纸口取走您的化验单',sHint);
+    end
+    else begin
+      ShowMsg('打印失败，请联系开票员补打',sHint);
+    end;
+  end;
+  {$ELSE}
   CreateBaseFormItem(cFI_FormBarCodePrint, '', @nP);
   if (nP.FCommand = cCmd_ModalResult) and (nP.FParamA = mrOK) then
   begin
@@ -593,6 +625,8 @@ begin
       ShowMsg('打印失败，请联系开票员补打',sHint);
     end;
   end;
+  {$ENDIF}
+  
 end;
 
 procedure TfFormMain.imgCardClick(Sender: TObject);

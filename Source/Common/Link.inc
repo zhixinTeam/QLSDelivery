@@ -85,6 +85,6 @@
   //民和
   {$DEFINE MultiReplay}
   //计数器应答模式
-  {.$DEFINE M100Reader}
+  {$DEFINE M100Reader}
   //启用M100Reader
 {$ENDIF}

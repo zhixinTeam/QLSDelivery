@@ -715,7 +715,7 @@ begin
     Exit;
   end;
   //≤…π∫¥≈ø®÷±Ω”Ãß∏À
-
+  {$IFNDEF YDSN}
   nPLine := nil;
   //nPTruck := nil;
 
@@ -747,6 +747,7 @@ begin
   finally
     SyncLock.Leave;
   end;
+  {$ENDIF}
 
   if not SaveLadingBills(sFlag_TruckIn, nTrucks) then
   begin
@@ -1487,7 +1488,7 @@ begin
     case nItem.FVType of
     rtOutM100 :
     begin
-      nRetain := MakeTruckOutM100(nItem.FCard, nItem.FVReader, nItem.FVPrinter, nItem.FVHyprinter, nCType);
+      nRetain := MakeTruckOutM100(nItem.FCard, nItem.FVReader, nItem.FVPrinter, nItem.FVHYPrinter, nCType);
       if nCType = sFlag_Provide then
       begin
         nDBConn := nil;

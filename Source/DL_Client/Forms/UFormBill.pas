@@ -812,6 +812,19 @@ begin
       begin
         ShowMsg('库位格式非法', sHint); Exit;
       end;
+      nCenterYL:=GetCenterSUM(nStockNo,Values['CenterID']);
+      if nCenterYL <> '' then
+      begin
+        if IsNumber(nCenterYL,True) then
+        begin
+          nYL:= StrToFloat(nCenterYL);
+          if nYL <= 0 then
+          begin
+            ShowMsg('生产线余量不足：'+#13#10+FormatFloat('0.00',nYL),sHint);
+            Exit;
+          end;
+        end;
+      end;
       {$ELSE}
       Values['KuWei'] := '';
       Values['LocationID']:= 'A';

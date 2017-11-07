@@ -69,7 +69,7 @@ type
     FVirtual: Boolean;         //虚拟读头
     FVReader: string;          //读头标识
     FVPrinter: string;         //虚拟打印机
-    FVHyprinter: string;       //虚拟化验单打印机
+    FVHYPrinter: string;         //化验单打印机
     FVType  : TM100ReaderVType;  //虚拟类型
 
     FKeepOnce: Integer;        //单次保持
@@ -390,7 +390,7 @@ begin
           FVirtual := nTmp.ValueAsString = 'Y';
           FVReader := nTmp.AttributeByName['reader'];
           FVPrinter:= nTmp.AttributeByName['printer'];
-          FVHyprinter:= nTmp.AttributeByName['hyprinter'];
+          FVHYPrinter:= nTmp.AttributeByName['hyprinter'];
 
           i := StrToIntDef(nTmp.AttributeByName['type'], 0);
           case i of

@@ -2334,6 +2334,14 @@ begin
           nBxz:=False;
         end else
         begin
+          if FTriaTrade = '' then
+          begin
+            nDBZhiKa:=LoadZhiKaInfo(nBills[0].FZhiKa,nHint);
+            with nDBZhiKa do
+            begin
+              FTriaTrade := FieldByName('Z_TriangleTrade').AsString;
+            end;
+          end;
           WriteLog('贸易类型：'+FTriaTrade);
           if FTriaTrade = '1' then    // 三角贸易
           begin

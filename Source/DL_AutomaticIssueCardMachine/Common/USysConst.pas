@@ -175,7 +175,8 @@ const
   cFI_FormSPrice        = $1094;                     //销售单价
   cFI_FormWeixinBind    = $1095;                     //微信账号绑定
 
-  cFI_FormBarCodePrint  = $1096;                     //扫码打印化验单  
+  cFI_FormBarCodePrint  = $1096;                     //扫码打印化验单
+  cFI_FormHYPrint       = $1097;                     //输入提单号打印化验单
 
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据

@@ -257,6 +257,8 @@ function PrintPoundReport(const nPound: string; nAsk: Boolean): Boolean;
 function PrintHuaYanReport(const nHID, nStockName: string; const nAsk: Boolean): Boolean;
 function PrintHeGeReport(const nHID: string; const nAsk: Boolean): Boolean;
 //化验单,合格证
+function PrintHYReport(const nBill: string; const nAsk: Boolean): Boolean;
+//打印随车化验单
 function PrintBillLoadReport(nBill: string; const nAsk: Boolean): Boolean;
 //打印物资发货单
 function PrintBillFYDReport(const nBill: string;  const nAsk: Boolean): Boolean;
@@ -2572,6 +2574,60 @@ begin
   FDR.Dataset1.DataSet := FDM.SqlTemp;
   FDR.ShowReport;
   Result := FDR.PrintSuccess;
+end;
+
+//lih: 打印标识为nBill的随车化验单
+function PrintHYReport(const nBill: string; const nAsk: Boolean): Boolean;
+var nStr,nSR: string;
+begin
+  if nAsk then
+  begin
+    Result := True;
+    nStr := '是否要打印化验单?';
+    if not QueryDlg(nStr, sAsk) then Exit;
+  end else Result := False;
+
+  nStr := 'select a.*,b.*,c.* from $Bill c ' +
+          ' left join $SR b on b.R_SerialNo=c.L_HYDan ' +
+          ' left join $SP a on a.P_ID=b.R_PID ' +
+          'where c.L_ID= ''$ID''';
+  nStr := MacroValue(nStr, [MI('$Bill', sTable_Bill), MI('$ID', nBill),
+          MI('$SR', sTable_StockRecord), MI('$SP', sTable_StockParam)]);
+  //xxxxx
+
+  if FDM.QueryTemp(nStr).RecordCount < 1 then
+  begin
+    nStr := '编号为[ %s ] 的化验单记录已无效!!';
+    nStr := Format(nStr, [nBill]);
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  if Pos('熟料',FDM.QueryTemp(nStr).FieldByName('L_StockName').AsString)>0 then
+    nStr := gPath + sReportDir + 'HuanYan3ShuLiao.fr3'
+  else
+    nStr := gPath + sReportDir + 'HuanYan3HeGe.fr3';
+  if not FDR.LoadReportFile(nStr) then
+  begin
+    nStr := '无法正确加载报表文件';
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  FDR.Dataset1.DataSet := FDM.SqlTemp;
+  FDR.Report1.Report.PrintOptions.Printer := gSysParam.FHYDanPrinter;
+  //  FDR.ShowReport;
+  FDR.PrintReport;
+  Result := FDR.PrintSuccess;
+  if Result then
+  begin
+    nStr := 'update %s set L_HYPrint=L_HYPrint+1 Where L_ID=''%s''';
+    nStr := Format(nStr, [sTable_Bill, nBill]);
+    with FDM.SQLTemp do
+    begin
+      Close;
+      SQL.Text:=nStr;
+      ExecSQL;
+    end;
+  end;
 end;
 
 //Date: 2015/1/18
