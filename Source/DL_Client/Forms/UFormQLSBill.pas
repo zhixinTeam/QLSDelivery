@@ -116,12 +116,18 @@ begin
       cxLabel1.Visible:=False;
       {$ENDIF}
     {$ENDIF}
+
     {$IFDEF QHSN}
     chkFenChe.Enabled:=True;
     chkFenChe.Visible:=True;
     {$ELSE}
-    chkFenChe.Enabled:=False;
-    chkFenChe.Visible:=False;
+      {$IFDEF MHSN}
+      chkFenChe.Enabled:=True;
+      chkFenChe.Visible:=True;
+      {$ELSE}
+      chkFenChe.Enabled:=False;
+      chkFenChe.Visible:=False;
+      {$ENDIF}
     {$ENDIF}
 
     BtnOK.Enabled := False;
@@ -443,7 +449,14 @@ begin
       else
         Values['IfFenChe'] := 'N';
       {$ELSE}
-      Values['IfFenChe'] := 'N';
+        {$IFDEF MHSN}
+        if chkFenChe.Checked then
+          Values['IfFenChe'] := 'Y'
+        else
+          Values['IfFenChe'] := 'N';
+        {$ELSE}
+        Values['IfFenChe'] := 'N';
+        {$ENDIF}
       {$ENDIF}
       Values['KuWei'] := '';
       Values['LocationID']:= 'A';
@@ -460,7 +473,7 @@ begin
           end;
         end;
       end; }
-    end; 
+    end;
     gIDList := SaveBill(PackerEncodeStr(nList.Text));
     //call mit bus
     if gIDList = '' then Exit;

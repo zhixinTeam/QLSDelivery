@@ -170,8 +170,13 @@ begin
     chkFenChe.Enabled:=True;
     chkFenChe.Visible:=True;
     {$ELSE}
-    chkFenChe.Enabled:=False;
-    chkFenChe.Visible:=False;
+      {$IFDEF MHSN}
+      chkFenChe.Enabled:=True;
+      chkFenChe.Visible:=True;
+      {$ELSE}
+      chkFenChe.Enabled:=False;
+      chkFenChe.Visible:=False;
+      {$ENDIF}
     {$ENDIF}
     LoadFormData;
     //try load data
@@ -700,7 +705,7 @@ begin
         end;
       end;
       {$ENDIF}
-      
+
       {$IFDEF PLKP}//¿ªÆ±Â¼ÈëÊÔÑù±àºÅ
       if cbxSampleID.Enabled=True then
       begin
@@ -796,7 +801,14 @@ begin
       else
         Values['IfFenChe'] := 'N';
       {$ELSE}
-      Values['IfFenChe'] := 'N';
+        {$IFDEF MHSN}
+        if chkFenChe.Checked then
+          Values['IfFenChe'] := 'Y'
+        else
+          Values['IfFenChe'] := 'N';
+        {$ELSE}
+        Values['IfFenChe'] := 'N';
+        {$ENDIF}
       {$ENDIF}
       {$IFDEF YDKP}
       if cbxKw.Itemindex< 0 then
