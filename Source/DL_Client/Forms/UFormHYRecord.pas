@@ -182,6 +182,7 @@ begin
     FRecordID := '';
     Caption := '检验记录 - 添加';
     {$IFNDEF CXSY}
+    cxValidDate.Hint := '';
     dxLayoutControl1Item14.Visible:= False;
     {$ENDIF}
     InitFormData('');
@@ -198,6 +199,7 @@ begin
     FRecordID := nID;
     Caption := '检验记录 - 修改';
     {$IFNDEF CXSY}
+    cxValidDate.Hint := '';
     dxLayoutControl1Item14.Visible:= False;
     {$ENDIF}
     InitFormData(nID);
@@ -221,6 +223,7 @@ begin
   begin
     FRecordID := nID;
     {$IFNDEF CXSY}
+    cxValidDate.Hint := '';
     dxLayoutControl1Item14.Visible:= False;
     {$ENDIF}
     InitFormData(nID);
@@ -307,7 +310,9 @@ end;
 procedure TfFormHYRecord.GetData(Sender: TObject; var nData: string);
 begin
   if Sender = EditDate then nData := DateTime2Str(EditDate.Date);
-  if Sender = cxValidDate then nData := DateTime2Str(cxValidDate.Date);
+  if Sender = cxValidDate then
+    if Length(Trim(cxValidDate.Text)) > 0 then
+      nData := DateTime2Str(cxValidDate.Date);
 end;
 
 function TfFormHYRecord.SetData(Sender: TObject; const nData: string): Boolean;

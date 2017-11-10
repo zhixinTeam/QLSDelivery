@@ -454,7 +454,22 @@ begin
       end;
     end; }
     {$ENDIF}
-    
+
+    {$IFDEF XHPZ}
+    if (FNextStatus=sFlag_TruckNone) and (FCardUsed=sFlag_Provide) then
+    begin
+      if SavePurchaseOrders(sFlag_TruckIn, nBills) then
+      begin
+        ShowMsg('车辆进厂成功', sHint);
+        LoadBillItems(FCardTmp);
+        Exit;
+      end else
+      begin
+        ShowMsg('车辆进厂失败', sHint);
+      end;
+    end;
+    {$ENDIF}
+
     {$IFDEF PLKP}
     if (FNextStatus=sFlag_TruckNone) then
     begin
@@ -484,7 +499,7 @@ begin
 
     end;
     {$ENDIF}
-    
+
     {$IFDEF MHSN}
     if (FNextStatus=sFlag_TruckNone) then
     begin

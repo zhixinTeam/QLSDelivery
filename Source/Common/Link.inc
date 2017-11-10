@@ -83,6 +83,10 @@
   //青海
   {.$DEFINE MHSN} 
   //民和
+  {.$DEFINE WDFH}
+  //陇南武都散装共用道放灰
+  {$DEFINE CXKC}
+  //成县空车出厂
   {$DEFINE MultiReplay}
   //计数器应答模式
   {$DEFINE M100Reader}

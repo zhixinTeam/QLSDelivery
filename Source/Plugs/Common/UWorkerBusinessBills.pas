@@ -81,6 +81,8 @@ type
     //保存岗位交货单
     function DelBillSendMsgWx(LID:string):Boolean;
     //删单发送微信消息
+    procedure SaveHyDanEvent(const nCenterID,nStockno,nStockType,
+          nStockname,nFrom,nSolution,nDepartment: string);
   public
     constructor Create; override;
     destructor destroy; override;
@@ -2158,8 +2160,8 @@ begin
         end;
 
         nStr := 'select F_CusGroup from %s '+
-                'where F_StockNo = ''%s'' and F_ID = ''%s'' ';
-        nStr := Format(nStr, [sTable_ForceCenterID,FStockNo,FCusID]);
+                'where F_Stock = ''%s'' and F_ID = ''%s'' ';
+        nStr := Format(nStr, [sTable_ForceCenterID,FStockName,FCusID]);
         with gDBConnManager.WorkerQuery(FDBConn, nStr) do
         if RecordCount > 0 then//特殊客户特殊处理
         begin
@@ -2184,6 +2186,10 @@ begin
           nData := '[%s]岗位[ %s ]试样编号使用完毕.';
           nData := Format(nData, [FStockName, PostTypeToStr(FIn.FExtParam)]);
           WriteLog(nData);
+          try
+            SaveHyDanEvent(FCenterID,FStockno,FType,FStockname,FIn.FExtParam,'Y=已经处理;I=马上处理', '化验室');
+          except
+          end;
           Exit;
         end;
         nReiNo:=nOut.FData;  //获取式样编号
@@ -2249,8 +2255,8 @@ begin
         end;
 
         nStr := 'select F_CusGroup from %s '+
-                'where F_StockNo = ''%s'' and F_ID = ''%s'' ';
-        nStr := Format(nStr, [sTable_ForceCenterID,FStockNo,FCusID]);
+                'where F_Stock = ''%s'' and F_ID = ''%s'' ';
+        nStr := Format(nStr, [sTable_ForceCenterID,FStockName,FCusID]);
         with gDBConnManager.WorkerQuery(FDBConn, nStr) do
         if RecordCount > 0 then//特殊客户特殊处理
         begin
@@ -2275,6 +2281,10 @@ begin
           nData := '岗位[ %s ]试样编号使用完毕.';
           nData := Format(nData, [PostTypeToStr(FIn.FExtParam)]);
           WriteLog(nData);
+          try
+            SaveHyDanEvent(FCenterID,FStockno,FType,FStockname,FIn.FExtParam,'Y=已经处理;I=马上处理', '化验室');
+          except
+          end;
           Exit;
         end;
         nReiNo:=nOut.FData;  //获取式样编号
@@ -2922,6 +2932,40 @@ begin
     {$ENDIF}
   end;
 
+end;
+
+procedure TWorkerBusinessBills.SaveHyDanEvent(const nCenterID,nStockno,nStockType,
+          nStockname,nFrom,nSolution,nDepartment: string);
+var
+  nStr:string;
+  nEvent,nEID:string;
+begin
+  try
+    nEID := nCenterID + nStockno + nStockType;
+    nStr := 'Delete From %s Where E_ID=''%s''';
+    nStr := Format(nStr, [sTable_ManualEvent, nEID]);
+
+    gDBConnManager.WorkerExec(FDBConn, nStr);
+
+    nEvent := '生产线[ %s ]水泥品种[ %s ]的试样编号已用尽,请化验室尽快补录';
+    nEvent := Format(nEvent,[nCenterID,nStockname]);
+    nStr := MakeSQLByStr([
+        SF('E_ID', nEID),
+        SF('E_Key', ''),
+        SF('E_From', TruckStatusToStr(nFrom)),
+        SF('E_Event', nEvent),
+        SF('E_Solution', nSolution),
+        SF('E_Departmen', nDepartment),
+        SF('E_Date', sField_SQLServer_Now, sfVal)
+        ], sTable_ManualEvent, '', True);
+    gDBConnManager.WorkerExec(FDBConn, nStr);
+    WriteLog('生成时间记录:'+nStr);
+  except
+    on E: Exception do
+    begin
+      WriteLog('TWorkerBusinessBills.SaveHyDanEvent(nEID='+nEID+',nStockno='+nStockno+',nStockname='+nStockname+',nFrom='+nFrom+',nSolution='+nSolution+',nDepartment='+nDepartment+') Error:'+e.message);
+    end;
+  end;
 end;
 
 initialization

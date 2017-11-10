@@ -149,7 +149,7 @@ begin
   ListQuery.Items.Clear;
 
   nStr := 'Select *,(B_Value-IsNull(B_SentValue,0)-IsNull(B_FreezeValue,0)) As B_MaxValue From $TB a, $MB b, $NB c ' +
-          'Where a.B_ID=b.M_ID ' + ' And a.B_StockNo=c.M_ID ' +  ' And c.M_Weighning = ''1'' ' +
+          'Where a.B_ID=b.M_ID ' + ' And a.B_StockNo=c.M_ID ' +
           'And ((M_DState=''30'') or (M_DState=''40''))'+
           'And ((B_BStatus=''Y'') or (B_BStatus=''1'') or ((M_PurchType=''0'') and (B_BStatus=''0''))) '+
           'and B_Blocked=''0'' ';

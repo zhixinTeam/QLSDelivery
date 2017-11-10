@@ -99,7 +99,7 @@ function TfFrameOrderDetailQuery.InitFormDataSQL(const nWhere: string): string;
 begin
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
   Result := 'Select *,(D_MValue-D_PValue-Isnull(D_KZValue,0)) as D_NetWeight ' +
-            'From $OD od Inner Join $OO oo on od.D_OID=oo.O_ID ';
+            'From $OD od Inner Join $OO oo on od.D_OID=oo.O_ID , $p p ';
   //xxxxxx
 
   if FJBWhere = '' then
@@ -113,9 +113,10 @@ begin
   begin
     Result := Result + ' Where (' + FJBWhere + ')';
   end;
+  Result := Result + ' and od.D_ID = p.P_Order ';//查询过磅ID
   Result := Result + ' and (D_YSResult = ''Y'' or D_YSResult is null)';//过滤拒收状态
   Result := Result + ' and D_OutFact is not null ';//未出厂不统计
-  Result := MacroValue(Result, [MI('$OD', sTable_OrderDtl),MI('$OO', sTable_Order),
+  Result := MacroValue(Result, [MI('$OD', sTable_OrderDtl),MI('$OO', sTable_Order), MI('$p', sTable_PoundLog),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
   {$IFDEF MHSN}

@@ -209,7 +209,7 @@ ResourceString
   sFlag_BillItem      = 'BillItem';                  //提单信息项
   sFlag_TruckQueue    = 'TruckQueue';                //车辆队列
   sFlag_ZTLineGroup   = 'ZTLineGroup';               //栈台分组
-                                                               
+
   sFlag_PaymentItem   = 'PaymentItem';               //付款方式信息项
   sFlag_PaymentItem2  = 'PaymentItem2';              //销售回款信息项
   sFlag_LadingItem    = 'LadingItem';                //提货方式信息项
@@ -259,6 +259,7 @@ ResourceString
   sTable_PopItem      = 'Sys_PopItem';               //权限项
   sTable_Entity       = 'Sys_Entity';                //字典实体
   sTable_DictItem     = 'Sys_DataDict';              //字典明细
+  sTable_ManualEvent  = 'Sys_ManualEvent';           //人工干预事件
 
   sTable_SysDict      = 'Sys_Dict';                  //系统字典
   sTable_ExtInfo      = 'Sys_ExtInfo';               //附加信息
@@ -267,7 +268,6 @@ ResourceString
   sTable_SerialBase   = 'Sys_SerialBase';            //编码种子
   sTable_SerialStatus = 'Sys_SerialStatus';          //编号状态
   sTable_WorkePC      = 'Sys_WorkePC';               //验证授权
-  sTable_ManualEvent  = 'Sys_ManualEvent';           //人工干预
 
   sTable_Customer     = 'S_Customer';                //客户信息
   sTable_CustomerExt  = 'S_CustomerExt';             //客户扩展

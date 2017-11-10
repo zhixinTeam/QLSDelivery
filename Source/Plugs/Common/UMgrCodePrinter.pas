@@ -728,7 +728,7 @@ begin
       Result := False;
       Exit;
    end;
-                    
+
 
   Result := True;
 end;
@@ -902,24 +902,25 @@ function TPrinterDDJD.PrintCode(const nCode: string;
     nDatatemp: string;
     nstr: string  ;
 begin
-  //protocol: 11 43 datas 0D 0A
-  nData := Char($11) + Char($43);
+  //protocol: 23 30 31 11 43 datas 0D 0A
+  nData := Char($23) + Char($30) + Char($31) + Char($11) + Char($41);
   nData := nData + nCode;
   nData := nData + Char($0D) + Char($0A);
 
   FClient.Socket.Write(nData, Indy8BitEncoding);
 
   SetLength(nBuf, 0);
-  FClient.Socket.ReadBytes(nBuf, 1, False);
+  FClient.Socket.ReadBytes(nBuf, 7, False);
 
   nstr:= BytesToString(nBuf,Indy8BitEncoding);
 
-  nDatatemp :=  Char($DD);
+  nDatatemp :=  Char($23) + Char($30) + Char($31);
+  nDatatemp :=  nDatatemp + Char($11)+ Char($36) + Char($0D) + Char($0A);
 
 
-  if nstr <> nDatatemp then
+  if nstr = '' then
    begin
-      nHint := '喷码机应答错误!';
+      nHint := '喷码机应答错误!'+'发送:'+nData+'接收:'+nstr+'正确应答:'+nDataTemp;
       Result := False;
       Exit;
    end;

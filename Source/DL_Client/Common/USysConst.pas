@@ -32,6 +32,7 @@ const
   cFI_FrameBill         = $0013;                     //开提货单
   cFI_FrameBillQuery    = $0014;                     //开单查询
   cFI_FrameMakeOCard    = $0015;                     //办理采购磁卡
+  cFI_FormTodo          = $0017;                     //待处理事项
 
   cFI_FrameShouJu       = $0020;                     //收据查询
   cFI_FrameZhiKaVerify  = $0021;                     //纸卡审核
@@ -227,6 +228,7 @@ type
     FLocalMAC   : string;                            //本机MAC
     FLocalName  : string;                            //本机名称
     FHardMonURL : string;                            //硬件守护
+    FDepartment : string;                            //所属部门
 
     FFactNum    : string;                            //工厂编号
     FSerialID   : string;                            //电脑编号
@@ -333,6 +335,7 @@ begin
   AddMenuModuleItem('MAIN_A04', cFI_FormRestore, mtForm);
   AddMenuModuleItem('MAIN_A05', cFI_FormChangePwd, mtForm);
   AddMenuModuleItem('MAIN_A07', cFI_FrameAuthorize);
+  AddMenuModuleItem('MAIN_A08', cFI_FormTodo, mtForm);
   AddMenuModuleItem('MAIN_A12', cFI_FormOptions, mtForm);
   AddMenuModuleItem('MAIN_A13', cFI_FormOnLineModel, mtForm);
 

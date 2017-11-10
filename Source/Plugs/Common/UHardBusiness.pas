@@ -37,6 +37,8 @@ procedure ModifyWebOrderStatus(const nLId:string;nStatus:Integer=c_WeChatStatusF
 //修改网上订单状态  nStatus 0:已开卡；1:已出厂
 function Do_ModifyWebOrderStatus(const nXmlStr: string): string;
 //修改网上订单状态
+function VerifyTruckTunnel(const nTruck: string; nTunnelEx: string):Boolean;
+//匹配通道用于两通道共用读卡器
 
 function SaveDBImage(const nDS: TDataSet; const nFieldName: string;
       const nImage: string): Boolean; overload;
@@ -91,7 +93,7 @@ begin
       TBlobField(nField).Clear;
       nDS.Post; Result := True; Exit;
     end;
-    
+
     nStream := TMemoryStream.Create;
     nImage.SaveToStream(nStream);
     nStream.Seek(0, soFromEnd);
@@ -310,7 +312,7 @@ begin
     gSysLoger.AddLog(TBusinessWorkerManager, '业务对象', nOut.FData);
   //xxxxx
 end;
-                                                             
+
 //------------------------------------------------------------------------------
 //Date: 2013-07-21
 //Parm: 事件描述;岗位标识
@@ -352,7 +354,7 @@ begin
     if not GetLadingOrders(nLid, sFlag_BillDone, nBills) then
     begin
       Exit;
-    end;  
+    end;
   end
   else begin
     Exit;
@@ -456,7 +458,7 @@ begin
   end;
 
   if nWebOrderId='' then Exit;
-  
+
   nXmlStr := '<?xml version="1.0" encoding="UTF-8"?>'
             +'<DATA>'
             +'<head><ordernumber>%s</ordernumber>'
@@ -1461,6 +1463,7 @@ begin
   end else
   begin
     g02NReader.ActiveELabel(nReader.FTunnel, nReader.FCard);
+    WriteHardHelperLog('WhenHYReaderCardArrived.g02NReader.ActiveELabel('+nReader.FTunnel+', '+nReader.FCard+')');
   end;
 end;
 
@@ -2081,6 +2084,17 @@ begin
     Exit;
   end;
 
+  {$IFDEF CXKC}
+  if nTrucks[0].FYSValid = sFlag_Yes then
+  begin
+    nStr := '车辆[ %s ]已办理空车出厂.';
+    nStr := Format(nStr, [nTrucks[0].FTruck]);
+
+    WriteNearReaderLog(nStr);
+    Exit;
+  end;
+  {$ENDIF}
+
   if nTunnel = '' then
   begin
     nTunnel := gTruckQueueManager.GetTruckTunnel(nTrucks[0].FTruck);
@@ -2152,7 +2166,7 @@ end;
 //Date: 2012-4-25
 //Parm: 车辆;通道
 //Desc: 授权nTruck在nTunnel车道放灰
-procedure TruckStartFH(const nTruck: PTruckItem; const nTunnel: string);
+procedure TruckStartFH(const nTruck: PTruckItem; const nTunnel, nTunnelEx: string);
 var nStr,nTmp,nCardUse: string;
    nField: TField;
    nWorker: PDBWorker;
@@ -2191,9 +2205,39 @@ begin
     gDBConnManager.ReleaseConnection(nWorker);
   end;
 
+  {$IFDEF WDFH}
+  if VerifyTruckTunnel(nTruck.FTruck, nTunnelEx) then
+  begin
+    gERelayManager.LineClose(nTunnel);
+    nStr := '通道[ %s ]关闭继电器';
+    nStr := Format(nStr, [nTunnel]);
+    Sleep(100);
+    WriteHardHelperLog(nStr, sPost_In);
 
+    gERelayManager.LineOpen(nTunnelEx);
+    nStr := '通道[ %s ]打开继电器';
+    nStr := Format(nStr, [nTunnelEx]);
+
+    WriteHardHelperLog(nStr, sPost_In);
+  end
+  else
+  begin
+    gERelayManager.LineClose(nTunnelEx);
+    nStr := '通道[ %s ]关闭继电器';
+    nStr := Format(nStr, [nTunnelEx]);
+    Sleep(100);
+    WriteHardHelperLog(nStr, sPost_In);
+
+    gERelayManager.LineOpen(nTunnel);
+    nStr := '通道[ %s ]打开继电器';
+    nStr := Format(nStr, [nTunnel]);
+
+    WriteHardHelperLog(nStr, sPost_In);
+  end;
+  {$ELSE}
   gERelayManager.LineOpen(nTunnel);
   //打开放灰
+  {$ENDIF}
 
   nStr := nTruck.FTruck + StringOfChar(' ', 12 - Length(nTruck.FTruck));
   nTmp := nTruck.FStockName + FloatToStr(nTruck.FValue);
@@ -2208,16 +2252,18 @@ end;
 //Date: 2012-4-24
 //Parm: 磁卡号;通道号
 //Desc: 对nCard执行袋装装车操作
-procedure MakeTruckLadingSan(const nCard,nTunnel: string);
+procedure MakeTruckLadingSan(const nCard,nTunnel,nTunnelEx: string);
 var nStr: string;
     nIdx: Integer;
     nPLine: PLineItem;
     nPTruck: PTruckItem;
     nTrucks: TLadingBillItems;
+    nChange: Boolean;
 begin
   {$IFDEF DEBUG}
   WriteNearReaderLog('MakeTruckLadingSan进入.');
   {$ENDIF}
+  WriteNearReaderLog('通道[ ' + nTunnel + ' ]: MakeTruckLadingSan进入.' + '扩展通道:' + nTunnelEx);
 
   if not GetLadingBills(nCard, sFlag_TruckFH, nTrucks) then
   begin
@@ -2250,6 +2296,42 @@ begin
     Exit;
   end;
 
+  {$IFDEF WDFH}
+  if not VerifyTruckTunnel(nTrucks[0].FTruck, nTunnelEx) then
+  begin
+    //1.车辆通道号与扩展通道号匹配
+    nChange := IsTruckInQueue(nTrucks[0].FTruck, nTunnel, False, nStr,
+           nPTruck, nPLine, sFlag_San);
+    //2.第1步匹配失败后检索nTruck可否在nTunnel装车
+    if not nChange then
+    if not IsTruckInQueue(nTrucks[0].FTruck, nTunnelEx, False, nStr,
+           nPTruck, nPLine, sFlag_San) then
+    begin
+      //3.第2步检索失败后检索nTruck可否在nTunnelEx装车,用以兼顾2个同品种nTunnelEx换道
+      WriteNearReaderLog(nStr);
+      //loged
+
+      nIdx := Length(nTrucks[0].FTruck);
+      nStr := nTrucks[0].FTruck + StringOfChar(' ',12 - nIdx) + '请换库装车';
+      gERelayManager.ShowTxt(nTunnel, nStr);
+      Exit;
+    end; //检查通道
+  end
+  else
+  begin
+    if not IsTruckInQueue(nTrucks[0].FTruck, nTunnelEx, False, nStr,
+           nPTruck, nPLine, sFlag_San) then
+    begin
+      WriteNearReaderLog(nStr);
+      //loged
+
+      nIdx := Length(nTrucks[0].FTruck);
+      nStr := nTrucks[0].FTruck + StringOfChar(' ',12 - nIdx) + '请换库装车';
+      gERelayManager.ShowTxt(nTunnel, nStr);
+      Exit;
+    end; //检查通道
+  end;
+  {$ELSE}
   if not IsTruckInQueue(nTrucks[0].FTruck, nTunnel, False, nStr,
          nPTruck, nPLine, sFlag_San) then
   begin
@@ -2261,14 +2343,15 @@ begin
     gERelayManager.ShowTxt(nTunnel, nStr);
     Exit;
   end; //检查通道
+  {$ENDIF}
 
   if nTrucks[0].FStatus = sFlag_TruckFH then
   begin
     nStr := '散装车辆[ %s ]再次刷卡装车.';
     nStr := Format(nStr, [nTrucks[0].FTruck]);
     WriteNearReaderLog(nStr);
-    
-    TruckStartFH(nPTruck, nTunnel);
+
+    TruckStartFH(nPTruck, nTunnel, nTunnelEx);
     Exit;
   end;
 
@@ -2281,7 +2364,7 @@ begin
     Exit;
   end;
 
-  TruckStartFH(nPTruck, nTunnel);
+  TruckStartFH(nPTruck, nTunnel, nTunnelEx);
   //执行放灰
 end;
 
@@ -2321,7 +2404,14 @@ begin
   begin
     if nCardType = sFlag_Sale then
     begin
-      MakeTruckLadingSan(nCard, nHost.FTunnel);
+      {$IFDEF WDFH}
+      if Assigned(nHost.FOptions) then
+        MakeTruckLadingSan(nCard, nHost.FTunnel, nHost.FOptions.Values['TunnelEx'])
+      else
+        MakeTruckLadingSan(nCard, nHost.FTunnel, '');
+      {$ELSE}
+        MakeTruckLadingSan(nCard, nHost.FTunnel, '');
+      {$ENDIF}
     end
     else if (nCardType = sFlag_Provide) or (nCardType = sFlag_other) then
     begin
@@ -2337,6 +2427,12 @@ procedure WhenReaderCardOut(const nCard: string; const nHost: PReaderHost);
 begin
   {$IFDEF DEBUG}
   WriteHardHelperLog('WhenReaderCardOut退出.');
+  {$ENDIF}
+
+  {$IFDEF WDFH}
+  if Assigned(nHost.FOptions) then
+    gERelayManager.LineClose(nHost.FOptions.Values['TunnelEx']);
+  Sleep(100);
   {$ENDIF}
 
   gERelayManager.LineClose(nHost.FTunnel);
@@ -2403,6 +2499,38 @@ begin
     CallHardwareCommand(cBC_SaveCountData, nStr, '', @nOut)
   finally
     nList.Free;
+  end;
+end;
+
+//Date: 2017-11-05
+//Parm: 车辆
+//Desc: 查询nTruck所在道并与虚拟道匹配
+function VerifyTruckTunnel(const nTruck: string; nTunnelEx: string):Boolean;
+var nStr: string;
+   nWorker: PDBWorker;
+begin
+  Result := False;
+  if nTunnelEx = '' then Exit;
+
+  nWorker := nil;
+  try
+    nStr := 'Select T_Line From %s Where T_Truck=''%s''';
+    nStr := Format(nStr, [sTable_ZTTrucks, nTruck]);
+
+    with gDBConnManager.SQLQuery(nStr, nWorker) do
+    if RecordCount > 0 then
+    begin
+      nStr := Trim(Fields[0].AsString);
+      if Length(nStr) > 0 then
+      begin
+        if nTunnelEx = nStr then
+          Result := True;
+      end;
+      //xxxxx
+    end;
+
+  finally
+    gDBConnManager.ReleaseConnection(nWorker);
   end;
 end;
 

@@ -42,19 +42,19 @@ type
     FDai      : Integer;     //袋数
     FTotal    : Integer;     //总数
     FInFact   : Boolean;     //是否进厂
-    FIsRun    : Boolean;     //是否运行    
+    FIsRun    : Boolean;     //是否运行
   end;
 
   TZTLineItems = array of TZTLineItem;
   TZTTruckItems = array of TZTTruckItem;
 
-  TCenterItem = record
-    FName : string;
-    FLineCount: Integer;//符合条件生产线数量
-    FTruckCount: Integer;//符合条件生产线车辆数量
+  TLineItem = record
+    FID: string;//通道号
+    FCenterID: string;//所属生产线
+    FTruckCount: Integer;//通道车辆数量
   end;
 
-var  gCenterItem: array of TCenterItem;
+var  gLineItem: array of TLineItem;
   //生产线列表
   
 //------------------------------------------------------------------------------
@@ -2802,32 +2802,37 @@ end;
 procedure InitCenter(const nStockNo,nCusID: string; const nCbx:TcxComboBox);
 var
   nStr,nItemGID:string;
-  nIdx: Integer;
+  nIdx,nI: Integer;
   nFl: Single;
+  nLines: TZTLineItems;
+  nTrucks: TZTTruckItems;
 begin
+  WriteLog('开始匹配生产线');
   nCbx.Properties.Items.Clear;
   nCbx.Text := '';
-  SetLength(gCenterItem, 0);
-  nStr := 'Select Z_CenterId,COUNT(*) as Num From %s Where Z_StockNo=''%s'' '+
-          'and Z_Valid=''%s'' group by Z_CenterId order by Num ';
+  SetLength(gLineItem, 0);
+  nStr := 'Select Z_ID, Z_CenterId From %s Where Z_StockNo=''%s'' '+
+          'and Z_Valid=''%s'' order by R_ID ';
   nStr := Format(nStr, [sTable_ZTLines, nStockNo, sFlag_Yes]);
+  WriteLog('查询符合条件通道sql:'+nStr);
   with FDM.QueryTemp(nStr) do
   begin
     if RecordCount < 1 then Exit;
 
     if RecordCount >= 1 then//存在符合条件生产线
     begin
-      SetLength(gCenterItem,RecordCount);
+      SetLength(gLineItem,RecordCount);
 
       nIdx := 0;
       First;
 
       while not Eof do
       begin
-        with gCenterItem[nIdx] do
+        with gLineItem[nIdx] do
         begin
-          FName := Fields[0].AsString;
-          FLineCount := Fields[1].AsInteger;
+          FID := Fields[0].AsString;
+          FCenterID := Fields[1].AsString;
+          FTruckCount := 0;
         end;
 
         Inc(nIdx);
@@ -2843,9 +2848,9 @@ begin
 
     if RecordCount = 1 then//VIP客户 强制指定有生产线且只有一条
     begin
-      for nIdx := Low(gCenterItem) to High(gCenterItem) do
+      for nIdx := Low(gLineItem) to High(gLineItem) do
       begin
-        if Fields[0].AsString = gCenterItem[nIdx].FName then
+        if Fields[0].AsString = gLineItem[nIdx].FCenterID then
         begin
           WriteLog('生产线匹配:'+nCusID+'强制生产线'+Fields[0].AsString);
           nCbx.Text:= Fields[0].AsString;
@@ -2860,44 +2865,45 @@ begin
   if Length(nCbx.Text) > 0 then
     Exit;
 
-  for nIdx := Low(gCenterItem) to High(gCenterItem) do
-  begin
-    nStr := 'Select L_InvCenterId, COUNT(*) as Num From %s a , %s b ' +
-            ' Where a.L_ID=b.T_Bill and a.L_InvCenterId=''%s'' '+
-            ' group by L_InvCenterId order by Num ';
-    nStr := Format(nStr, [sTable_Bill, sTable_ZTTrucks, gCenterItem[nIdx].FName]);
-    with FDM.QueryTemp(nStr) do
+  try
+    if LoadTruckQueue(nLines, nTrucks, False) then
     begin
-
-      if RecordCount <= 0 then//查询该品种所属生产线是否有车，无车直接指定到该生产线
+      for nIdx:=Low(nTrucks) to High(nTrucks) do
       begin
-        WriteLog('生产线匹配:'+'生产线'+gCenterItem[nIdx].FName+'没有车辆,指定到此生产线');
-        nCbx.Text:= gCenterItem[nIdx].FName;
-        Break;
-      end
-      else
-      begin
-        gCenterItem[nIdx].FTruckCount := Fields[1].AsInteger;
+        for nI:=Low(gLineItem) to High(gLineItem) do
+          if nTrucks[nIdx].FLine = gLineItem[nI].FID then
+          begin
+            Inc(gLineItem[nI].FTruckCount);
+          end;
       end;
+    end
+    else
+    begin
+      WriteLog('读取队列信息失败');
+      Exit;
     end;
+  except
+    WriteLog('读取队列信息失败');
   end;
 
-  if Length(nCbx.Text) > 0 then
-    Exit;
+  for nIdx := Low(gLineItem) to High(gLineItem) do
+  begin
+    WriteLog('通道'+gLineItem[nIdx].FID+'车辆数量为:'+IntToStr(gLineItem[nIdx].FTruckCount)+'所属生产线:'+gLineItem[nIdx].FCenterID);
+  end;
 
-  nFl := 0;
-  for nIdx := Low(gCenterItem) to High(gCenterItem) do
+  nI := 0;
+  for nIdx := Low(gLineItem) to High(gLineItem) do
   begin
     try
-      if nIdx = Low(gCenterItem) then
+      if nIdx = Low(gLineItem) then
       begin
-       nFl:= gCenterItem[nIdx].FTruckCount / gCenterItem[nIdx].FTruckCount;
-       nCbx.Text := gCenterItem[nIdx].FName;
+       nI:= gLineItem[nIdx].FTruckCount;
+       nCbx.Text := gLineItem[nIdx].FCenterID;
       end
       else
       begin
-        if gCenterItem[nIdx].FTruckCount / gCenterItem[nIdx].FTruckCount <= nFl then
-          nCbx.Text := gCenterItem[nIdx].FName;
+        if gLineItem[nIdx].FTruckCount < nI then
+          nCbx.Text := gLineItem[nIdx].FCenterID;
       end;
     except
     end;

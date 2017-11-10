@@ -90,6 +90,19 @@ begin
   end;
 
   nHint := '';
+  {$IFDEF CXKC}
+  for nIdx:=Low(gBills) to High(gBills) do
+  if gBills[nIdx].FStatus <> sFlag_TruckBFP then
+  begin
+    nStr := '¡ù.µ¥ºÅ:[ %s ] ×´Ì¬:[ %-6s -> %-6s ]   ';
+    if nIdx < High(gBills) then nStr := nStr + #13#10;
+
+    nStr := Format(nStr, [gBills[nIdx].FID,
+            TruckStatusToStr(gBills[nIdx].FStatus),
+            TruckStatusToStr(gBills[nIdx].FNextStatus)]);
+    nHint := nHint + nStr;
+  end else gBills[nIdx].FYSValid := sFlag_Yes;
+  {$ELSE}
   for nIdx:=Low(gBills) to High(gBills) do
   //if gBills[nIdx].FStatus = sFlag_TruckNone then
   if (gBills[nIdx].FStatus <> sFlag_TruckBFP) and
@@ -104,6 +117,8 @@ begin
             TruckStatusToStr(gBills[nIdx].FNextStatus)]);
     nHint := nHint + nStr;
   end else gBills[nIdx].FYSValid := sFlag_Yes;
+  {$ENDIF}
+
 
   if nHint <> '' then
   begin

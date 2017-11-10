@@ -11,17 +11,17 @@ inherited fFormGetPOrderBase: TfFormGetPOrderBase
   PixelsPerInch = 96
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
-    Width = 622
-    Height = 353
+    Width = 614
+    Height = 346
     inherited BtnOK: TButton
-      Left = 476
-      Top = 320
+      Left = 468
+      Top = 313
       Caption = #30830#23450
       TabOrder = 4
     end
     inherited BtnExit: TButton
-      Left = 546
-      Top = 320
+      Left = 538
+      Top = 313
       TabOrder = 5
     end
     object EditProvider: TcxButtonEdit [2]

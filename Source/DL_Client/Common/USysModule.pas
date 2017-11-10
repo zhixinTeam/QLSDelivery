@@ -35,6 +35,7 @@ uses
   UFormPurchReject,//原材料拒收
   UFormOnLineModel,//设置在线离线状态
   UFrameForceCenterID,//强制生产线
+  UFormTodo,//待处理事项
   UFrameUpInfo, UFramePoundWuCha, UFormPWuCha, UFrameZTQuery, UFormPoundKw,
   UFormWorkSet, UFrameUpPurchase, UFramePoundDevia, UFrameLSCard, UFormLSCard,
   UFormTransfer, UFrameQueryTransferDetail, UFrameSTCard, UFormSTCard,
@@ -49,7 +50,7 @@ implementation
 
 uses
   UMgrChannel, UChannelChooser, UDataModule, USysDB, USysMAC, SysUtils,
-  USysLoger, USysConst, UMemDataPool;
+  USysLoger, USysConst, UMemDataPool, UFormBase;
 
 //Desc: 初始化系统对象
 procedure InitSystemObject;
@@ -81,7 +82,7 @@ begin
     GetLocalIPConfig(FLocalName, FLocalIP);
   end;
 
-  nStr := 'Select W_Factory,W_Serial From %s ' +
+  nStr := 'Select W_Factory,W_Serial,W_Departmen From %s ' +
           'Where W_MAC=''%s'' And W_Valid=''%s''';
   nStr := Format(nStr, [sTable_WorkePC, gSysParam.FLocalMAC, sFlag_Yes]);
 
@@ -90,6 +91,7 @@ begin
   begin
     gSysParam.FFactNum := Fields[0].AsString;
     gSysParam.FSerialID := Fields[1].AsString;
+    gSysParam.FDepartment := Fields[2].AsString;
   end;
 
   //----------------------------------------------------------------------------
@@ -134,7 +136,7 @@ begin
 
       if nStr = sFlag_PEmpTWuCha then
         gSysParam.FEmpTruckWc := Fields[0].AsFloat;
-        
+
       Next;
     end;
 
@@ -183,6 +185,8 @@ begin
     gSysParam.FFactory := FieldByName('D_value').AsString;
   end;
 
+  CreateBaseFormItem(cFI_FormTodo);
+  //待处理事项
 end;
 
 //Desc: 释放系统对象
