@@ -3,33 +3,25 @@
   <Packs>
     <Pack ID="Bus_MIT_1" Name="本地服务">
       <SAP/>
-      <DB></DB>
-      <Perform></Perform>
+      <DB>local_db</DB>
+      <Perform>stand_per</Perform>
     </Pack>
   </Packs>
   <Param>
     <DBList>
-      <DB ID="k3_db" Name="K3数据库">
+      <DB ID="local_db" Name="中间库">
         <Host>127.0.0.1</Host>
         <Port>1433</Port>
-        <DBName>AIS20101231173129</DBName>
+        <DBName>chengxian</DBName>
         <User>sa</User>
         <Password>c2E=</Password>
         <ConnStr>UHJvdmlkZXI9U1FMT0xFREIuMTtQYXNzd29yZD0kUHdkO1BlcnNpc3QgU2VjdXJpdHkgSW5mbz1UcnVlO1VzZXIgSUQ9JFVzZXI7SW5pdGlhbCBDYXRhbG9nPSREQk5hbWU7RGF0YSBTb3VyY2U9JEhvc3Q=</ConnStr>
-        <WorkerNum>5</WorkerNum>
-      </DB>
-	  <DB ID="js_db" Name="计数器数据库">
-        <Host>127.0.0.1</Host>
-        <Port>1433</Port>
-        <DBName>JSData</DBName>
-        <User>sa</User>
-        <Password>c2E=</Password>
-        <ConnStr>UHJvdmlkZXI9U1FMT0xFREIuMTtQYXNzd29yZD0kUHdkO1BlcnNpc3QgU2VjdXJpdHkgSW5mbz1UcnVlO1VzZXIgSUQ9JFVzZXI7SW5pdGlhbCBDYXRhbG9nPSREQk5hbWU7RGF0YSBTb3VyY2U9JEhvc3Q=</ConnStr>
-        <WorkerNum>5</WorkerNum>
+        <WorkerNum>16</WorkerNum>
       </DB>
     </DBList>
-	<PerformList>
-      <Perform ID="perform" Name="性能参数">
+    <SAPList/>
+    <PerformList>
+      <Perform ID="stand_per" Name="标准配置">
         <PortTCP>8081</PortTCP>
         <PortHttp>8082</PortHttp>
         <PoolSizeSAP>1</PoolSizeSAP>
@@ -41,5 +33,7 @@
         <MonInterval>2000</MonInterval>
       </Perform>
     </PerformList>
+    <URLLocal/>
+    <URLRemote/>
   </Param>
 </ParamPacks>

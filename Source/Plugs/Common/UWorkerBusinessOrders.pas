@@ -1238,11 +1238,6 @@ begin
       //磅房处理自动出厂
       WriteLog('磅房处理自动出厂');
       {$ELSE}
-        {$IFDEF MHSN}
-        gHardShareData('TruckOut:' + nPound[0].FCard);
-        //磅房处理自动出厂
-        WriteLog('磅房处理自动出厂');
-        {$ELSE}
         nSQL := 'Select D_Value From %s Where D_Name=''AutoOutStock'' and D_Value=''%s''';
         nSQL := Format(nSQL, [sTable_SysDict, nPound[0].FStockNo]);
 
@@ -1253,7 +1248,6 @@ begin
           //磅房处理自动出厂
           WriteLog('磅房处理自动出厂');
         end;
-        {$ENDIF}
       {$ENDIF}
     end;
   end;

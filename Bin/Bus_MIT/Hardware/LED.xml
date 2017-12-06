@@ -3,7 +3,7 @@
   <card ID="11" Name="大厅" Group="A">
     <param>
       <type>5E1</type>
-      <ip>192.168.3.90</ip>
+      <ip>192.168.210.11</ip>
       <port>5005</port>
       <width>256</width>
       <height>128</height>
@@ -11,7 +11,7 @@
     </param>
     <head_area>
       <rect L="0" T="0" W="256" H="20" />
-      <text>     新安中联万基水泥有限公司欢迎您来提货     </text>
+      <text>     青海祁连山水泥有限公司欢迎您来提货     </text>
       <fontname>宋体</fontname>
       <fontsize>15</fontsize>
       <fontbold>1</fontbold>
@@ -53,7 +53,7 @@
   <card ID="12" Name="外厅" Group="B">
     <param>
       <type>5E1</type>
-      <ip>192.168.3.89</ip>
+      <ip>192.168.210.12</ip>
       <port>8000</port>
       <width>288</width>
       <height>192</height>
@@ -61,7 +61,7 @@
     </param>
     <head_area>
       <rect L="0" T="0" W="288" H="30" />
-      <text>     新安中联万基水泥有限公司欢迎您来提货     </text>
+      <text>     青海祁连山水泥水泥有限公司欢迎您来提货     </text>
       <fontname>宋体</fontname>
       <fontsize>18</fontsize>
       <fontbold>1</fontbold>

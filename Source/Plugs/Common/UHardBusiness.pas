@@ -2451,6 +2451,12 @@ end;
 procedure MakeTruckAutoOut(const nCardNo: string);
 var nReader,nExtReader: string;
 begin
+  {$IFDEF GGJC}
+  nReader := gHardwareHelper.GetReaderLastOn(nCardNo,nExtReader);
+  if nReader <> '' then
+    gHardwareHelper.SetReaderCard(nReader, nCardNo);
+  //Ä£ÄâË¢¿¨
+  {$ELSE}
   if gTruckQueueManager.IsTruckAutoOut then
   begin
     nReader := gHardwareHelper.GetReaderLastOn(nCardNo,nExtReader);
@@ -2458,6 +2464,7 @@ begin
       gHardwareHelper.SetReaderCard(nReader, nCardNo);
     //Ä£ÄâË¢¿¨
   end;
+  {$ENDIF}
 end;
 
 //Date: 2012-12-16

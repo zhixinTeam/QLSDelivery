@@ -1,9 +1,23 @@
 <?xml version="1.0" encoding="gb2312"?>
 <hosts>
-  <host name="散装库(1-3)">
+  <host name="熟料库">
+    <param>
+      <id>HostS</id>
+      <ip>192.168.210.80</ip>
+      <port>6000</port>
+    </param>
+    <lines>
+      <item>
+        <tunnel>SL001</tunnel>
+        <line>0</line>
+        <card>1</card>
+      </item>
+    </lines>
+  </host>
+  <host name="散装库(1-4)">
     <param>
       <id>HostA</id>
-      <ip>192.168.3.111</ip>
+      <ip>192.168.210.75</ip>
       <port>6000</port>
     </param>
     <lines>
@@ -27,54 +41,54 @@
         <line>3</line>
         <card>4</card>
       </item>
-      <item>
-        <tunnel>FH005</tunnel>
-        <line>4</line>
-        <card>5</card>
-      </item>
-       <item>
-        <tunnel>FH006</tunnel>
-        <line>5</line>
-        <card>6</card>
-      </item>
     </lines>
   </host>
-  <host name="散装库(4-6)">
+  <host name="散装库(5-8)">
     <param>
       <id>HostB</id>
-      <ip>192.168.3.112</ip>
+      <ip>192.168.210.76</ip>
       <port>6000</port>
     </param>
     <lines>
       <item>
-        <tunnel>FH007</tunnel>
+        <tunnel>FH005</tunnel>
         <line>0</line>
         <card>1</card>
       </item>
       <item>
-        <tunnel>FH008</tunnel>
+        <tunnel>FH006</tunnel>
         <line>1</line>
         <card>2</card>
       </item>
       <item>
-        <tunnel>FH009</tunnel>
+        <tunnel>FH007</tunnel>
         <line>2</line>
         <card>3</card>
       </item>
       <item>
-        <tunnel>FH010</tunnel>
+        <tunnel>FH008</tunnel>
         <line>3</line>
         <card>4</card>
       </item>
       <item>
-        <tunnel>FH011</tunnel>
+        <tunnel>FH015</tunnel>
         <line>4</line>
         <card>5</card>
       </item>
       <item>
-        <tunnel>FH012</tunnel>
+        <tunnel>FH016</tunnel>
         <line>5</line>
         <card>6</card>
+      </item>
+      <item>
+        <tunnel>FH017</tunnel>
+        <line>6</line>
+        <card>7</card>
+      </item>
+      <item>
+        <tunnel>FH018</tunnel>
+        <line>7</line>
+        <card>8</card>
       </item>
     </lines>
   </host>

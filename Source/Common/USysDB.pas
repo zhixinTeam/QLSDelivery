@@ -386,6 +386,13 @@ ResourceString
   sTable_XT_TRANSPLAN = 'EXTTRANSPLANLOG';           //AX提货单表
 
 const
+  sFlag_Departments   = 'Departments';               //部门列表
+  sFlag_DepDaTing     = '大厅';                      //服务大厅
+  sFlag_DepJianZhuang = '监装';                      //监装
+  sFlag_DepBangFang   = '磅房';                      //磅房
+  sFlag_Solution_YN   = 'Y=通过;N=禁止';
+  sFlag_Solution_YNI  = 'Y=通过;N=禁止;I=忽略';
+
   {*新建表*}
   sSQL_NewSysDict = 'Create Table $Table(D_ID $Inc, D_Name varChar(15),' +
        'D_Desc varChar(30), D_Value varChar(50), D_Memo varChar(20),' +

@@ -21,42 +21,141 @@
 <HY_RFID102>
   <config>
     <enable>Y</enable>
-    <thread>4</thread>
+    <thread>6</thread>
     <monitor>1</monitor>
     <cardlen>10</cardlen>
+    <cardprefix>C0F0,C0F1</cardprefix>
   </config>
   <readers>
-    <reader id="16230279">
-      <ip>192.168.212.101</ip>
-      <port>6021</port>
-      <tunnel>16230279</tunnel>
-      <enable>N</enable>
-      <keeponce keeppeer="Y">10</keeponce>
-      <virtual reader="16230279" type="900">Y</virtual>
+  <reader id="dz01">
+      <enable>Y</enable>
+      <ip>192.168.210.151</ip>
+      <port>6151</port>
+      <tunnel>FH001</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
     </reader>
-     <reader id="16230277">
-      <ip>192.168.212.103</ip>
-      <port>6022</port>
-      <tunnel>16230277</tunnel>
-      <enable>N</enable>
-      <keeponce keeppeer="Y">10</keeponce>
-      <virtual reader="16230277" type="900">Y</virtual>
+    <reader id="dz02">
+      <ip>192.168.210.152</ip>
+      <port>6152</port>
+      <tunnel>FH002</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
     </reader>
-     <reader id="16230285">
-      <ip>192.168.212.104</ip>
-      <port>6023</port>
-      <tunnel>16230285</tunnel>
-      <enable>N</enable>
-      <keeponce keeppeer="Y">10</keeponce>
-      <virtual reader="16230285" type="900">Y</virtual>
+    <reader id="dz03">
+      <ip>192.168.210.153</ip>
+      <port>6153</port>
+      <tunnel>FH003</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
     </reader>
-     <reader id="16230293">
-      <ip>192.168.212.105</ip>
-      <port>6000</port>
-      <tunnel>16230293</tunnel>
-      <enable>N</enable>
-      <keeponce keeppeer="Y">10</keeponce>
-      <virtual reader="16230293" type="900">Y</virtual>
+    <reader id="dz04">
+      <ip>192.168.210.154</ip>
+      <port>6154</port>
+      <tunnel>FH004</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
+    </reader>
+    <reader id="dz05">
+      <ip>192.168.210.155</ip>
+      <port>6155</port>
+      <tunnel>FH005</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
+    </reader>
+    <reader id="dz06">
+      <ip>192.168.210.156</ip>
+      <port>6156</port>
+      <tunnel>FH006</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
+    </reader>
+    <reader id="dz07">
+      <ip>192.168.210.157</ip>
+      <port>6157</port>
+      <tunnel>FH007</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
+    </reader>
+    <reader id="dz08">
+      <ip>192.168.210.158</ip>
+      <port>6158</port>
+      <tunnel>FH008</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
+    </reader>
+    <reader id="dz09">
+      <ip>192.168.210.159</ip>
+      <port>6159</port>
+      <tunnel>FH009</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
+    </reader>
+    <reader id="dz10">
+      <ip>192.168.210.160</ip>
+      <port>6160</port>
+      <tunnel>FH010</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
+    </reader>
+    <reader id="dz11">
+      <ip>192.168.210.161</ip>
+      <port>6161</port>
+      <tunnel>FH011</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
+    </reader>
+    <reader id="dz12">
+      <ip>192.168.210.162</ip>
+      <port>6162</port>
+      <tunnel>FH012</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
+    </reader>
+    <reader id="sl13">
+      <ip>192.168.210.163</ip>
+      <port>6163</port>
+      <tunnel>SL001</tunnel>
+      <keeponce keeppeer="N">5000</keeponce>
+      <virtual reader="" type="900">N</virtual>
+      <cardlen>10</cardlen>
+      <cardprefix>C0F0</cardprefix>
+      <options>key1=value;key2=value</options>
     </reader>
   </readers>
 </HY_RFID102>

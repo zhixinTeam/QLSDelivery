@@ -7,32 +7,88 @@
     <!--启用计数器连锁 1,开启;其它,关闭 -->
   </config>
   <printers>
-    <item id="1期北">
-      <ip>192.168.3.81</ip>
+    <item id="1号道">
+      <ip>192.168.210.165</ip>
       <port>8000</port>
       <driver>zero</driver>
       <tunnel>ZT001</tunnel>
       <enable>1</enable>
     </item>
-    <item id="1期南">
-      <ip>192.168.3.82</ip>
+    <item id="2号道">
+      <ip>192.168.210.166</ip>
       <port>8000</port>
       <driver>zero</driver>
       <tunnel>ZT002</tunnel>
       <enable>1</enable>
     </item>
-    <item id="2期北">
-      <ip>192.168.3.83</ip>
+    <item id="3号道">
+      <ip>192.168.210.167</ip>
       <port>8000</port>
       <driver>zero</driver>
       <tunnel>ZT003</tunnel>
       <enable>1</enable>
     </item>
-    <item id="2期南">
-      <ip>192.168.3.84</ip>
+    <item id="4号道">
+      <ip>192.168.210.168</ip>
       <port>8000</port>
       <driver>zero</driver>
       <tunnel>ZT004</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="5号道">
+      <ip>192.168.210.169</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT005</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="6号道">
+      <ip>192.168.210.170</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT006</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="7号道">
+      <ip>192.168.210.171</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT007</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="8号道">
+      <ip>192.168.210.172</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT008</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="9号道">
+      <ip>192.168.210.173</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT009</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="10号道">
+      <ip>192.168.210.174</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT010</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="11号道">
+      <ip>192.168.210.175</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT011</tunnel>
+      <enable>1</enable>
+    </item>
+    <item id="12号道">
+      <ip>192.168.210.176</ip>
+      <port>8000</port>
+      <driver>zero</driver>
+      <tunnel>ZT012</tunnel>
       <enable>1</enable>
     </item>
   </printers>

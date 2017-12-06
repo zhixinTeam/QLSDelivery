@@ -772,7 +772,6 @@ begin
       FListC.Values['Object'] := sFlag_BillNo;
       //to get serial no
 
-      //{$IFDEF GGJC}
       if Length(FListA.Values['LID']) > 8 then
         nOut.FData := FListA.Values['LID']
       else
@@ -781,12 +780,6 @@ begin
             FListC.Text, sFlag_Yes, @nOut) then
         raise Exception.Create(nOut.FData);
       end;
-      //{$ELSE}
-      {if not TWorkerBusinessCommander.CallMe(cBC_GetSerialNO,
-          FListC.Text, sFlag_Yes, @nOut) then
-      raise Exception.Create(nOut.FData); }
-      //xxxxx
-      //{$ENDIF}
 
       FOut.FData := FOut.FData + nOut.FData + ',';
       //combine bill

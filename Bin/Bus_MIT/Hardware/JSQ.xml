@@ -6,36 +6,94 @@
     <count>0</count>
     <!--开启计数 1,开启;其它,关闭 -->
   </config>
-  <item name="11111">
+  <item name="1线">
     <param>
-      <ip>192.168.76.77</ip>
+      <ip>192.168.210.177</ip>
       <port>8000</port>
       <addr>1</addr>
       <linenum>4</linenum>
     </param>
     <lines>
       <line>
-        <id>zt001</id>
+        <id>ZT001</id>
         <name>装车1道</name>
-        <tunnel>1</tunnel>
+        <tunnel>001</tunnel>
         <delay>7</delay>
       </line>
       <line>
-        <id>zt002</id>
+        <id>ZT002</id>
         <name>装车2道</name>
-        <tunnel>2</tunnel>
+        <tunnel>002</tunnel>
         <delay>7</delay>
       </line>
       <line>
-        <id>zt003</id>
+        <id>ZT003</id>
         <name>装车3道</name>
-        <tunnel>3</tunnel>
+        <tunnel>003</tunnel>
         <delay>7</delay>
       </line>
       <line>
-        <id>zt004</id>
+        <id>ZT004</id>
         <name>装车4道</name>
-        <tunnel>4</tunnel>
+        <tunnel>004</tunnel>
+        <delay>7</delay>
+      </line>
+    </lines>
+  </item>
+  <item name="2线">
+    <param>
+      <ip>192.168.210.178</ip>
+      <port>8000</port>
+      <addr>1</addr>
+      <linenum>4</linenum>
+    </param>
+    <lines>
+      <line>
+        <id>ZT005</id>
+        <name>装车5道</name>
+        <tunnel>005</tunnel>
+        <delay>7</delay>
+      </line>
+      <line>
+        <id>ZT006</id>
+        <name>装车6道</name>
+        <tunnel>006</tunnel>
+        <delay>7</delay>
+      </line>
+      <line>
+        <id>ZT007</id>
+        <name>装车7道</name>
+        <tunnel>007</tunnel>
+        <delay>7</delay>
+      </line>
+      <line>
+        <id>ZT008</id>
+        <name>装车8道</name>
+        <tunnel>008</tunnel>
+        <delay>7</delay>
+      </line>
+      <line>
+        <id>ZT009</id>
+        <name>装车9道</name>
+        <tunnel>009</tunnel>
+        <delay>7</delay>
+      </line>
+      <line>
+        <id>ZT010</id>
+        <name>装车10道</name>
+        <tunnel>010</tunnel>
+        <delay>7</delay>
+      </line>
+      <line>
+        <id>ZT011</id>
+        <name>装车11道</name>
+        <tunnel>011</tunnel>
+        <delay>7</delay>
+      </line>
+      <line>
+        <id>ZT012</id>
+        <name>装车12道</name>
+        <tunnel>012</tunnel>
         <delay>7</delay>
       </line>
     </lines>

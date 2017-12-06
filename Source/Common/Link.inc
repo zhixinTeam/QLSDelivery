@@ -65,16 +65,18 @@
   //古浪
   {.$DEFINE YDKP} 
   //永登、定西开票
-  {.$DEFINE YDSN} 
-  //永登
-  {$DEFINE PLKP} 
+  {$DEFINE YDSN} 
+  //永登、中川商砼
+  {.$DEFINE PLKP} 
   //平凉开票
   {.$DEFINE XHPZ} 
   //定西皮重
   {.$DEFINE ZXKP} 
   //漳县
-  {.$DEFINE GGJC} 
-  //甘谷、兰州商砼自动出厂
+  {$DEFINE ZCST}
+  //中川商砼
+  {$DEFINE GGJC} 
+  //甘谷、兰州商砼、中川商砼自动出厂
   {.$DEFINE CXSY} 
   //成县试样编号
   {.$DEFINE LZST} 
@@ -85,10 +87,10 @@
   //民和
   {.$DEFINE WDFH}
   //陇南武都散装共用道放灰
-  {$DEFINE CXKC}
+  {.$DEFINE CXKC}
   //成县空车出厂
-  {$DEFINE MultiReplay}
+  {.$DEFINE MultiReplay}
   //计数器应答模式
-  {$DEFINE M100Reader}
+  {.$DEFINE M100Reader}
   //启用M100Reader
 {$ENDIF}

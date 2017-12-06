@@ -10,28 +10,198 @@
 *.ledtext: LED显示内容
 +++++++++++++++++++++++++++++++++++ -->
 <readers>
-  <config>
-    <local_port>1234</local_port>
-    <keep_readone>6000</keep_readone>
-    <keep_readkeep>2000</keep_readkeep>
-    <keep_elabel>300</keep_elabel>
-  </config>
   <readone>
     <item>
+      <id>ZT101</id>
+      <ip>192.168.210.106</ip>
+      <port>1234</port>
+      <tunnel>ZT101</tunnel>
+      <type>1</type>
+    </item>
+    <item>
+      <id>ZT102</id>
+      <ip>192.168.210.107</ip>
+      <port>1234</port>
+      <tunnel>ZT102</tunnel>
+      <type>2</type>
+      <printer>EPSON TM-U220 Receipt</printer>
+      <HYprinter>HP LaserJet Pro M201-M202 PCL 6</HYprinter>
+    </item>
+    <item>
+      <id>SL001</id>
+      <ip>192.168.210.63</ip>
+      <port>1234</port>
+      <tunnel>SL001</tunnel>
+      <type>0</type>
+    </item>
+    <item>
       <id>ZT001</id>
-      <ip>17.0.89.181</ip>
-      <port>8000</port>
-      <tunnel>001</tunnel>
-      <uselabel>N</uselabel>
-      <options>key1=value;key2=values</options>
+      <ip>192.168.210.31</ip>
+      <port>1234</port>
+      <tunnel>ZT001</tunnel>
+      <type>0</type>
+    </item>
+    <item>
+      <id>ZT002</id>
+      <ip>192.168.210.32</ip>
+      <port>1234</port>
+      <tunnel>ZT002</tunnel>
+      <type>0</type>
+    </item>
+    <item>
+      <id>ZT003</id>
+      <ip>192.168.210.33</ip>
+      <port>1234</port>
+      <tunnel>ZT003</tunnel>
+      <type>0</type>
+    </item>
+    <item>
+      <id>ZT004</id>
+      <ip>192.168.210.34</ip>
+      <port>1234</port>
+      <tunnel>ZT004</tunnel>
+      <type>0</type>
+    </item>
+     <item>
+      <id>ZT005</id>
+      <ip>192.168.210.35</ip>
+      <port>1234</port>
+      <tunnel>ZT005</tunnel>
+      <type>0</type>
+    </item>
+    <item>
+      <id>ZT006</id>
+      <ip>192.168.210.36</ip>
+      <port>1234</port>
+      <tunnel>ZT006</tunnel>
+      <type>0</type>
+    </item>
+    <item>
+      <id>ZT007</id>
+      <ip>192.168.210.37</ip>
+      <port>1234</port>
+      <tunnel>ZT007</tunnel>
+      <type>0</type>
+    </item>
+    <item>
+      <id>ZT008</id>
+      <ip>192.168.210.38</ip>
+      <port>1234</port>
+      <tunnel>ZT008</tunnel>
+      <type>0</type>
+    </item>
+    <item>
+      <id>ZT015</id>
+      <ip>192.168.210.39</ip>
+      <port>1234</port>
+      <tunnel>ZT015</tunnel>
+      <type>0</type>
+    </item>
+    <item>
+      <id>ZT016</id>
+      <ip>192.168.210.40</ip>
+      <port>1234</port>
+      <tunnel>ZT016</tunnel>
+      <type>0</type>
+    </item>
+    <item>
+      <id>ZT017</id>
+      <ip>192.168.210.41</ip>
+      <port>1234</port>
+      <tunnel>ZT017</tunnel>
+      <type>0</type>
+    </item>
+    <item>
+      <id>ZT018</id>
+      <ip>192.168.210.42</ip>
+      <port>1234</port>
+      <tunnel>ZT018</tunnel>
+      <type>0</type>
     </item>
   </readone>
   <readkeep>
     <item>
       <id>FH001</id>
-      <ip>17.0.89.171</ip>
+      <ip>192.168.210.51</ip>
       <port>8000</port>
       <tunnel>FH001</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH002</id>
+      <ip>192.168.210.52</ip>
+      <port>8000</port>
+      <tunnel>FH002</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH003</id>
+      <ip>192.168.210.53</ip>
+      <port>8000</port>
+      <tunnel>FH003</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH004</id>
+      <ip>192.168.210.54</ip>
+      <port>8000</port>
+      <tunnel>FH004</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH005</id>
+      <ip>192.168.210.55</ip>
+      <port>8000</port>
+      <tunnel>FH005</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH006</id>
+      <ip>192.168.210.56</ip>
+      <port>8000</port>
+      <tunnel>FH006</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH007</id>
+      <ip>192.168.210.57</ip>
+      <port>8000</port>
+      <tunnel>FH007</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH008</id>
+      <ip>192.168.210.58</ip>
+      <port>8000</port>
+      <tunnel>FH008</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH009</id>
+      <ip>192.168.210.59</ip>
+      <port>8000</port>
+      <tunnel>FH009</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH010</id>
+      <ip>192.168.210.60</ip>
+      <port>8000</port>
+      <tunnel>FH010</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH011</id>
+      <ip>192.168.210.61</ip>
+      <port>8000</port>
+      <tunnel>FH011</tunnel>
+      <ledtext>  善用资源    服务建设  </ledtext>
+    </item>
+    <item>
+      <id>FH012</id>
+      <ip>192.168.210.62</ip>
+      <port>8000</port>
+      <tunnel>FH012</tunnel>
       <ledtext>  善用资源    服务建设  </ledtext>
     </item>
   </readkeep>

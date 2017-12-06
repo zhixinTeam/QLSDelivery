@@ -508,6 +508,15 @@ begin
       Exit;
     end;
     {$ENDIF}
+
+    {$IFDEF ZCST}
+    if (FNextStatus=sFlag_TruckNone) then
+    begin
+      nStr:= TruckIn(nCard);
+      LoadBillItems(FCardTmp);
+      Exit;
+    end;
+    {$ENDIF}
     if (FStatus <> sFlag_TruckBFP) and (FNextStatus = sFlag_TruckZT) then
       FNextStatus := sFlag_TruckBFP;
     //×´Ì¬Ð£Õý
