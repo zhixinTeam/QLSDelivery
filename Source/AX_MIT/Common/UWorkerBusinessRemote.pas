@@ -238,7 +238,7 @@ begin
   Result := ISrvBusiness(FChannel.FChannel).Action(GetFlagStr(cWorker_GetMITName), nData);
   //remote call
 
-  nPacker.UnPackOut(nData, @nOut);
+  //nPacker.UnPackOut(nData, @nOut);
   {$IFDEF DEBUG}
   WriteLog('TSendAXMsgWorker Send::: ' + nStr);
   WriteLog('TSendAXMsgWorker Result::: ' + nOut.FData);

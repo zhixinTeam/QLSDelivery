@@ -30,7 +30,7 @@ type
   TCompanyIdUrl = record
     FCompanyId: string;
     FRemoteUrl: string;
-    FEnable   : Boolean;
+    FLeaseRemoteUrl: string;
   end;
 
 type
@@ -64,6 +64,8 @@ type
   private
     FOwner: TAxMsgManager;
     //拥有者
+    FDBConn: PDBWorker;
+    //数据对象
     FListA,FListB,FListC: TStrings;
     //列表对象
     FXMLBuilder: TNativeXml;
@@ -74,6 +76,7 @@ type
     procedure BuildDefaultXMLPack;
     //构造XML基本结构
     function GetCompanyID: Pointer;
+    function GetLeaseState(const nInfo: TAXSendDataInfo): Boolean;
     procedure DoNewSendAXMsg;
     procedure Execute; override;
     //执行线程
@@ -310,7 +313,11 @@ begin
              FRemoteUrl := nTmp.ValueAsString
         else FRemoteUrl := '';
 
-        FEnable := True;
+        nTmp := nNode.NodeByName('LeaseRemoteURL');
+        if Assigned(nTmp) then
+             FLeaseRemoteUrl := nTmp.ValueAsString
+        else FLeaseRemoteUrl := '';
+        
       end;
     end;
   finally
@@ -617,9 +624,28 @@ begin
   end;
 end;
 
+//lih 2017-12-19
+function TSendAxMsgThread.GetLeaseState(const nInfo: TAXSendDataInfo): Boolean;
+var
+  nSQL: string;
+begin
+  Result := False;
+  FDBConn := nil;
+  with nInfo do
+  begin
+    nSQL := 'select PurchPoolId from %s where dataareaid = ''%s'' and recid = ''%s'' and PurchPoolId = ''%s'' ';
+    nSQL := Format(nSQL, [sTable_AX_PurOrder, FCompanyId, FRefRecid, sFlag_Hnzl]);
+    with gDBConnManager.SQLQuery(nSQL, FDBConn, sFlag_DB_AX) do
+    if RecordCount > 0 then
+    begin
+      Result := True;
+    end;
+  end;
+end;
+
 procedure TSendAxMsgThread.DoNewSendAXMsg;
 var nIdx:Integer;
-    nBool: Boolean;
+    nBool, nLease: Boolean;
     nCIU: PCompanyIdUrl;
     nSDI: PAXSendDataInfo;
     nData: TAXSendDataInfo;
@@ -634,6 +660,7 @@ begin
 
     nCIU := GetCompanyId;
     nBool := False;
+    nLease := False;
     nIdx := 0;
     
     while nIdx < FAXDATA.Count do
@@ -645,7 +672,9 @@ begin
       begin
         nData := nSDI^;
         //copy data
-        
+        if nCIU.FLeaseRemoteUrl <> '' then
+          nLease := GetLeaseState(nData);
+
         with nData, FXMLBuilder.Root.NodeNew('Item') do
         begin
           NodeNew('CompanyId').ValueAsString   := FCompanyId;
@@ -670,18 +699,19 @@ begin
   finally
     FSyncCS.Leave;
   end;
-  try
   if nBool then
   begin
-    CallRemoteWorker(sCLI_BusinessMessage, FXMLBuilder.WriteToString, nCIU.FRemoteUrl, nData.FMsgNo, @nOut);
-    WriteLog('SendAxMsgThread');
-  end;
-  except
-    on e:Exception do
+    if nLease then  //是否租赁
     begin
-      WriteLog('SendAxMsgThread: ' + e.Message);
+      if not CallRemoteWorker(sCLI_BusinessMessage, FXMLBuilder.WriteToString, nCIU.FLeaseRemoteUrl, nData.FMsgNo, @nOut) then
+        WriteLog('SendAxMsgThread Error: ' + nOut.FData);
+    end else
+    begin
+      if not CallRemoteWorker(sCLI_BusinessMessage, FXMLBuilder.WriteToString, nCIU.FRemoteUrl, nData.FMsgNo, @nOut) then
+        WriteLog('SendAxMsgThread Error: ' + nOut.FData);
     end;
   end;
+
 end;
 
 initialization

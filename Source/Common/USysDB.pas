@@ -250,6 +250,7 @@ ResourceString
   sFlag_OnLineModel   = 'OnLineModel';               //在线模式
   sFlag_NoSampleID    = 'NoSampleID';                //无试样编号
   sFlag_Sgzl          = 'HuYanSgzl';                 //石膏种类
+  sFlag_Hnzl          = 'HNZL';                      //混凝租赁
 
   {*数据表*}
   sTable_Group        = 'Sys_Group';                 //用户组

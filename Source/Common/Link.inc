@@ -66,7 +66,7 @@
   {.$DEFINE YDKP} 
   //永登、定西开票
   {$DEFINE YDSN} 
-  //永登、中川商砼
+  //永登、中川商砼、甘谷商砼
   {.$DEFINE PLKP} 
   //平凉开票
   {.$DEFINE XHPZ} 
@@ -74,9 +74,9 @@
   {.$DEFINE ZXKP} 
   //漳县
   {$DEFINE ZCST}
-  //中川商砼
+  //中川商砼、甘谷商砼
   {$DEFINE GGJC} 
-  //甘谷、兰州商砼、中川商砼自动出厂
+  //甘谷、兰州商砼、中川商砼、甘谷商砼自动出厂
   {.$DEFINE CXSY} 
   //成县试样编号
   {.$DEFINE LZST} 
