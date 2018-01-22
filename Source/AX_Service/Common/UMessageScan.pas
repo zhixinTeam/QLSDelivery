@@ -27,7 +27,7 @@ const
   get_AX_Providers           = 'EDB_0007';
   get_AX_Materails           = 'EDB_0008';
   get_AX_ThInfo              = 'EDS_0011';
-  get_AX_YKAmount            = 'EDS_0011';
+  get_AX_YKAmount            = 'EWS_0001';
 type
   TMessageScan = class;
   TMessageScanThread = class(TThread)

@@ -95,6 +95,8 @@ type
     FEmptyPoundIdleLong: Int64;
     FEmptyPoundIdleShort: Int64;
     //空磅计时
+    FMaxPoundWeight: Double;
+    //称重最大上限
     FPoundVoice: string;
     //称重异常数据语音
     procedure SetUIData(const nReset: Boolean; const nOnlyData: Boolean = False);
@@ -256,6 +258,12 @@ begin
 
     FEmptyPoundWeight := FEmptyPoundWeight / 1000;
     //unit kilo
+
+    nStr := FPoundTunnel.FOptions.Values['MaxWeight'];
+    if IsNumber(nStr, True) then
+         FMaxPoundWeight := StrToFloat(nStr)
+    else FMaxPoundWeight := 150;
+    //unit ton
 
     nStr := FPoundTunnel.FOptions.Values['EmptyIdleLong'];
     if IsNumber(nStr, False) then
@@ -497,6 +505,15 @@ begin
         end;
       end;
 
+    end;
+    {$ENDIF}
+
+    {$IFDEF QHSN}
+    if GetNeiDao(FStockNo) and (FNextStatus=sFlag_TruckNone) then
+    begin
+      nStr:= TruckIn(nCard);
+      LoadBillItems(FCardTmp);
+      Exit;
     end;
     {$ENDIF}
 
@@ -890,28 +907,30 @@ begin
           end;
         end;
         {$IFDEF ZXKP}
-        if (FType = sFlag_San) and
-          (Pos('熟料',FStockName)<=0) and
-          (nNet > 0) and (nNet < 48) then
-        begin
-          nStr := '车辆[%s]净重较小,请通知司磅员检查车厢';
-          nStr := Format(nStr, [FUIData.FTruck]);
-          PlayVoice(nStr);
-
-          nStr := '车辆[ %s ]净重小于48吨,详情如下:' + #13#10#13#10 +
-                  '※.皮重: %.2f吨' + #13#10 +
-                  '※.毛重: %.2f吨' + #13#10 +
-                  '※.净重: %.2f吨' + #13#10#13#10 +
-                  '是否继续保存?';
-          nStr := Format(nStr, [FUIData.FTruck, FUIData.FPData.FValue,
-                  FUIData.FMData.FValue, nNet]);
-          if not QueryDlg(nStr, sAsk) then
+          {$IFNDEF DXSN}
+          if (FType = sFlag_San) and
+            (Pos('熟料',FStockName)<=0) and
+            (nNet > 0) and (nNet < 48) then
           begin
-            FIsSaveing := True;
-            Result:=True;
-            Exit;
+            nStr := '车辆[%s]净重较小,请通知司磅员检查车厢';
+            nStr := Format(nStr, [FUIData.FTruck]);
+            PlayVoice(nStr);
+
+            nStr := '车辆[ %s ]净重小于48吨,详情如下:' + #13#10#13#10 +
+                    '※.皮重: %.2f吨' + #13#10 +
+                    '※.毛重: %.2f吨' + #13#10 +
+                    '※.净重: %.2f吨' + #13#10#13#10 +
+                    '是否继续保存?';
+            nStr := Format(nStr, [FUIData.FTruck, FUIData.FPData.FValue,
+                    FUIData.FMData.FValue, nNet]);
+            if not QueryDlg(nStr, sAsk) then
+            begin
+              FIsSaveing := True;
+              Result:=True;
+              Exit;
+            end;
           end;
-        end;
+          {$ENDIF}
         {$ENDIF}
       end;
     end else
@@ -1164,9 +1183,11 @@ begin
   if gSysParam.FIsManual then Exit;
   //手动时无效
 
-  if FPoundTunnel.FPort.FMaxValue>0 then
+  //if FPoundTunnel.FPort.FMaxValue>0 then
+  if FMaxPoundWeight > 0 then
   begin
-    if nResValue>FPoundTunnel.FPort.FMaxValue then
+    //if nResValue>FPoundTunnel.FPort.FMaxValue then
+    if nResValue>FMaxPoundWeight then
     begin
       WriteLog(FUIData.FTruck+'超重值: '+FormatFloat('0.00',nResValue));
       PlayVoice(FUIData.FTruck+'已超载,请到更高吨位磅称重.');

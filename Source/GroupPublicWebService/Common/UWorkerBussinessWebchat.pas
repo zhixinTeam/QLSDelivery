@@ -391,6 +391,7 @@ function TBusWorkerBusinessWebchat.GetInOutFactoryTatol(var nData:string):Boolea
 var nOut: TWorkerBusinessCommand;
     nItems: TInOutFactListItems;
     nIdx: Integer;
+    nDValue,nSValue,nTotalValue: Double;
 begin
   Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
             @nOut, cBC_WeChat_InOutFactoryTotal, Trim(FIn.FRemoteUL));
@@ -401,10 +402,27 @@ begin
   begin
     with FPacker.XMLBuilder do
     begin
+      AnalyseInOutFactListItems(nOut.FData, nItems);
+
+      for nIdx := Low(nItems) to High(nItems) do
+      with nItems[nIdx] do
+      begin
+        if Pos('´ü', FStockName) > 0 then
+          nDValue := nDValue + FStockValue
+        else
+          nSValue := nSValue + FStockValue;
+        nTotalValue := nTotalValue + FStockValue;
+      end;
+      
+      with Root.NodeNew('head') do
+      begin
+        NodeNew('DValue').ValueAsString := FormatFloat('0.00', nDValue);
+        NodeNew('SValue').ValueAsString := FormatFloat('0.00', nSValue);
+        NodeNew('TotalValue').ValueAsString := FormatFloat('0.00', nTotalValue);
+      end;
+
       with Root.NodeNew('Items') do
       begin
-        AnalyseInOutFactListItems(nOut.FData, nItems);
-
         for nIdx := Low(nItems) to High(nItems) do
         with NodeNew('Item'), nItems[nIdx] do
         begin

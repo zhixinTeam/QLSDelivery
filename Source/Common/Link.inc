@@ -61,36 +61,38 @@
   //状态栏显示
   {$DEFINE HYRFID201}
   //华益读头
+  {$DEFINE MultiReplay}
+  //计数器应答模式
+  {$DEFINE M100Reader}
+  //启用M100Reader自动收卡机
   {.$DEFINE GLPURCH} 
   //古浪
   {.$DEFINE YDKP} 
-  //永登、定西开票
-  {$DEFINE YDSN} 
+  //永登开票
+  {.$DEFINE YDSN} 
   //永登、中川商砼、甘谷商砼
   {.$DEFINE PLKP} 
   //平凉开票
   {.$DEFINE XHPZ} 
-  //定西皮重
+  //夏河、定西
+  {.$DEFINE DXSN} 
+  //定西
   {.$DEFINE ZXKP} 
-  //漳县
-  {$DEFINE ZCST}
+  //漳县、定西
+  {.$DEFINE ZCST}
   //中川商砼、甘谷商砼
-  {$DEFINE GGJC} 
+  {.$DEFINE GGJC} 
   //甘谷、兰州商砼、中川商砼、甘谷商砼自动出厂
   {.$DEFINE CXSY} 
   //成县试样编号
+  {.$DEFINE CXKC}
+  //成县空车出厂
   {.$DEFINE LZST} 
   //兰州商砼水泥內倒
   {.$DEFINE QHSN} 
   //青海
-  {.$DEFINE MHSN} 
+  {$DEFINE MHSN} 
   //民和
   {.$DEFINE WDFH}
   //陇南武都散装共用道放灰
-  {.$DEFINE CXKC}
-  //成县空车出厂
-  {.$DEFINE MultiReplay}
-  //计数器应答模式
-  {.$DEFINE M100Reader}
-  //启用M100Reader
 {$ENDIF}

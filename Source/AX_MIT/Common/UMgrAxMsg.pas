@@ -503,6 +503,7 @@ begin
           FRefRecid := FieldByName('RefRecid').AsString;
           Foperation := FieldByName('operation').AsString;
           FRecId := FieldByName('RecId').AsString;
+          FXTIndexXML := FieldByName('XTINDEXXML').AsString;
         end;
         
         nSQL:= 'update %s set SyncStart= ''%s'' where RecId= ''%s''';
