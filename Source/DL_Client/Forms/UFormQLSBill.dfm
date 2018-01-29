@@ -2,29 +2,29 @@ inherited fFormQLSBill: TfFormQLSBill
   Left = 372
   Top = 166
   ClientHeight = 422
-  ClientWidth = 462
+  ClientWidth = 474
   Position = poDesktopCenter
   OnClose = FormClose
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
-    Width = 462
+    Width = 474
     Height = 422
     inherited BtnOK: TButton
-      Left = 316
+      Left = 328
       Top = 389
       Caption = #24320#21333
-      TabOrder = 13
+      TabOrder = 14
     end
     inherited BtnExit: TButton
-      Left = 386
+      Left = 398
       Top = 389
-      TabOrder = 14
+      TabOrder = 15
     end
     object EditValue: TcxTextEdit [2]
       Left = 81
-      Top = 225
+      Top = 216
       ParentFont = False
       Properties.ReadOnly = True
       Style.BorderColor = clWindowFrame
@@ -34,7 +34,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object EditTruck: TcxTextEdit [3]
       Left = 264
-      Top = 125
+      Top = 116
       ParentFont = False
       Properties.MaxLength = 15
       Properties.ReadOnly = True
@@ -46,7 +46,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object EditLading: TcxComboBox [4]
       Left = 81
-      Top = 125
+      Top = 116
       Enabled = False
       ParentFont = False
       Properties.DropDownListStyle = lsEditFixedList
@@ -72,12 +72,12 @@ inherited fFormQLSBill: TfFormQLSBill
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
       Style.HotTrack = False
-      TabOrder = 11
+      TabOrder = 12
       Width = 121
     end
     object EditStock: TcxComboBox [6]
       Left = 81
-      Top = 200
+      Top = 191
       Enabled = False
       ParentFont = False
       Properties.ReadOnly = True
@@ -86,7 +86,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object EditJXSTHD: TcxTextEdit [7]
       Left = 277
-      Top = 150
+      Top = 141
       ParentFont = False
       Properties.ReadOnly = False
       TabOrder = 4
@@ -94,7 +94,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object cbxSampleID: TcxComboBox [8]
       Left = 277
-      Top = 250
+      Top = 241
       ParentFont = False
       Properties.DropDownListStyle = lsFixedList
       Properties.OnChange = cbxSampleIDPropertiesChange
@@ -103,7 +103,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object cbxCenterID: TcxComboBox [9]
       Left = 81
-      Top = 250
+      Top = 241
       ParentFont = False
       Properties.DropDownListStyle = lsFixedList
       Properties.OnEditValueChanged = cbxCenterIDPropertiesEditValueChanged
@@ -112,23 +112,23 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object cxLabel1: TcxLabel [10]
       Left = 399
-      Top = 250
+      Top = 241
       AutoSize = False
       ParentFont = False
       Height = 16
-      Width = 39
+      Width = 52
     end
     object chkFenChe: TcxCheckBox [11]
       Left = 137
       Top = 389
       Caption = #20998#36710#25552#36135
       ParentFont = False
-      TabOrder = 12
+      TabOrder = 13
       Width = 121
     end
     object EditType: TcxComboBox [12]
       Left = 81
-      Top = 150
+      Top = 141
       Enabled = False
       ParentFont = False
       Properties.DropDownListStyle = lsFixedList
@@ -143,7 +143,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object EditHYCus: TComboBox [13]
       Left = 81
-      Top = 175
+      Top = 166
       Width = 358
       Height = 20
       Ctl3D = True
@@ -166,6 +166,12 @@ inherited fFormQLSBill: TfFormQLSBill
       Properties.OnButtonClick = EditIDPropertiesButtonClick
       TabOrder = 0
       OnKeyPress = EditIDKeyPress
+      Width = 121
+    end
+    object cbxKw: TcxComboBox [15]
+      Left = 81
+      Top = 266
+      TabOrder = 11
       Width = 121
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
@@ -263,6 +269,11 @@ inherited fFormQLSBill: TfFormQLSBill
             Control = cxLabel1
             ControlOptions.ShowBorder = False
           end
+        end
+        object dxLayout1Item3: TdxLayoutItem
+          Caption = #24211'    '#20301':'
+          Control = cbxKw
+          ControlOptions.ShowBorder = False
         end
       end
       inherited dxLayout1Group1: TdxLayoutGroup

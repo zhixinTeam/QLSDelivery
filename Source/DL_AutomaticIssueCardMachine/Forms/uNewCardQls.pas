@@ -84,7 +84,9 @@ type
     FNewBillID,FWebOrderID:string;
     FSzttceApi:TSzttceApi;
     FAutoClose:Integer;
+    Fbegin:TDateTime;
     function DownloadOrder(const nCard:string):Boolean;
+    procedure Writelog(nMsg:string);
     function SaveBillProxy:Boolean;
     function VerifyCtrl(Sender: TObject; var nHint: string): Boolean;
     procedure SetControlsReadOnly;
@@ -107,7 +109,8 @@ var
 implementation
 uses
   ULibFun,UBusinessPacker,USysLoger,UBusinessConst,UFormMain,USysBusiness,USysDB,
-  UAdjustForm,UFormCard,UFormBase,UDataReport,UDataModule,NativeXml,DB;
+  UAdjustForm,UFormCard,UFormBase,UDataReport,UDataModule,NativeXml,DB,UMgrK720Reader,
+  DateUtils;
 {$R *.dfm}
 
 var
@@ -126,7 +129,7 @@ begin
   Action:=  caFree;
   fFormNewCardQls := nil;
   FreeAndNil(FDR);
-  fFormMain.TimerInsertCard.Enabled := True;
+  //fFormMain.TimerInsertCard.Enabled := True;
 end;
 
 procedure TfFormNewCardQls.FormShow(Sender: TObject);
@@ -140,6 +143,15 @@ begin
   FAutoClose := gSysParam.FAutoClose_Mintue;
   TimerAutoClose.Interval := 60*1000;
   TimerAutoClose.Enabled := True;
+end;
+
+procedure TfFormNewCardQls.Writelog(nMsg: string);
+var
+  nStr:string;
+begin
+  nStr := 'weborder[%s]clientid[%s]clientname[%s]sotckno[%s]stockname[%s]';
+  nStr := Format(nStr,[editWebOrderNo.Text,EditCus.Text,EditCName.Text,EditStock.Text,EditSName.Text]);
+  gSysLoger.AddLog(nStr+nMsg);
 end;
 
 procedure TfFormNewCardQls.BtnOKClick(Sender: TObject);
@@ -281,11 +293,15 @@ var
 
   nList,nTmp,nStocks: TStrings;
   nPrint:Boolean;
+  nBillID:string;
   nBillData:string;
   nNewCardNo:string;
   nStr,nType:string;
   nPos:Integer;
   nZID,nCenterID,nSampleID:string;
+  nRet: Boolean;
+  nidx:Integer;
+  i,j:Integer;
 begin
   FNewBillID := '';
   Result := False;
@@ -348,86 +364,156 @@ begin
     PrintFH.Checked := True
   else
     PrintFH.Checked := False;
-  //保存提货单
-  nStocks := TStringList.Create;
-  nList := TStringList.Create;
-  nTmp := TStringList.Create;
-  try
-    nList.Clear;
-    nPrint := False;
-    LoadSysDictItem(sFlag_PrintBill, nStocks);
-    with nTmp do
+
+  if gSysParam.FCanCreateCard then
+  begin
+    nNewCardNo := '';
+    Fbegin := Now;
+  
+    //连续三次读卡均失败，则回收卡片，重新发卡
+    for i := 0 to 3 do
     begin
-      Values['Type'] := gType;
-      Values['StockNO'] := gStockNO;
-      Values['StockName'] := EditSName.text;
-      Values['Price'] := gPrice;
-      Values['Value'] := EditValue.text;
-      Values['RECID'] := gRecID;
-      Values['SampleID'] := '';
-      {$IFDEF ZXKP}
-      if not CheckTruckCount(Trim(EditSName.text)) then
+      for nIdx:=0 to 3 do
       begin
-        ShowMsg('厂内车辆达到上限，禁止开单',sHint);
-        Exit;
+        if gMgrK720Reader.ReadCard(nNewCardNo) then Break;
+        //连续三次读卡,成功则退出。
       end;
-      {$ENDIF}
+      if nNewCardNo<>'' then Break;
+      gMgrK720Reader.RecycleCard;
     end;
 
-    nList.Add(PackerEncodeStr(nTmp.Text));
-    nPrint := nStocks.IndexOf(gStockNO) >= 0;
-
-    with nList do
+    if nNewCardNo = '' then
     begin
-      Values['Bills'] := PackerEncodeStr(nList.Text);
-      Values['LID'] := Trim(editWebOrderNo.Text);
-      Values['ZhiKa'] := gZhiKa;
-      Values['Truck'] := EditTruck.Text;
-      Values['Lading'] := IntToStr(EditLading.ItemIndex);
-      //Values['VPListID']:=
-      Values['IsVIP'] := EditType.Text;
-      //Values['Seal'] := EditFQ.Text;
-      Values['BuDan'] := 'N';
-      if PrintFH.Checked then
-        Values['IfHYprt'] := 'Y'
-      else
-        Values['IfHYprt'] := 'N';
-      Values['SalesType'] := gSalesType;
-      Values['CenterID']:= nCenterID;
-      Values['JXSTHD'] := '';
-      Values['Project'] := Trim(EditCName.Text);
-      Values['IfFenChe'] := 'N';
-      Values['KuWei'] := '';
-      Values['LocationID']:= 'A';
-      {nCenterYL:=GetCenterSUM(nStockNo,Values['CenterID']);
-      if nCenterYL <> '' then
-      begin
-        if IsNumber(nCenterYL,True) then
-        begin
-          nYL:= StrToFloat(nCenterYL);
-          if nYL <= 0 then
-          begin
-            ShowMsg('生产线余量不足：'+#13#10+FormatFloat('0.00',nYL),sHint);
-            Exit;
-          end;
-        end;
-      end; }
-    end;
-    nBillData := PackerEncodeStr(nList.Text);
-    FNewBillID := SaveBill(nBillData);
-    if FNewBillID = '' then
-    begin
-      ShowMsg('提货单保存失败！请联系管理员', sHint);
+      ShowDlg('卡箱异常,请查看是否有卡.', sWarn, Self.Handle);
       Exit;
     end;
-  finally
-    nStocks.Free;
-    nList.Free;
-    nTmp.Free;
+    Writelog('ReadCard: ' + nNewCardNo);
+    nNewCardNo := gMgrK720Reader.ParseCardNO(nNewCardNo);
+    WriteLog('ParseCardNO: ' + nNewCardNo);
+    if nNewCardNo = '' then
+    begin
+      ShowDlg('卡号异常,解析失败.', sWarn, Self.Handle);
+      Exit;
+    end;
+    //解析卡片
+    writelog('TfFormNewCard.SaveBillProxy 发卡机读卡-耗时：'+InttoStr(MilliSecondsBetween(Now, FBegin))+'ms');
+  end;
+
+  //验证是否已经保存提货单
+  FNewBillID := Trim(editWebOrderNo.Text);
+  nRet := IFSaveBill(FNewBillID);
+
+  //保存提货单
+  if not nRet then
+  begin
+    nStocks := TStringList.Create;
+    nList := TStringList.Create;
+    nTmp := TStringList.Create;
+    try
+      nList.Clear;
+      nPrint := False;
+      LoadSysDictItem(sFlag_PrintBill, nStocks);
+      with nTmp do
+      begin
+        Values['Type'] := gType;
+        Values['StockNO'] := gStockNO;
+        Values['StockName'] := EditSName.text;
+        Values['Price'] := gPrice;
+        Values['Value'] := EditValue.text;
+        Values['RECID'] := gRecID;
+        Values['SampleID'] := '';
+        {$IFDEF ZXKP}
+        if not CheckTruckCount(Trim(EditSName.text)) then
+        begin
+          ShowMsg('厂内车辆达到上限，禁止开单',sHint);
+          Exit;
+        end;
+        {$ENDIF}
+      end;
+
+      nList.Add(PackerEncodeStr(nTmp.Text));
+      nPrint := nStocks.IndexOf(gStockNO) >= 0;
+
+      with nList do
+      begin
+        Values['Bills'] := PackerEncodeStr(nList.Text);
+        Values['LID'] := Trim(editWebOrderNo.Text);
+        Values['ZhiKa'] := gZhiKa;
+        Values['Truck'] := EditTruck.Text;
+        Values['Lading'] := IntToStr(EditLading.ItemIndex);
+        //Values['VPListID']:=
+        Values['IsVIP'] := EditType.Text;
+        //Values['Seal'] := EditFQ.Text;
+        Values['BuDan'] := 'N';
+        if PrintFH.Checked then
+          Values['IfHYprt'] := 'Y'
+        else
+          Values['IfHYprt'] := 'N';
+        Values['SalesType'] := gSalesType;
+        Values['CenterID']:= nCenterID;
+        Values['JXSTHD'] := '';
+        Values['Project'] := Trim(EditCName.Text);
+        Values['IfFenChe'] := 'N';
+        Values['KuWei'] := '';
+        Values['LocationID']:= 'A';
+        {nCenterYL:=GetCenterSUM(nStockNo,Values['CenterID']);
+        if nCenterYL <> '' then
+        begin
+          if IsNumber(nCenterYL,True) then
+          begin
+            nYL:= StrToFloat(nCenterYL);
+            if nYL <= 0 then
+            begin
+              ShowMsg('生产线余量不足：'+#13#10+FormatFloat('0.00',nYL),sHint);
+              Exit;
+            end;
+          end;
+        end; }
+      end;
+      nBillData := PackerEncodeStr(nList.Text);
+      FNewBillID := SaveBill(nBillData);
+      if FNewBillID = '' then
+      begin
+        ShowMsg('提货单保存失败！请联系管理员', sHint);
+        Exit;
+      end;
+    finally
+      nStocks.Free;
+      nList.Free;
+      nTmp.Free;
+    end;
   end;
   ShowMsg('提货单保存成功', sHint);
+  nRet := SaveBillCard(FNewBillID,nNewCardNo);
+  FBegin := Now;
+  
+  if nRet then
+  begin
+    nRet := False;
+    for nIdx := 0 to 3 do
+    begin
+      nRet := gMgrK720Reader.SendReaderCmd('FC0');
+      if nRet then Break;
+    end;
+    //发卡
+  end;
+  if nRet then
+  begin
+    nHint := '商城订单号['+editWebOrderNo.Text+']发卡成功,卡号['+nNewCardNo+'],请收好您的卡片';
+    WriteLog(nHint);
+    ShowMsg(nHint,sWarn);
+  end
+  else begin
+    gMgrK720Reader.RecycleCard;
+
+    nHint := '商城订单号['+editWebOrderNo.Text+'],卡号['+nNewCardNo+']关联订单失败，请到开票窗口重新关联。';
+    WriteLog(nHint);
+    ShowDlg(nHint,sHint,Self.Handle);
+    Close;
+  end;
+  writelog('TfFormNewCard.SaveBillProxy 发卡机出卡并关联磁卡号-耗时：'+InttoStr(MilliSecondsBetween(Now, FBegin))+'ms');
   //发卡
-  if not FSzttceApi.IssueOneCard(nNewCardNo) then
+  {if not FSzttceApi.IssueOneCard(nNewCardNo) then
   begin
     nHint := '出卡失败,请到开票窗口补办磁卡：[errorcode=%d,errormsg=%s]';
     nHint := Format(nHint,[FSzttceApi.ErrorCode,FSzttceApi.ErrorMsg]);
@@ -437,7 +523,8 @@ begin
   else begin
     ShowMsg('发卡成功,卡号['+nNewCardNo+'],请收好您的卡片',sHint);
     SetBillCard(FNewBillID, EditTruck.Text,nNewCardNo, True);
-  end;
+  end; }
+
   Result := True;
   {$IFDEF PLKP}
   if nPrint then  //平凉使用

@@ -50,6 +50,8 @@ type
     dxLayout1Item20: TdxLayoutItem;
     EditID: TcxButtonEdit;
     dxLayout1Item4: TdxLayoutItem;
+    cbxKw: TcxComboBox;
+    dxLayout1Item3: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BtnOKClick(Sender: TObject);
@@ -105,6 +107,8 @@ begin
     dxLayout1Item5.Enabled:=True;
     dxLayout1Item5.Visible:=True;
     cxLabel1.Visible:=True;
+    dxLayout1Item3.Enabled:=True;
+    dxLayout1Item3.Visible:=True;
     {$ELSE}
       {$IFDEF PLKP}
       dxLayout1Item5.Enabled:=True;
@@ -114,6 +118,8 @@ begin
       dxLayout1Item5.Enabled:=False;
       dxLayout1Item5.Visible:=False;
       cxLabel1.Visible:=False;
+      dxLayout1Item3.Enabled:=True;
+      dxLayout1Item3.Visible:=True;
       {$ENDIF}
     {$ENDIF}
 
@@ -286,6 +292,19 @@ begin
     ShowMsg(nStr, sHint); Exit;
   end;
   InitCenter(gStockNO,gType,cbxCenterID);
+  {$IFDEF YDKP}
+  if pos('熟',gStockName)>0 then
+  begin
+    InitKuWei('熟料',cbxKw);
+  end else
+  if pos('袋',gStockName)>0 then
+  begin
+    InitKuWei('袋装',cbxKw);
+  end else
+  begin
+    InitKuWei('散装',cbxKw);
+  end;
+  {$ENDIF}
 
   BtnOK.Enabled := True;
   ActiveControl := BtnOK;
@@ -460,6 +479,37 @@ begin
       {$ENDIF}
       Values['KuWei'] := '';
       Values['LocationID']:= 'A';
+      {$IFDEF YDKP}
+      if cbxKw.Itemindex< 0 then
+      begin
+        ShowMsg('请选择库位号', sHint); Exit;
+      end;
+      nPos:=Pos('.',cbxKw.Text);
+      if (nPos>0) and (nPos<Length(cbxKw.Text)) then
+      begin
+        Values['KuWei']:= Copy(cbxKw.Text,1,nPos-1);
+        Values['LocationID']:= Copy(cbxKw.Text,nPos+1,Length(cbxKw.Text)-nPos);
+      end else
+      begin
+        ShowMsg('库位格式非法', sHint); Exit;
+      end;
+      nCenterYL:=GetCenterSUM(nStockNo,Values['CenterID']);
+      if nCenterYL <> '' then
+      begin
+        if IsNumber(nCenterYL,True) then
+        begin
+          nYL:= StrToFloat(nCenterYL);
+          if nYL <= 0 then
+          begin
+            ShowMsg('生产线余量不足：'+#13#10+FormatFloat('0.00',nYL),sHint);
+            Exit;
+          end;
+        end;
+      end;
+      {$ELSE}
+      Values['KuWei'] := '';
+      Values['LocationID']:= 'A';
+      {$ENDIF}
       {nCenterYL:=GetCenterSUM(nStockNo,Values['CenterID']);
       if nCenterYL <> '' then
       begin

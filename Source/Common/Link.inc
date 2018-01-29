@@ -91,7 +91,7 @@
   //兰州商砼水泥內倒
   {.$DEFINE QHSN} 
   //青海
-  {$DEFINE MHSN} 
+  {.$DEFINE MHSN} 
   //民和
   {.$DEFINE WDFH}
   //陇南武都散装共用道放灰

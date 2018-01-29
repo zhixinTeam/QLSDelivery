@@ -312,6 +312,8 @@ function CheckTruckBilling(const nTruck:string):Boolean;
 //检查车辆是否运行开单
 function CheckTruckCount(const nStockName: string):Boolean;
 //检查厂内车辆数是否达到上限
+function IFSaveBill(const nLID: string): Boolean;
+//是否已经保存提货单
 
 
 function CallBusinessCommand(const nCmd: Integer; const nData,nExt: string;
@@ -3004,6 +3006,24 @@ begin
   if RecordCount > 0 then
   begin
     if FieldByName('ZL').AsInteger >= StrToInt(nSTD) then Result:=False;
+  end;
+end;
+
+//是否已经保存提货单
+function IFSaveBill(const nLID: string): Boolean;
+var nStr: string;
+begin
+  Result := False;
+
+  nStr :='select L_Card,L_ID from %s where L_Status = ''%s'' and L_ID =''%s'' ';
+  nStr := Format(nStr, [sTable_Bill, sFlag_TruckNone, nLID]);
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+  begin
+    if Length(Fields[0].AsString) > 1 then
+    begin
+      Result := True;
+    end;
   end;
 end;
 

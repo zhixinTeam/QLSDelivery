@@ -20,7 +20,7 @@ implementation
 
 uses
   UMgrChannel, UChannelChooser, UDataModule, USysDB, USysMAC, SysUtils,
-  USysLoger, USysConst, UMemDataPool, USysFun;
+  USysLoger, USysConst, UMemDataPool, USysFun, UMgrK720Reader;
 
 //Desc: 初始化系统对象
 procedure InitSystemObject;
@@ -39,12 +39,16 @@ begin
   gChannelChoolser := TChannelChoolser.Create(gPath+sConfigFile);
   gChannelChoolser.AutoUpdateLocal := False;
   //channel
+  gMgrK720Reader := TK720ReaderManager.Create;
+  gMgrK720Reader.LoadConfig(gPath + 'K720Reader.XML');
 end;
 
 //Desc: 运行系统对象
 procedure RunSystemObject;
 var nStr: string;
 begin
+  gMgrK720Reader.StartReader;
+  //启动读卡器
   with gSysParam do
   begin
     FLocalMAC   := MakeActionID_MAC;
