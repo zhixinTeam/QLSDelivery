@@ -208,6 +208,8 @@ function GetOrderLimValue: Double;
 //获取订单量开单限值
 function IsDealerLadingIDExit(const nDealerID: string): Boolean;
 //检查经销商单号是否已存在
+function IsEleCardVaid(const nStockType,nTruckNo: string): Boolean;
+//检查散装车辆是否办理或启用电子标签
 function IsWeekValid(const nWeek: string; var nHint: string): Boolean;
 //周期是否有效
 function IsWeekHasEnable(const nWeek: string): Boolean;
@@ -353,6 +355,8 @@ function LoadAXPlanInfo(const nID: string; var nHint: string): TDataset;
 //载入提货信息
 function TruckIn(const nCardNo: string): string;
 //车辆进厂
+procedure ChangeHYPrintStatus(const nID: string);
+//空车出厂不打印化验单  漳县用
 
 implementation
 
@@ -2001,6 +2005,30 @@ begin
     Result := False;
 end;
 
+function IsEleCardVaid(const nStockType,nTruckNo: string): Boolean;
+var
+  nSql:string;
+begin
+  Result := False;
+  if nStockType <> 'S' then
+  begin
+    Result := True;
+    Exit;
+  end;
+  nSql := 'select * from %s where T_Truck = ''%s'' ';
+  nSql := Format(nSql,[sTable_Truck,nTruckNo]);
+
+  with FDM.QueryTemp(nSql) do
+  begin
+    if recordcount>0 then
+    begin
+      if (FieldByName('T_Card').AsString = '') and (FieldByName('T_Card2').AsString = '') then
+        Exit;
+      Result := FieldByName('T_CardUse').AsString = sFlag_Yes;
+    end;
+  end;
+end;
+
 //Desc: 检测nWeek是否存在或过期
 function IsWeekValid(const nWeek: string; var nHint: string): Boolean;
 var nStr: string;
@@ -3356,6 +3384,20 @@ begin
   if CallBusinessHardware(cBC_TruckAutoIn, nCardNo, '', @nOut) then
        Result := nOut.FData
   else Result := '';
+end;
+
+procedure ChangeHYPrintStatus(const nID: string);
+var nSQL: string;
+begin
+  nSQL := 'Update %s set L_IfHYPrint=''%s'' where L_ID= ''%s'' ';
+  nSQL := Format(nSQL,[sTable_Bill, sFlag_No, nID]);
+  FDM.ADOConn.BeginTrans;
+  try
+    FDM.ExecuteSQL(nSQL);
+    FDM.ADOConn.CommitTrans;
+  except
+    FDM.ADOConn.RollbackTrans;
+  end;
 end;
 
 

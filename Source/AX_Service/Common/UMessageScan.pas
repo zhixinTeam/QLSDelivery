@@ -224,6 +224,7 @@ begin
           nRecid:= FieldByName('AX_Recid').AsString;
           nCompanyId:= FieldByName('AX_CompanyId').AsString;
           nSyncTime:= FieldByName('AX_SyncTime').AsInteger;
+          nXtIndexXml := '';
           nXtIndexXml := FieldByName('AX_XtIndexXml').AsString;
 
           FDBConn.FConn.BeginTrans;

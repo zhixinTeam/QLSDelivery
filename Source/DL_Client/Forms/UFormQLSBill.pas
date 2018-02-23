@@ -403,6 +403,15 @@ begin
     ShowMsg('请录入选择试样编号', sHint); Exit;
   end;
   {$ENDIF}
+  {$IFDEF ZXKP}
+  if Pos('熟料',Editstock.text) <= 0 then
+  if not IsEleCardVaid(gType,EditTruck.Text) then
+  begin
+    ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
+  end;
+  if Pos('熟料',Editstock.text) > 0 then
+    chkIfHYprint.Checked := False;
+  {$ENDIF}
 
   if not IsDealerLadingIDExit(EditJXSTHD.Text) then
   begin

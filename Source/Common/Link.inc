@@ -83,9 +83,9 @@
   //中川商砼、甘谷商砼
   {.$DEFINE GGJC} 
   //甘谷、兰州商砼、中川商砼、甘谷商砼自动出厂
-  {.$DEFINE CXSY} 
+  {$DEFINE CXSY} 
   //成县试样编号
-  {.$DEFINE CXKC}
+  {$DEFINE CXKC}
   //成县空车出厂
   {.$DEFINE LZST} 
   //兰州商砼水泥內倒
@@ -95,4 +95,10 @@
   //民和
   {.$DEFINE WDFH}
   //陇南武都散装共用道放灰
+  {.$DEFINE JSTruck}
+  //格式化计数器车牌(漳县)
+  {.$DEFINE XHYY}
+  //夏河装车道语音
+  {$DEFINE RemoteSnap}
+  //车牌识别
 {$ENDIF}

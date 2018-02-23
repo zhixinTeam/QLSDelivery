@@ -78,7 +78,7 @@ ResourceString
   {*相关标记*}
   sFlag_Yes           = 'Y';                         //是
   sFlag_No            = 'N';                         //否
-  sFlag_Unknow        = 'U';                         //未知 
+  sFlag_Unknow        = 'U';                         //未知
   sFlag_Enabled       = 'Y';                         //启用
   sFlag_Disabled      = 'N';                         //禁用
 
@@ -96,7 +96,7 @@ ResourceString
   sFlag_Other         = 'O';                         //其它
   sFlag_DuanDao       = 'D';                         //短倒(预制皮重,单次称重)
   sFlag_ST            = 'T';                         //商砼
-  
+
   sFlag_TiHuo         = 'T';                         //自提
   sFlag_SongH         = 'S';                         //送货
   sFlag_XieH          = 'X';                         //运卸
@@ -146,13 +146,13 @@ ResourceString
   sFlag_TJNone        = 'N';                         //未调价
   sFlag_TJing         = 'T';                         //调价中
   sFlag_TJOver        = 'O';                         //调价完成
-  
+
   sFlag_PoundBZ       = 'B';                         //标准
   sFlag_PoundPZ       = 'Z';                         //皮重
   sFlag_PoundPD       = 'P';                         //配对
   sFlag_PoundCC       = 'C';                         //出厂(过磅模式)
   sFlag_PoundLS       = 'L';                         //临时
-  
+
   sFlag_MoneyHuiKuan  = 'R';                         //回款入金
   sFlag_MoneyJiaCha   = 'C';                         //补缴价差
   sFlag_MoneyZhiKa    = 'Z';                         //纸卡回款
@@ -169,6 +169,8 @@ ResourceString
   sFlag_LoadExtInfo   = 'ExtInfo;';                  //载入附加
   sFlag_AllowZeroNum  = 'ZeroNum;';                  //允许没量
 
+  sFlag_ManualE       = 'E';                         //车牌识别
+
   sFlag_SysParam      = 'SysParam';                  //系统参数
   sFlag_EnableBakdb   = 'Uses_BackDB';               //备用库
   sFlag_ValidDate     = 'SysValidDate';              //有效期
@@ -182,7 +184,7 @@ ResourceString
   sFlag_SaleManDept   = 'SaleManDepartment';         //业务员部门编号
   sFlag_ShadowWeight  = 'ShadowWeight';              //影子重量
   sFlag_OrderLimValue = 'OrderLimValue';                //订单开单限值
-  
+
   sFlag_PDaiWuChaZ    = 'PoundDaiWuChaZ';            //袋装正误差 10t-150t
   sFlag_PDaiWuChaF    = 'PoundDaiWuChaF';            //袋装负误差 10t-150t
   sFlag_PDaiPercent   = 'PoundDaiPercent';           //按比例计算误差
@@ -251,6 +253,7 @@ ResourceString
   sFlag_NoSampleID    = 'NoSampleID';                //无试样编号
   sFlag_Sgzl          = 'HuYanSgzl';                 //石膏种类
   sFlag_Hnzl          = 'HNZL';                      //混凝租赁
+  sFlag_TruckInNeedManu = 'TruckInNeedManu';         //车牌识别需要人工干预
 
   {*数据表*}
   sTable_Group        = 'Sys_Group';                 //用户组
@@ -333,6 +336,7 @@ ResourceString
   sTable_BindInfo     = 'W_BindInfo';                //用户绑定（微信）
   sTable_CustomerInfo = 'W_CustomerInfo';            //客户信息（微信）
   sTable_WebOrderMatch   = 'S_WebOrderMatch';        //商城订单映射
+  sTable_SnapTruck    = 'Sys_SnapTruck';             //车辆抓拍记录
 
   sTable_InventDim       = 'Sys_InventDim';          //维度信息
   sTable_InventCenter    = 'Sys_InventCenter';       //生产线基础表
@@ -391,6 +395,7 @@ const
   sFlag_DepDaTing     = '大厅';                      //服务大厅
   sFlag_DepJianZhuang = '监装';                      //监装
   sFlag_DepBangFang   = '磅房';                      //磅房
+  sFlag_DepMenGang    = '门岗';                      //门岗
   sFlag_Solution_YN   = 'Y=通过;N=禁止';
   sFlag_Solution_YNI  = 'Y=通过;N=禁止;I=忽略';
 
@@ -2092,6 +2097,16 @@ const
    *.$ID:信息标识
   -----------------------------------------------------------------------------}
 
+  sSQL_SnapTruck = 'Create Table $Table(R_ID $Inc, S_ID varChar(20), ' +
+       'S_Truck varChar(20), S_Date DateTime)';
+  {-----------------------------------------------------------------------------
+   微信发送日志:WeixinLog
+   *.R_ID:记录编号
+   *.S_ID: 抓拍岗位
+   *.S_Truck:抓拍车牌号
+   *.S_Date: 抓拍时间
+  -----------------------------------------------------------------------------}
+
 function CardStatusToStr(const nStatus: string): string;
 //磁卡状态
 function TruckStatusToStr(const nStatus: string): string;
@@ -2206,7 +2221,7 @@ begin
   AddSysTableItem(sTable_Truck, sSQL_NewTruck,'');
   AddSysTableItem(sTable_ZTLines, sSQL_NewZTLines,'');
   AddSysTableItem(sTable_ZTTrucks, sSQL_NewZTTrucks,'');
-  
+
   AddSysTableItem(sTable_PoundLog, sSQL_NewPoundLog,'');
   AddSysTableItem(sTable_PoundBak, sSQL_NewPoundLog,'');
   AddSysTableItem(sTable_Picture, sSQL_NewPicture,'');
@@ -2254,7 +2269,7 @@ begin
   AddSysTableItem(sTable_AxPlanInfo, sSQL_NewAxPlanInfo,'');
   AddSysTableItem(sTable_AxMsgList, sSQL_NewAxMsgList,'');
   AddSysTableItem(sTable_YSLines, sSQL_NewYSLines, '');
-
+  AddSysTableItem(sTable_SnapTruck,sSQL_SnapTruck,'');
 end;
 
 //Desc: 清理系统表

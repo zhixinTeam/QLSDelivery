@@ -596,6 +596,11 @@ begin
     ShowMsg(EditTruck.Text+'非法，禁止开单',sHint);
     Exit;
   end;
+  if Pos('熟料',gStockName) <= 0 then
+  if not IsEleCardVaid(gType,EditTruck.Text) then
+  begin
+    ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
+  end;
   {$ENDIF}
   {$IFDEF YDKP}
   if not CheckTruckOK(Trim(EditTruck.Text)) then
@@ -647,6 +652,8 @@ begin
         ShowMsg('厂内车辆达到上限，禁止开单',sHint);
         Exit;
       end;
+      if Pos('熟料',FStockName) > 0 then
+        chkIfHYprint.Checked := False;
       {$ENDIF}
       {$IFDEF YDKP}//开票录入试样编号
       if cbxSampleID.Enabled=True then

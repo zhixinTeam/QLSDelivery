@@ -37,7 +37,7 @@ uses
   UMgrQueue, UMgrLEDCard, UMgrHardHelper, UMgrRemotePrint, U02NReader,
   UMgrERelay, {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF}
   UMgrRemoteVoice, UMgrCodePrinter, UMgrLEDDisp, UMgrRFID102,
-  UMgrVoiceNet, UMgrTTCEM100;
+  UMgrVoiceNet, UMgrTTCEM100, UMgrRemoteSnap;
 
 class function THardwareWorker.ModuleInfo: TPlugModuleInfo;
 begin
@@ -95,7 +95,7 @@ begin
       if not Assigned(gNetVoiceHelper) then
         gNetVoiceHelper := TNetVoiceManager.Create;
       gNetVoiceHelper.LoadConfig(nCfg + 'NetVoice.xml');
-    end;     
+    end;
 
     nStr := 'ÅçÂë»ú';
     gCodePrinterManager.LoadConfig(nCfg + 'CodePrinter.xml');
@@ -120,13 +120,23 @@ begin
       gM100ReaderManager.LoadConfig(nCfg + cTTCE_M100_Config);
     end;
     {$ENDIF}
-    
-    nStr := '³µÁ¾¼ì²âÆ÷';    
+
+    nStr := '³µÁ¾¼ì²âÆ÷';
     if FileExists(nCfg + 'TruckProber.xml') then
     begin
       gProberManager := TProberManager.Create;
       gProberManager.LoadConfig(nCfg + 'TruckProber.xml');
     end;
+
+    {$IFDEF RemoteSnap}
+    nStr := 'º£¿µÍþÊÓÔ¶³Ì×¥ÅÄ';
+    if FileExists(nCfg + 'RemoteSnap.xml') then
+    begin
+      //gHKSnapHelper := THKSnapHelper.Create;
+      gHKSnapHelper.LoadConfig(nCfg + 'RemoteSnap.xml');
+    end;
+    {$ENDIF}
+
   except
     on E:Exception do
     begin
@@ -194,6 +204,9 @@ begin
   //near reader
 
   gMultiJSManager.SaveDataProc := WhenSaveJS;
+  {$IFDEF JSTruck}
+  gMultiJSManager.GetTruckProc := GetJSTruck;
+  {$ENDIF}
   gMultiJSManager.StartJS;
   //counter
   {$IFNDEF YDSN}
@@ -217,6 +230,11 @@ begin
   //small led
   gProberManager.StartProber;
   //TruckProbe
+
+  {$IFDEF RemoteSnap}
+  gHKSnapHelper.StartSnap;
+  //remote snap
+  {$ENDIF}
 end;
 
 procedure THardwareWorker.AfterStopServer;
@@ -271,6 +289,11 @@ begin
   {$IFNDEF YDSN}
   gTruckQueueManager.StopQueue;
   //queue
+  {$ENDIF}
+
+  {$IFDEF RemoteSnap}
+  gHKSnapHelper.StopSnap;
+  //remote snap
   {$ENDIF}
 end;
 

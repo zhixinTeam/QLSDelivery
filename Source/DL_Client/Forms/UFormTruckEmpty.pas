@@ -45,7 +45,7 @@ implementation
 
 {$R *.dfm}
 uses
-  IniFiles, ULibFun, UMgrControl, UFormInputbox, USysGrid, UBusinessConst, 
+  IniFiles, ULibFun, UMgrControl, UFormInputbox, USysGrid, UBusinessConst,
   USysBusiness, USysDB, USysConst, UFormBase;
 
 var
@@ -238,6 +238,9 @@ begin
 
   if nRet then
   begin
+    {$IFDEF ZXKP}
+    ChangeHYPrintStatus(gBills[0].FID);
+    {$ENDIF}
     ShowMsg('允许车辆空车出厂成功', sHint);
     ModalResult := mrOk;
   end;
