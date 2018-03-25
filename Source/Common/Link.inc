@@ -65,6 +65,7 @@
   //计数器应答模式
   {$DEFINE M100Reader}
   //启用M100Reader自动收卡机
+
   {.$DEFINE GLPURCH} 
   //古浪
   {.$DEFINE YDKP} 
@@ -89,7 +90,7 @@
   //成县空车出厂
   {.$DEFINE LZST} 
   //兰州商砼水泥內倒
-  {.$DEFINE QHSN} 
+  {$DEFINE QHSN} 
   //青海
   {.$DEFINE MHSN} 
   //民和

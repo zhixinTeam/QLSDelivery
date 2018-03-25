@@ -315,6 +315,9 @@ function CheckTruckCount(const nStockName: string):Boolean;
 function IFSaveBill(const nLID: string): Boolean;
 //是否已经保存提货单
 
+function GetCenterSUM(nStockNo,nCenterID:string):string;
+//获取生产线余量
+
 
 function CallBusinessCommand(const nCmd: Integer; const nData,nExt: string;
   const nOut: PWorkerBusinessCommand; const nWarn: Boolean = True): Boolean;
@@ -3025,6 +3028,18 @@ begin
       Result := True;
     end;
   end;
+end;
+
+//Date:2018-03-16
+//获取生产线余量
+function GetCenterSUM(nStockNo,nCenterID:string):string;
+var nOut: TWorkerBusinessCommand;
+begin
+  if CallBusinessCommand(cBC_GetAXInVentSum, nStockNo, nCenterID, @nOut) then
+  begin
+    Result := nOut.FData;
+  end else Result := '';
+  WriteLog(nStockNo+'  '+nCenterID+'  '+Result);
 end;
 
 end.
