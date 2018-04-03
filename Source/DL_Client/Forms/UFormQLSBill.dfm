@@ -171,6 +171,7 @@ inherited fFormQLSBill: TfFormQLSBill
     object cbxKw: TcxComboBox [15]
       Left = 81
       Top = 266
+      ParentFont = False
       TabOrder = 11
       Width = 121
     end

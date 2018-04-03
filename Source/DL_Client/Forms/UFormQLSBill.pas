@@ -377,7 +377,7 @@ var nIdx: Integer;
     nPlanW,nBatQuaS,nBatQuaE:Double;
     FSumTon:Double;
     nStr,nCenterYL,nStockNo,nCenterID:string;
-    nYL:Double;
+    nYL,nKdValue:Double;
     FSampleID:string;
 begin
   FSumTon:=0.00;
@@ -444,7 +444,8 @@ begin
       Values['RECID'] := gRecID;
       Values['SampleID'] := FSampleID;
       nStockNo:= Values['StockNO'];
-
+      nKdValue:= StrToFloat(EditValue.text);
+      
       nList.Add(PackerEncodeStr(nTmp.Text));
       //new bill
       if (not nPrint) and (FBuDanFlag <> sFlag_Yes) then
@@ -519,19 +520,19 @@ begin
       Values['KuWei'] := '';
       Values['LocationID']:= 'A';
       {$ENDIF}
-      {nCenterYL:=GetCenterSUM(nStockNo,Values['CenterID']);
+      nCenterYL:=GetCenterSUM(nStockNo,Values['CenterID']);
       if nCenterYL <> '' then
       begin
         if IsNumber(nCenterYL,True) then
         begin
           nYL:= StrToFloat(nCenterYL);
-          if nYL <= 0 then
+          if (nYL <= 0) or (nYL < nKdValue) then
           begin
             ShowMsg('生产线余量不足：'+#13#10+FormatFloat('0.00',nYL),sHint);
             Exit;
           end;
         end;
-      end; }
+      end;
     end;
     gIDList := SaveBill(PackerEncodeStr(nList.Text));
     //call mit bus
