@@ -2,23 +2,23 @@ inherited fFormZTLine: TfFormZTLine
   Left = 478
   Top = 286
   Caption = #35013#36710#32447#37197#32622
-  ClientHeight = 254
-  ClientWidth = 550
+  ClientHeight = 300
+  ClientWidth = 554
   Position = poMainFormCenter
   PixelsPerInch = 96
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
-    Width = 550
-    Height = 254
+    Width = 554
+    Height = 300
     inherited BtnOK: TButton
-      Left = 404
-      Top = 221
-      TabOrder = 13
+      Left = 408
+      Top = 267
+      TabOrder = 14
     end
     inherited BtnExit: TButton
-      Left = 474
-      Top = 221
-      TabOrder = 14
+      Left = 478
+      Top = 267
+      TabOrder = 15
     end
     object EditName: TcxTextEdit [2]
       Left = 354
@@ -57,13 +57,13 @@ inherited fFormZTLine: TfFormZTLine
     end
     object CheckValid: TcxCheckBox [5]
       Left = 11
-      Top = 221
+      Top = 267
       Hint = 'T.Z_Valid'
       Caption = #36890#36947#26377#25928
       ParentFont = False
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
-      TabOrder = 12
+      TabOrder = 13
       Transparent = True
       Width = 80
     end
@@ -162,7 +162,7 @@ inherited fFormZTLine: TfFormZTLine
     end
     object cbxLocationID: TcxComboBox [14]
       Left = 81
-      Top = 186
+      Top = 211
       Enabled = False
       ParentFont = False
       Properties.ReadOnly = False
@@ -172,6 +172,16 @@ inherited fFormZTLine: TfFormZTLine
       Style.HotTrack = False
       Style.ButtonStyle = btsHotFlat
       Style.PopupBorderStyle = epbsSingle
+      TabOrder = 12
+      Width = 121
+    end
+    object EditMill: TcxComboBox [15]
+      Left = 81
+      Top = 186
+      ParentFont = False
+      Properties.DropDownListStyle = lsFixedList
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
       TabOrder = 11
       Width = 121
     end
@@ -266,6 +276,11 @@ inherited fFormZTLine: TfFormZTLine
         object dxLayout1Item6: TdxLayoutItem
           Caption = #29983#20135#32447'ID:'
           Control = cbxCenterID
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayout1Item11: TdxLayoutItem
+          Caption = #27700' '#27877' '#30952':'
+          Control = EditMill
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item9: TdxLayoutItem

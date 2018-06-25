@@ -31,7 +31,7 @@ function GetJSTruck(const nTruck,nBill: string): string;
 //获取计数器显示车牌
 function GetTruckLineName(const nBill: string): string;
 //获取车辆所在道名称
-procedure MakeTruckIn(const nCard,nReader: string);
+procedure MakeTruckIn(const nCard,nReader,nPost,nDept: string);
 //车辆进厂
 procedure SendMsgToWebMall(const nLid:string;const MsgType:Integer;const nBillType:string);
 //推送消息到微信平台
@@ -46,7 +46,7 @@ function VerifyTruckTunnel(const nTruck: string; nTunnelEx: string):Boolean;
 //匹配通道用于两通道共用读卡器
 procedure MakeLadingSound(const nTruck: PTruckItem; const nLine: PLineItem;
   const nPost: string);
-function VerifySnapTruck(const nTruck,nBill,nPos: string;var nResult: string): Boolean;
+function VerifySnapTruck(const nTruck,nBill,nPos,nDept: string;var nResult: string): Boolean;
 //车牌识别
 
 function SaveDBImage(const nDS: TDataSet; const nFieldName: string;
@@ -361,7 +361,7 @@ begin
 
     gNetVoiceHelper.PlayVoice(nText, nPost);
     //播发语音
-    WriteHardHelperLog(nText);
+    WriteHardHelperLog(nText+'岗位:'+nPost);
   except
     on nErr: Exception do
     begin
@@ -532,7 +532,7 @@ end;
 //Date: 2012-4-22
 //Parm: 卡号
 //Desc: 对nCard放行进厂
-procedure MakeTruckIn(const nCard,nReader: string);
+procedure MakeTruckIn(const nCard,nReader,nPost,nDept: string);
 var nStr,nTruck,nCardType,nSnapStr,nPos: string;
     nIdx,nInt: Integer;
     nPLine: PLineItem;
@@ -552,10 +552,10 @@ begin
   nCardType := '';
   if not GetCardUsed(nCard, nCardType) then Exit;
 
-  if nCardType = sFlag_Provide then
-    nPos := sPost_PIn
+  if nPost = '' then
+    nPos := sPost_SIn
   else
-    nPos := sPost_SIn;
+    nPos := nPost;
   if nCardType = sFlag_Other then   //临时卡进厂
   begin
     nDB := nil;
@@ -590,7 +590,7 @@ begin
         begin
           {$IFDEF RemoteSnap}
           if not VerifySnapTruck(FieldByName('I_Truck').AsString,'',
-                                 nPos,nSnapStr) then
+                                 nPos,nDept,nSnapStr) then
           begin
             MakeGateSound(nSnapStr, nPos, False);
             Exit;
@@ -662,7 +662,7 @@ begin
         end;
         {$IFDEF RemoteSnap}
         if not VerifySnapTruck(FieldByName('I_Truck').AsString,'',
-                               nPos,nSnapStr) then
+                               nPos,nDept,nSnapStr) then
         begin
           MakeGateSound(nSnapStr, nPos, False);
           Exit;
@@ -749,7 +749,9 @@ begin
   end;
 
   {$IFDEF RemoteSnap}
-  if not VerifySnapTruck(nTrucks[0].FTruck,nTrucks[0].FID,nPos,nSnapStr) then
+  if (not (nTrucks[0].FNeiDao=sFlag_Yes)) then//内倒不判断
+  if (nTrucks[0].FStatus = sFlag_TruckNone) then//已进厂不判断
+  if not VerifySnapTruck(nTrucks[0].FTruck,nTrucks[0].FID,nPos,nDept,nSnapStr) then
   begin
     MakeGateSound(nSnapStr, nPos, False);
     Exit;
@@ -801,10 +803,14 @@ begin
   begin
     if not SaveLadingOrders(sFlag_TruckIn, nTrucks) then
     begin
-      nStr := '车辆[ %s ]进厂放行失败.';
+      nStr := '车辆[ %s ]进厂放行失败';
       nStr := Format(nStr, [nTrucks[0].FTruck]);
 
       WriteHardHelperLog(nStr, sPost_In);
+
+      {$IFDEF RemoteSnap}
+      MakeGateSound(nStr, nPos, False);
+      {$ENDIF}
       Exit;
     end;
 
@@ -848,10 +854,15 @@ begin
 
     if not Assigned(nPLine) then
     begin
-      nStr := '车辆[ %s ]没有在调度队列中.';
+      nStr := '车辆[ %s ]没有在调度队列中';
       nStr := Format(nStr, [nTrucks[0].FTruck]);
 
       WriteHardHelperLog(nStr, sPost_In);
+
+      {$IFDEF RemoteSnap}
+      MakeGateSound(nStr, nPos, False);
+      {$ENDIF}
+
       Exit;
     end;
   finally
@@ -861,10 +872,15 @@ begin
 
   if not SaveLadingBills(sFlag_TruckIn, nTrucks) then
   begin
-    nStr := '车辆[ %s ]进厂放行失败.';
+    nStr := '车辆[ %s ]进厂放行失败';
     nStr := Format(nStr, [nTrucks[0].FTruck]);
 
     WriteHardHelperLog(nStr, sPost_In);
+
+    {$IFDEF RemoteSnap}
+    MakeGateSound(nStr, nPos, False);
+    {$ENDIF}
+
     Exit;
   end;
 
@@ -921,7 +937,7 @@ end;
 //Date: 2012-4-22
 //Parm: 卡号;读头;打印机
 //Desc: 对nCard放行出厂
-procedure MakeTruckOut(const nCard,nReader,nPrinter,nHyprinter: string);
+procedure MakeTruckOut(const nCard,nReader,nPrinter,nHyprinter,nPost,nDept: string);
 var nStr,nCardType,nTruck,nSnapStr,nPos: string;
     nIdx: Integer;
     nRet: Boolean;
@@ -935,10 +951,10 @@ begin
   nCardType := '';
   if not GetCardUsed(nCard, nCardType) then Exit;
 
-  if nCardType = sFlag_Provide then
-    nPos := sPost_POut
+  if nPost = '' then
+    nPos := sPost_SIn
   else
-    nPos := sPost_SOut;
+    nPos := nPost;
 
   if nCardType = sFlag_Other then
   begin
@@ -976,7 +992,7 @@ begin
         {$IFDEF QHSN}
         {$IFDEF RemoteSnap}
         if not VerifySnapTruck(FieldByName('I_Truck').AsString,'',
-                               nPos,nSnapStr) then
+                               nPos,nDept,nSnapStr) then
         begin
           MakeGateSound(nSnapStr, nPos, False);
           Exit;
@@ -1000,7 +1016,7 @@ begin
         begin
           {$IFDEF RemoteSnap}
           if not VerifySnapTruck(FieldByName('I_Truck').AsString,'',
-                                 nPos,nSnapStr) then
+                                 nPos,nDept,nSnapStr) then
           begin
             MakeGateSound(nSnapStr, nPos, False);
             Exit;
@@ -1081,7 +1097,7 @@ begin
 
         {$IFDEF RemoteSnap}
         if not VerifySnapTruck(FieldByName('I_Truck').AsString,'',
-                               nPos,nSnapStr) then
+                               nPos,nDept,nSnapStr) then
         begin
           MakeGateSound(nSnapStr, nPos, False);
           Exit;
@@ -1180,7 +1196,8 @@ begin
   end;
 
   {$IFDEF RemoteSnap}
-  if not VerifySnapTruck(nTrucks[0].FTruck,nTrucks[0].FID,nPos,nSnapStr) then
+  if not (nTrucks[0].FNeiDao=sFlag_Yes) then//内倒不判断
+  if not VerifySnapTruck(nTrucks[0].FTruck,nTrucks[0].FID,nPos,nDept,nSnapStr) then
   begin
     MakeGateSound(nSnapStr, nPos, False);
     Exit;
@@ -1252,7 +1269,8 @@ end;
 //Date: 2017-10-31
 //Parm: 卡号;读头;打印机
 //lih: 对nCard放行出厂
-function MakeTruckOutM100(const nCard,nReader,nPrinter,nHyprinter: string; var nCType:string): Boolean;
+function MakeTruckOutM100(const nCard,nReader,nPrinter,nHyprinter,
+                          nPost,nDept: string; var nCType:string): Boolean;
 var nStr,nCardType,nTruck,nSnapStr,nPos: string;
     nIdx: Integer;
     nRet: Boolean;
@@ -1268,10 +1286,10 @@ begin
   if not GetCardUsed(nCard, nCardType) then Exit;
   nCType := nCardType;
 
-  if nCardType = sFlag_Provide then
-    nPos := sPost_POut
+  if nPost = '' then
+    nPos := sPost_SIn
   else
-    nPos := sPost_SOut;
+    nPos := nPost;
 
 
   if nCardType = sFlag_Other then
@@ -1311,7 +1329,7 @@ begin
         {$IFDEF QHSN}
         {$IFDEF RemoteSnap}
         if not VerifySnapTruck(FieldByName('I_Truck').AsString,'',
-                               nPos,nSnapStr) then
+                               nPos,nDept,nSnapStr) then
         begin
           MakeGateSound(nSnapStr, nPos, False);
           Exit;
@@ -1336,7 +1354,7 @@ begin
         begin
           {$IFDEF RemoteSnap}
           if not VerifySnapTruck(FieldByName('I_Truck').AsString,'',
-                                 nPos,nSnapStr) then
+                                 nPos,nDept,nSnapStr) then
           begin
             MakeGateSound(nSnapStr, nPos, False);
             Exit;
@@ -1420,7 +1438,7 @@ begin
 
         {$IFDEF RemoteSnap}
         if not VerifySnapTruck(FieldByName('I_Truck').AsString,'',
-                               nPos,nSnapStr) then
+                               nPos,nDept,nSnapStr) then
         begin
           MakeGateSound(nSnapStr, nPos, False);
           Exit;
@@ -1522,7 +1540,8 @@ begin
   end;
 
   {$IFDEF RemoteSnap}
-  if not VerifySnapTruck(nTrucks[0].FTruck,nTrucks[0].FID,nPos,nSnapStr) then
+  if not (nTrucks[0].FNeiDao=sFlag_Yes) then//内倒不判断
+  if not VerifySnapTruck(nTrucks[0].FTruck,nTrucks[0].FID,nPos,nDept,nSnapStr) then
   begin
     MakeGateSound(nSnapStr, nPos, False);
     Exit;
@@ -1698,15 +1717,16 @@ begin
   finally
     gDBConnManager.ReleaseConnection(nDBConn);
   end;
-  
+
   try
     if nReader.FType = rtIn then
     begin
-      MakeTruckIn(nStr, nReader.FID);
+      MakeTruckIn(nStr, nReader.FID, nReader.FPost, nReader.FDept);
     end else
     if nReader.FType = rtOut then
     begin
-      MakeTruckOut(nStr, nReader.FID, nReader.FPrinter, nReader.FHyprinter);
+      MakeTruckOut(nStr, nReader.FID, nReader.FPrinter, nReader.FHyprinter,
+                   nReader.FPost, nReader.FDept);
     end else
 
     if nReader.FType = rtGate then
@@ -1774,7 +1794,8 @@ begin
     case nItem.FVType of
     rtOutM100 :
     begin
-      nRetain := MakeTruckOutM100(nItem.FCard, nItem.FVReader, nItem.FVPrinter, nItem.FVHYPrinter, nCType);
+      nRetain := MakeTruckOutM100(nItem.FCard, nItem.FVReader, nItem.FVPrinter,
+                 nItem.FVHYPrinter, nItem.FPost, nItem.FDept, nCType);
       if nCType = sFlag_Provide then
       begin
         nDBConn := nil;
@@ -1819,7 +1840,7 @@ end;
 //Date: 2012-4-24
 //Parm: 车牌;通道;是否检查先后顺序;提示信息
 //Desc: 检查nTuck是否可以在nTunnel装车
-function IsTruckInQueue(const nTruck,nTunnel: string; const nQueued: Boolean;
+function IsTruckInQueue(const nTruck,nTunnel,nMill: string; const nQueued: Boolean;
  var nHint: string; var nPTruck: PTruckItem; var nPLine: PLineItem;
  const nStockType: string = ''): Boolean;
 var i,nIdx,nInt: Integer;
@@ -1853,6 +1874,16 @@ begin
 
         if nInt < 0 then Continue;
         //不在当前队列
+        if nMill <> '' then
+        begin
+          if nLineItem.FMill <> nMill then
+          begin
+            nHint := '车辆[ %s ]与当前刷卡通道[ %s ]水泥磨不匹配';
+            nHint := Format(nHint, [nTruck, nPLine.FName]);
+            WriteNearReaderLog(nHint);
+            Continue;
+          end;
+        end;
         if not StockMatch(nPLine.FStockNo, nLineItem) then Continue;
         //刷卡道与队列道品种不匹配
 
@@ -2276,6 +2307,8 @@ begin
       FSelected := (FStatus = sFlag_TruckXH) or (FNextStatus = sFlag_TruckXH);
       if FSelected then
       begin
+        FYSValid := sFlag_Yes;
+        FYSMan   := nTunnel;
         Inc(nInt);
         Continue;
       end;
@@ -2325,7 +2358,7 @@ end;
 //Parm: 磁卡号;通道号
 //Desc: 对nCard执行袋装装车操作
 procedure MakeTruckLadingDai(const nCard: string; nTunnel: string);
-var nStr, nSelfTunnel: string;
+var nStr, nSelfTunnel, nMill: string;
     nIdx,nInt: Integer;
     nPLine: PLineItem;
     nPTruck: PTruckItem;
@@ -2405,7 +2438,13 @@ begin
     if IsJSRun then Exit;
   end;
 
-  if not IsTruckInQueue(nTrucks[0].FTruck, nTunnel, False, nStr,
+  {$IFDEF StockMill}
+  nMill := nTrucks[0].FMill;
+  {$ELSE}
+  nMill := '';
+  {$ENDIF}
+
+  if not IsTruckInQueue(nTrucks[0].FTruck, nTunnel, nMill, False, nStr,
          nPTruck, nPLine, sFlag_Dai) then
   begin
     WriteNearReaderLog(nStr);
@@ -2575,7 +2614,7 @@ end;
 //Parm: 磁卡号;通道号
 //Desc: 对nCard执行袋装装车操作
 procedure MakeTruckLadingSan(const nCard,nTunnel,nTunnelEx: string);
-var nStr, nSelfTunnel: string;
+var nStr, nSelfTunnel,nMill: string;
     nIdx: Integer;
     nPLine: PLineItem;
     nPTruck: PTruckItem;
@@ -2627,15 +2666,21 @@ begin
     Exit;
   end;
 
+  {$IFDEF StockMill}
+  nMill := nTrucks[0].FMill;
+  {$ELSE}
+  nMill := '';
+  {$ENDIF}
+
   {$IFDEF WDFH}
   if not VerifyTruckTunnel(nTrucks[0].FTruck, nTunnelEx) then
   begin
     //1.车辆通道号与扩展通道号匹配
-    nChange := IsTruckInQueue(nTrucks[0].FTruck, nTunnel, False, nStr,
+    nChange := IsTruckInQueue(nTrucks[0].FTruck, nTunnel, nMill, False, nStr,
            nPTruck, nPLine, sFlag_San);
     //2.第1步匹配失败后检索nTruck可否在nTunnel装车
     if not nChange then
-    if not IsTruckInQueue(nTrucks[0].FTruck, nTunnelEx, False, nStr,
+    if not IsTruckInQueue(nTrucks[0].FTruck, nTunnelEx, nMill, False, nStr,
            nPTruck, nPLine, sFlag_San) then
     begin
       //3.第2步检索失败后检索nTruck可否在nTunnelEx装车,用以兼顾2个同品种nTunnelEx换道
@@ -2650,7 +2695,7 @@ begin
   end
   else
   begin
-    if not IsTruckInQueue(nTrucks[0].FTruck, nTunnelEx, False, nStr,
+    if not IsTruckInQueue(nTrucks[0].FTruck, nTunnelEx, nMill, False, nStr,
            nPTruck, nPLine, sFlag_San) then
     begin
       WriteNearReaderLog(nStr);
@@ -2663,7 +2708,7 @@ begin
     end; //检查通道
   end;
   {$ELSE}
-  if not IsTruckInQueue(nTrucks[0].FTruck, nTunnel, False, nStr,
+  if not IsTruckInQueue(nTrucks[0].FTruck, nTunnel, nMill, False, nStr,
          nPTruck, nPLine, sFlag_San) then
   begin
     WriteNearReaderLog(nStr);
@@ -2730,14 +2775,14 @@ begin
   begin
     if nHost.FFun = rfIn then
     begin
-      MakeTruckIn(nCard, '');
+      MakeTruckIn(nCard, '', '','');
     end else
     if nHost.FFun = rfOut then
     begin
       if Assigned(nHost.FOptions) then
-        MakeTruckOut(nCard, '', nHost.FPrinter, nHost.FOptions.Values['HYprinter'])
+        MakeTruckOut(nCard, '', nHost.FPrinter, nHost.FOptions.Values['HYprinter'],'','')
       else
-        MakeTruckOut(nCard, '', nHost.FPrinter, '');
+        MakeTruckOut(nCard, '', nHost.FPrinter, '', '','');
     end else
     begin
       if nCardType = sFlag_Sale then
@@ -2992,11 +3037,16 @@ begin
   end;
 end;
 
-function VerifySnapTruck(const nTruck,nBill,nPos: string; var nResult: string): Boolean;
+function VerifySnapTruck(const nTruck,nBill,nPos,nDept: string; var nResult: string): Boolean;
 var nList: TStrings;
     nOut: TWorkerBusinessCommand;
-    nID: string;
+    nID,nDefDept: string;
 begin
+  {$IFDEF QHSN}
+  nDefDept := 'cmmg';
+  {$ELSE}
+  nDefDept := '门岗';
+  {$ENDIF}
   if nBill = '' then
     nID := nTruck + FormatDateTime('YYMMDD',Now)
   else
@@ -3007,6 +3057,10 @@ begin
     nList.Values['Truck'] := nTruck;
     nList.Values['Bill'] := nID;
     nList.Values['Pos'] := nPos;
+    if nDept = '' then
+      nList.Values['Dept'] := nDefDept
+    else
+      nList.Values['Dept'] := nDept;
 
     Result := CallBusinessCommand(cBC_VerifySnapTruck, nList.Text, '', @nOut);
     nResult := nOut.FData;

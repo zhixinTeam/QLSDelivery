@@ -208,7 +208,7 @@ function GetOrderLimValue: Double;
 //获取订单量开单限值
 function IsDealerLadingIDExit(const nDealerID: string): Boolean;
 //检查经销商单号是否已存在
-function IsEleCardVaid(const nStockType,nTruckNo: string): Boolean;
+function IsEleCardVaid(const nStockType,nTruckNo,nStockNo: string): Boolean;
 //检查散装车辆是否办理或启用电子标签
 function IsWeekValid(const nWeek: string; var nHint: string): Boolean;
 //周期是否有效
@@ -290,6 +290,8 @@ function GetPoundWc(nNet:Double; var nDaiZ,nDaiF:Double):Boolean;
 //获取袋装误差
 procedure InitCenter(const nStockNo,nType: string; const nCbx:TcxComboBox);
 //初始化生产线ID
+procedure InitMill(const nCbx:TcxComboBox);
+//初始化水泥磨
 function CheckTruckOK(const nTruck:string):Boolean;
 //检查车辆上次出厂是否超过一个小时
 function CheckTruckBilling(const nTruck:string):Boolean;     
@@ -321,7 +323,7 @@ function SaveTransferInfo(nTruck, nMateID, nMate, nSrcAddr, nDstAddr:string):Boo
 
 function GetAutoInFactory(const nStockNo:string):Boolean;
 //获取是否自动进厂
-function GetCenterSUM(nStockNo,nCenterID:string):string;
+function GetCenterSUM(nStockNo,nStockType,nCenterID:string):string;
 //获取生产线余量
 function GetZhikaYL(nRECID:string):Double;
 //获取纸卡余量
@@ -357,6 +359,8 @@ function TruckIn(const nCardNo: string): string;
 //车辆进厂
 procedure ChangeHYPrintStatus(const nID: string);
 //空车出厂不打印化验单  漳县用
+function VerifyZTlineChange(const nLineID: string): Boolean;
+//校验装车线nLineID水泥品种变更时如果存在排队车辆则无法修改
 
 implementation
 
@@ -2005,16 +2009,35 @@ begin
     Result := False;
 end;
 
-function IsEleCardVaid(const nStockType,nTruckNo: string): Boolean;
+function IsEleCardVaid(const nStockType,nTruckNo,nStockNo: string): Boolean;
 var
-  nSql:string;
+  nStr,nSql:string;
 begin
   Result := False;
-  if nStockType <> 'S' then
+  if nStockType <> sFlag_San then
   begin
     Result := True;
     Exit;
   end;
+
+  nStr := 'Select D_Value,D_Memo,D_ParamB From $Table ' +
+          'Where D_Name=''$Name'' And D_Value=''$Value'' ' +
+          'And D_Memo=''$Memo'' Order By D_Index ASC';
+  nStr := MacroValue(nStr, [MI('$Table', sTable_SysDict),
+                            MI('$Name', sFlag_NoEleCard),
+                            MI('$Value', nStockNo),
+                            MI('$Memo', nStockType)]);
+  //xxxxx
+
+  with FDM.QueryTemp(nStr) do
+  begin
+    if RecordCount > 0 then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
+
   nSql := 'select * from %s where T_Truck = ''%s'' ';
   nSql := Format(nSql,[sTable_Truck,nTruckNo]);
 
@@ -2904,6 +2927,30 @@ begin
   end;
 end;
 
+//初始化水泥磨
+procedure InitMill(const nCbx:TcxComboBox);
+var
+  nStr: string;
+begin
+  nCbx.Properties.Items.Clear;
+
+  nStr := 'Select D_Value From %s Where D_Name=''%s'' ';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_StockMillItem]);
+
+  with FDM.QueryTemp(nStr) do
+  begin
+    if RecordCount > 0 then
+    begin
+      First;
+      while not Eof do
+      begin
+        nCbx.Properties.Items.Add(Fields[0].AsString);
+        Next;
+      end;
+    end;
+  end;
+end;
+
 //检查车辆上次出厂是否超过一个小时
 function CheckTruckOK(const nTruck:string):Boolean;
 var
@@ -3275,14 +3322,22 @@ end;
 
 //Date:2016-10-09
 //获取生产线余量
-function GetCenterSUM(nStockNo,nCenterID:string):string;
+function GetCenterSUM(nStockNo,nStockType,nCenterID:string):string;
 var nOut: TWorkerBusinessCommand;
+    nList: TStrings;
 begin
-  if CallBusinessCommand(cBC_GetAXInVentSum, nStockNo, nCenterID, @nOut) then
-  begin
-    Result := nOut.FData;
-  end else Result := '';
-  WriteLog(nStockNo+'  '+nCenterID+'  '+Result);
+  nList := TStringList.Create;
+  try
+    nList.Values['StockType'] := nStockType;
+    nList.Values['CenterID']  := nCenterID;
+    if CallBusinessCommand(cBC_GetAXInVentSum, nStockNo, nList.Text, @nOut) then
+    begin
+      Result := nOut.FData;
+    end else Result := '';
+    WriteLog(nStockNo+'  '+nStockType+'  '+nCenterID+'  '+Result);
+  finally
+    nList.Free;
+  end;
 end;
 
 //获取纸卡余量
@@ -3400,5 +3455,24 @@ begin
   end;
 end;
 
+//Desc: 校验装车线nLineID水泥品种变更时如果存在排队车辆则无法修改
+function VerifyZTlineChange(const nLineID: string): Boolean;
+var
+  nStr,nSql:string;
+begin
+  Result := True;
+
+  nSql := 'select * from %s where T_Line = ''%s'' ';
+  nSql := Format(nSql,[sTable_ZTTrucks,nLineID]);
+
+  with FDM.QueryTemp(nSql) do
+  begin
+    if recordcount>0 then
+    begin
+      Result := False;
+      Exit;
+    end;
+  end;
+end;
 
 end.

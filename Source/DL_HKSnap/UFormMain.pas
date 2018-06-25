@@ -60,7 +60,7 @@ type
     //执行动作
   public
     { Public declarations }
-    procedure SaveSnapTruck(const nIP, nTruck: String);
+    procedure SaveSnapTruck(const nIP, nTruck, nPicName: String);
     //保存抓拍
   end;
 
@@ -300,20 +300,34 @@ begin
   end;
 end;
 
-procedure TfFormMain.SaveSnapTruck(const nIP, nTruck: String);
+procedure TfFormMain.SaveSnapTruck(const nIP, nTruck, nPicName: String);
 var nStr,nID: string;
+    nDel: Boolean;
 begin
   nID := gHKDoorSnapManager.GetDoorID(nIP);
 
-  nStr := 'Delete From %s Where S_ID=''%s''';
+  nStr := 'Select R_ID From %s Where S_ID=''%s'' order by R_ID';
   nStr := Format(nStr, [sTable_SnapTruck, nID]);
-  try
-    FDM.SQLExecute(nStr,FDM.SQLQuery1);
-  except
+
+  if FDM.SQLQuery(nStr, FDM.SQLQuery1).RecordCount > 5 then
+    nDel := True
+  else
+    nDel := False;
+
+  if nDel then
+  begin
+    nStr := 'Delete From %s Where S_ID=''%s'' ' +
+            ' and R_ID = (Select top 1 R_ID From %s Where S_ID=''%s'')';
+    nStr := Format(nStr, [sTable_SnapTruck, nID,
+                          sTable_SnapTruck, nID]);
+    try
+      FDM.SQLExecute(nStr,FDM.SQLQuery1);
+    except
+    end;
   end;
 
-  nStr := 'insert into %s(S_ID,S_Truck,S_Date) values(''%s'',''%s'',''%s'')';
-  nStr := Format(nStr,[sTable_SnapTruck,nID,nTruck,DateTime2Str(Now)]);
+  nStr := 'insert into %s(S_ID,S_Truck,S_Date,S_PicName) values(''%s'',''%s'',''%s'',''%s'')';
+  nStr := Format(nStr,[sTable_SnapTruck,nID,nTruck,DateTime2Str(Now),nPicName]);
   try
     FDM.SQLExecute(nStr,FDM.SQLQuery1);
   except

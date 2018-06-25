@@ -55,6 +55,7 @@ type
     N13: TMenuItem;
     N14: TMenuItem;
     N15: TMenuItem;
+    N16: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnDelClick(Sender: TObject);
@@ -73,12 +74,15 @@ type
     procedure N13Click(Sender: TObject);
     procedure N14Click(Sender: TObject);
     procedure N15Click(Sender: TObject);
+    procedure N16Click(Sender: TObject);
   protected
     FStart,FEnd: TDate;
     //时间区间
     FUseDate: Boolean;
     //使用区间
     FAll: Boolean;
+    FShadowWeight: Double;
+    //影子重量
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
     function FilterColumnField: string; override;
@@ -108,6 +112,13 @@ begin
   inherited;
   FUseDate := True;
   InitDateRange(Name, FStart, FEnd);
+
+  {$IFDEF StockMill}
+  N16.Visible := True;
+  {$ELSE}
+  N16.Visible := False;
+  {$ENDIF}
+  FShadowWeight := -1;
 end;
 
 procedure TfFrameBill.OnDestroyFrame;
@@ -140,6 +151,31 @@ begin
   Result := MacroValue(Result, [
             MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
+
+  if not gPopedomManager.HasPopedom(PopedomItem, sPopedom_FullReport) then
+  begin
+    nStr := ' And L_CusID Not In (Select S_CusID From %s)';
+    Result := Result +  Format(nStr, [sTable_CusShadow]);
+
+    if FShadowWeight < 0 then
+    begin
+      FShadowWeight := 0;
+      nStr := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
+      nStr := Format(nStr, [sTable_SysDict, sFlag_SysParam, sFlag_ShadowWeight]);
+
+      with FDM.QueryTemp(nStr) do
+      if RecordCount > 0 then
+      begin
+        FShadowWeight := Fields[0].AsFloat;
+      end;
+    end;
+
+    if FShadowWeight > 0 then
+    begin
+      nStr := ' And L_Value<%f';
+      Result := Result +  Format(nStr, [FShadowWeight]);
+    end;
+  end;
 
   if CheckDelete.Checked then
        Result := MacroValue(Result, [MI('$Bill', sTable_BillBak)])
@@ -267,12 +303,12 @@ begin
   if cxView1.DataController.GetSelectedCount > 0 then
   begin
     nStr := SQLQuery.FieldByName('L_ID').AsString;
-    {nIfFenChe := SQLQuery.FieldByName('L_IfFenChe').AsString;
+    nIfFenChe := SQLQuery.FieldByName('L_IfFenChe').AsString;
     if nIfFenChe='Y' then
     begin
       PrintBill4(nStr, False);
       PrintBill6(nStr, False);
-    end else }
+    end else
       PrintBillReport(nStr, False);
   end;
 end;
@@ -485,6 +521,36 @@ begin
 
     InitFormData(FWhere);
     ShowMsg('化验单客户名称修改成功', sHint);
+  end;
+end;
+
+procedure TfFrameBill.N16Click(Sender: TObject);
+var nStr,nID,nMill: string;
+begin
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nStr := SQLQuery.FieldByName('L_Mill').AsString;
+    nMill := nStr;
+    if not ShowInputBox('请输入新的水泥磨:', '修改', nMill, 100) then Exit;
+
+    if (nMill = '') or (nStr = nMill) then Exit;
+    //无效或一致
+    nID := SQLQuery.FieldByName('L_ID').AsString;
+
+    nStr := '确定要将交货单[ %s ]的水泥磨改为[ %s ]吗?';
+    nStr := Format(nStr, [nID, nMill]);
+    if not QueryDlg(nStr, sAsk) then Exit;
+
+    nStr := 'Update %s Set L_Mill=''%s'' Where L_ID=''%s''';
+    nStr := Format(nStr, [sTable_Bill, nMill, nID]);
+    FDM.ExecuteSQL(nStr);
+
+    nStr := '修改水泥磨[ %s -> %s ].';
+    nStr := Format(nStr, [SQLQuery.FieldByName('L_Mill').AsString, nMill]);
+    FDM.WriteSysLog(sFlag_BillItem, nID, nStr, False);
+
+    InitFormData(FWhere);
+    ShowMsg('水泥磨修改成功', sHint);
   end;
 end;
 

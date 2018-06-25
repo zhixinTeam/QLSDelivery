@@ -15,12 +15,12 @@ inherited fFormBill: TfFormBill
       Left = 316
       Top = 452
       Caption = #24320#21333
-      TabOrder = 17
+      TabOrder = 18
     end
     inherited BtnExit: TButton
       Left = 386
       Top = 452
-      TabOrder = 18
+      TabOrder = 19
     end
     object ListInfo: TcxMCListBox [2]
       Left = 23
@@ -43,7 +43,7 @@ inherited fFormBill: TfFormBill
     end
     object ListBill: TcxListView [3]
       Left = 23
-      Top = 364
+      Top = 389
       Width = 372
       Height = 113
       Columns = <
@@ -64,7 +64,7 @@ inherited fFormBill: TfFormBill
       RowSelect = True
       SmallImages = FDM.ImageBar
       Style.Edges = [bLeft, bTop, bRight, bBottom]
-      TabOrder = 14
+      TabOrder = 15
       ViewStyle = vsReport
     end
     object EditValue: TcxTextEdit [4]
@@ -131,7 +131,7 @@ inherited fFormBill: TfFormBill
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
       Style.HotTrack = False
-      TabOrder = 15
+      TabOrder = 16
       Width = 121
     end
     object EditStock: TcxComboBox [10]
@@ -188,7 +188,7 @@ inherited fFormBill: TfFormBill
       Top = 452
       Caption = #20998#36710#25552#36135
       ParentFont = False
-      TabOrder = 16
+      TabOrder = 17
       Width = 121
     end
     object EditType: TcxComboBox [17]
@@ -213,6 +213,14 @@ inherited fFormBill: TfFormBill
       ItemHeight = 12
       ParentCtl3D = False
       TabOrder = 5
+    end
+    object EditMill: TcxComboBox [19]
+      Left = 81
+      Top = 364
+      ParentFont = False
+      Properties.DropDownListStyle = lsFixedList
+      TabOrder = 14
+      Width = 121
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
       inherited dxGroup1: TdxLayoutGroup
@@ -330,6 +338,11 @@ inherited fFormBill: TfFormBill
         object dxLayout1Item16: TdxLayoutItem
           Caption = #24211'    '#20301':'
           Control = cbxKw
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayout1Item19: TdxLayoutItem
+          Caption = #29983' '#20135' '#32447':'
+          Control = EditMill
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item4: TdxLayoutItem

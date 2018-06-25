@@ -30,6 +30,7 @@ type
     FTrucks     : TList;
     FRealCount  : Integer;     //实位车数
     FCenterID   : string;      //生产线
+    FMill       : string;      //水泥磨
   end;//装车线
 
   PTruckItem = ^TTruckItem;
@@ -56,6 +57,7 @@ type
     FBuCha      : Integer;     //补差总装
     FStarted    : Boolean;     //是否启动
     FCenID      : string;      //生产线
+    FTruckMill  : string;      //水泥磨
   end;
 
   TQueueParam = record
@@ -116,7 +118,8 @@ type
     procedure MakePoolTruckIn(const nIdx: Integer; const nLine: PLineItem);
     //车辆入队
     procedure InvalidTruckOutofQueue;
-    function IsLineTruckLeast(const nLine: PLineItem; nIsReal: Boolean;nCenterID:string =''): Boolean;
+    function IsLineTruckLeast(const nLine: PLineItem; nIsReal: Boolean;
+    nCenterID:string ='';nMill:string =''): Boolean;
     procedure SortTruckList(const nList: TList);
     //队列处理
     function RealTruckInQueue(const nTruck: string): Boolean;
@@ -128,6 +131,8 @@ type
     //车辆出队
     function GetTruckCenterID(const nTruck, nBill: string): string;
     //获取车辆生产线
+    function GetTruckMill(const nTruck, nBill: string): string;
+    //获取车辆水泥磨
   public
     constructor Create(AOwner: TTruckQueueManager);
     destructor Destroy; override;
@@ -991,6 +996,10 @@ begin
         FIsValid    := FieldByName('Z_Valid').AsString <> sFlag_No;
         FIndex      := FieldByName('Z_Index').AsInteger;
         FCenterID   := FieldByName('Z_CenterID').AsString;
+
+        {$IFDEF StockMill}
+        FMill       := FieldByName('Z_Mill').AsString;
+        {$ENDIF}
       end;
 
       Next;
@@ -1122,6 +1131,10 @@ begin
         FDai        := 0;
         FCenID      := GetTruckCenterID(FieldByName('T_Truck').AsString,
                        FieldByName('T_Bill').AsString);
+        {$IFDEF StockMill}
+        FTruckMill       := GetTruckMill(FieldByName('T_Truck').AsString,
+                       FieldByName('T_Bill').AsString);
+        {$ENDIF}
       end;
 
       Inc(nIdx);
@@ -1218,6 +1231,12 @@ begin
           if FTruckPool[i].FCenID <> FCenterID then  Continue;
         end;
         {$ENDIF}
+        {$IFDEF StockMill}
+        if Length(FTruckPool[i].FTruckMill) > 0 then //水泥磨
+        begin
+          if FTruckPool[i].FTruckMill <> FMill then  Continue;
+        end;
+        {$ENDIF}
         MakePoolTruckIn(i, FOwner.Lines[nIdx]);
         //本队列车辆优先,全部进队
         Result := True;
@@ -1282,11 +1301,18 @@ begin
       if not IsStockMatch(FTruckPool[i].FStockNo, FOwner.Lines[nIdx]) then Continue;
       //3.交货单与通道品种不匹配
       {$IFDEF CXSY}
-      if not IsLineTruckLeast(FOwner.Lines[nIdx], FTruckPool[i].FIsReal,FTruckPool[i].FCenID) then
+      if not IsLineTruckLeast(FOwner.Lines[nIdx], FTruckPool[i].FIsReal,
+             FTruckPool[i].FCenID) then
         Continue;
       {$ELSE}
-      if not IsLineTruckLeast(FOwner.Lines[nIdx], FTruckPool[i].FIsReal) then
-        Continue;
+        {$IFDEF StockMill}
+        if not IsLineTruckLeast(FOwner.Lines[nIdx], FTruckPool[i].FIsReal,
+           FTruckPool[i].FCenID,FTruckPool[i].FTruckMill) then
+          Continue;
+        {$ELSE}
+        if not IsLineTruckLeast(FOwner.Lines[nIdx], FTruckPool[i].FIsReal) then
+          Continue;
+        {$ENDIF}
       {$ENDIF}
       //4.队列车辆不是最少
 
@@ -1301,6 +1327,12 @@ begin
         begin
           if FTruckPool[i].FCenID <> FCenterID then  Continue;
         end;
+      {$ENDIF}
+      {$IFDEF StockMill}
+      if Length(FTruckPool[i].FTruckMill) > 0 then //水泥磨
+      begin
+        if FTruckPool[i].FTruckMill <> FMill then  Continue;
+      end;
       {$ENDIF}
       MakePoolTruckIn(i, FOwner.Lines[nIdx]);
       //车辆进队列
@@ -1518,7 +1550,7 @@ end;
 //Parm: 装车线;实位车辆
 //Desc: 判断nLine的队列车辆否为同品种通道中最少
 function TTruckQueueDBReader.IsLineTruckLeast(const nLine: PLineItem;
-  nIsReal: Boolean;nCenterID:string =''): Boolean;
+  nIsReal: Boolean;nCenterID:string ='';nMill:string =''): Boolean;
 var nIdx: Integer;
 begin
   Result := True;
@@ -1544,6 +1576,12 @@ begin
     begin
       if nCenterID <> FCenterID then  Continue;
     end;
+
+    if Length(nMill) > 0 then //水泥磨
+    begin
+      if nMill <> FMill then  Continue;
+    end;
+
     Result := False;
     Break;
   end;
@@ -1591,6 +1629,28 @@ begin
     if RecordCount > 0 then
     begin
       Result := FieldByName('L_InvCenterId').AsString;
+    end;
+  finally
+    gDBConnManager.ReleaseConnection(nDBWorker);
+  end;
+end;
+
+function TTruckQueueDBReader.GetTruckMill(const nTruck,
+  nBill: string): string;
+var nStr: string;
+    nDBWorker: PDBWorker;
+begin
+  Result := '';
+  nDBWorker := nil;
+  try
+    nStr := ' Select L_Mill From %s  ' +
+            ' Where L_Truck=''%s'' And L_ID=''%s'' ';
+    nStr := Format(nStr, [sTable_Bill, nTruck, nBill]);
+
+    with gDBConnManager.SQLQuery(nStr, nDBWorker, '') do
+    if RecordCount > 0 then
+    begin
+      Result := FieldByName('L_Mill').AsString;
     end;
   finally
     gDBConnManager.ReleaseConnection(nDBWorker);

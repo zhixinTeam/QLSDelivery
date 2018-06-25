@@ -33,6 +33,8 @@ const
   cFI_FrameBillQuery    = $0014;                     //开单查询
   cFI_FrameMakeOCard    = $0015;                     //办理采购磁卡
   cFI_FormTodo          = $0017;                     //待处理事项
+  cFI_FrameTodo         = $0018;                     //待处理事件记录
+  cFI_FormTodoSend      = $0019;                     //推送事件
 
   cFI_FrameShouJu       = $0020;                     //收据查询
   cFI_FrameZhiKaVerify  = $0021;                     //纸卡审核
@@ -94,6 +96,8 @@ const
   cFI_FormChangePwd     = $1005;                     //修改密码
   cFI_FormOptions       = $1201;                     //参数选项
   cFI_FormOnLineModel   = $1202;                     //设置在线离线状态
+  cFI_FormSnapTruckSet  = $1203;                     //设置车牌识别启用停用
+  cFI_FormSnapView      = $1204;                     //抓拍图片浏览
 
   cFI_FormBaseInfo      = $1006;                     //基本信息
   cFI_FormCustomer      = $1007;                     //客户资料
@@ -334,10 +338,13 @@ begin
   AddMenuModuleItem('MAIN_A03', cFI_FormBackup, mtForm);
   AddMenuModuleItem('MAIN_A04', cFI_FormRestore, mtForm);
   AddMenuModuleItem('MAIN_A05', cFI_FormChangePwd, mtForm);
+  AddMenuModuleItem('MAIN_A06', cFI_FormOptions, mtForm);
   AddMenuModuleItem('MAIN_A07', cFI_FrameAuthorize);
   AddMenuModuleItem('MAIN_A08', cFI_FormTodo, mtForm);
+  AddMenuModuleItem('MAIN_A09', cFI_FrameTodo);
   AddMenuModuleItem('MAIN_A12', cFI_FormOptions, mtForm);
   AddMenuModuleItem('MAIN_A13', cFI_FormOnLineModel, mtForm);
+  AddMenuModuleItem('MAIN_A14', cFI_FormSnapTruckSet, mtForm);
 
   AddMenuModuleItem('MAIN_B01', cFI_FormBaseInfo, mtForm);
   AddMenuModuleItem('MAIN_B02', cFI_FrameCustomer);

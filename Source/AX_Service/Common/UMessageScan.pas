@@ -204,8 +204,8 @@ begin
       FDBConn := gDBConnManager.GetConnection(gDBConnManager.DefaultConnection, nErr);
       if not Assigned(FDBConn) then Continue;
 
-      nStr:= 'select top 100 * from %s';
-      nStr:= Format(nStr,[sTable_AxMsgList]);
+      nStr:= 'select * from %s where isnull(AX_SyncTime,0) < %d order by R_ID desc';
+      nStr:= Format(nStr,[sTable_AxMsgList,gMessageScan.FSyncTime]);
       with gDBConnManager.WorkerQuery(FDBConn, nStr) do
       begin
         if RecordCount < 1 then
@@ -242,19 +242,6 @@ begin
             end
             else
             begin
-              if nSyncTime > gMessageScan.FSyncTime then
-              begin
-                nStr := 'Delete from %s where AX_ProcessId = ''%s'' and AX_RecId = ''%s'' ';
-                nStr:= Format(nStr,[sTable_AxMsgList, nXTProcessId, nRecid]);
-                gDBConnManager.WorkerExec(FDBConn, nStr);
-                WriteLog(nXTProcessId+'同步次数：'+IntToStr(nSyncTime)+'，进行删除操作...');
-              end
-              else
-              begin
-                nStr := 'Update %s Set AX_SyncTime = AX_SyncTime + 1 where AX_ProcessId = ''%s'' and AX_RecId = ''%s'' ';
-                nStr:= Format(nStr,[sTable_AxMsgList, nXTProcessId, nRecid]);
-                gDBConnManager.WorkerExec(FDBConn, nStr);
-              end;
               Inc(nFailCount);
             end;
             FDBConn.FConn.CommitTrans;
@@ -269,6 +256,11 @@ begin
       WriteLog(IntToStr(nSuccessCount) + '条消息同步成功，'
                 + IntToStr(nFailCount) + '条消息同步失败，'
                 + '耗时: ' + IntToStr(GetTickCount - nInit) + 'ms');
+
+      nStr := 'Update %s Set AX_SyncTime = isnull(AX_SyncTime,0) + 1 where isnull(AX_SyncTime,0) < %d ';
+      nStr:= Format(nStr,[sTable_AxMsgList, gMessageScan.FSyncTime]);
+      gDBConnManager.WorkerExec(FDBConn, nStr);
+
     finally
       gDBConnManager.ReleaseConnection(FDBConn);
       FSyncLock.SyncLockLeave();

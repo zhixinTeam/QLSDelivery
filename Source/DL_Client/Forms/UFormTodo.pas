@@ -12,7 +12,7 @@ uses
   UDataModule, UFormNormal, cxGraphics, cxControls, cxLookAndFeels,
   cxLookAndFeelPainters, cxContainer, cxEdit, ComCtrls, ImgList, DB, ADODB,
   ExtCtrls, cxGroupBox, cxRadioGroup, cxMemo, cxTextEdit, cxListView,
-  cxLabel, dxLayoutControl, StdCtrls;
+  cxLabel, dxLayoutControl, StdCtrls, cxImage, jpeg;
 
 type
   TfFormTodo = class(TfFormNormal)
@@ -32,6 +32,8 @@ type
     Timer1: TTimer;
     ADOQuery1: TADOQuery;
     ImageBar: TcxImageList;
+    ImageTruck: TcxImage;
+    dxLayout1Item9: TdxLayoutItem;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BtnExitClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -39,11 +41,13 @@ type
     procedure ListTodoSelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
     procedure cxRadio1PropertiesEditValueChanged(Sender: TObject);
+    procedure ImageTruckClick(Sender: TObject);
   private
     { Private declarations }
     function LoadEventFromDB: Boolean;
     procedure LoadEventToUI;
     function GetSolution(const nData: string; nUIIndex: Integer = -1): string;
+    function GetImage(const nPath: string): string;
   protected
     Procedure CreateParams(Var Params: TCreateParams); override;
     //new style
@@ -60,7 +64,7 @@ implementation
 
 uses
   IniFiles, ULibFun, UMgrControl, UFormBase, UFormCtrl, USysDB, USysConst,
-  USysGrid, UMgrSndPlay;
+  USysGrid, UMgrSndPlay, ShellAPI;
 
 const
   cRefreshInterval = 10; //刷新间隔
@@ -74,6 +78,7 @@ type
     FEvent: string;
     FSolution: string;
     FDate: TDateTime;
+    FKey: string;
   end;
 
 var
@@ -239,6 +244,7 @@ begin
           nItem.FEvent := FieldByName('E_Event').AsString;
           nItem.FSolution := FieldByName('E_Solution').AsString;
           nItem.FDate := FieldByName('E_Date').AsDateTime;
+          nItem.FKey := FieldByName('E_Key').AsString;
         end;
 
         Next;
@@ -301,6 +307,8 @@ procedure TfFormTodo.ListTodoSelectItem(Sender: TObject; Item: TListItem;
   Selected: Boolean);
 var nItem: PEventItem;
 begin
+  ImageTruck.Hint := '';
+  ImageTruck.Clear;
   cxRadio1.Enabled := Selected;
   if Selected and Assigned(Item) then
   begin
@@ -310,6 +318,7 @@ begin
     EditEvent.Text := nItem.FEvent;
 
     GetSolution(nItem.FSolution);
+    GetImage(nItem.FKey);
   end;
 end;
 
@@ -322,7 +331,7 @@ begin
   try
     cxRadio1.Properties.Items.BeginUpdate;
     nList.Text := StringReplace(nData, ';', #13, [rfReplaceAll]);
-    
+
     if nUIIndex < 0 then
     begin
       cxRadio1.Properties.Items.Clear;
@@ -345,7 +354,31 @@ begin
   finally
     nList.Free;
     cxRadio1.Properties.Items.EndUpdate;
-  end;   
+  end;
+end;
+
+function TfFormTodo.GetImage(const nPath: string): string;
+var nStr: string;
+    nJpg: TjpegImage;
+begin
+  if nPath = '' then
+  begin
+    ShowMsg('图片路径为空',sHint);
+    Exit;
+  end;
+  if not FileExists(nPath) then
+  begin
+    ShowMsg('图片不存在',sHint);
+    Exit;
+  end;
+  try
+    nJpg:=TJPEGImage.Create;
+    nJpg.LoadFromFile(nPath);
+    ImageTruck.Picture.Assign(nJpg);
+    ImageTruck.Hint := nPath;
+  finally
+    if Assigned(nJpg) then nJpg.Free;
+  end;
 end;
 
 procedure TfFormTodo.Timer1Timer(Sender: TObject);
@@ -371,7 +404,7 @@ begin
 
     if not Visible then Show;
     //xxxxx
-    
+
     if nBool then
     begin
       nStr := gPath + 'sound.wav';
@@ -392,7 +425,7 @@ begin
     nStr := cxRadio1.Properties.Items[cxRadio1.ItemIndex].Caption;
 
     nStr := '事件处理如下:' + StringOfChar(' ', 22) + #13#10#13#10 +
-            '※.来源: ' + EditFrom.Text + #13#10 + 
+            '※.来源: ' + EditFrom.Text + #13#10 +
             '※.结果: ' + nStr + #13#10#13#10 +
             '确认处理结果请点击"是"按钮.';
     if not QueryDlg(nStr, sAsk, Handle) then Exit;
@@ -407,6 +440,15 @@ begin
     FDM.ExecuteSQL(nStr);
     Timer1.Tag := cRefreshInterval - 1;
   end;
+end;
+
+procedure TfFormTodo.ImageTruckClick(Sender: TObject);
+var nParam: TFormCommandParam;
+begin
+  if ImageTruck.Hint = '' then
+    Exit;
+  ShellExecute(GetDesktopWindow, 'open', PChar(ImageTruck.Hint), nil, nil, SW_SHOWNORMAL);
+  ImageTruck.Hint := '';//一定程度上避免多次点击导致打开多张图片
 end;
 
 initialization

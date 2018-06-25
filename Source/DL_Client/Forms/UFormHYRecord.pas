@@ -122,6 +122,8 @@ type
     dxLayoutControl1Item12: TdxLayoutItem;
     cxValidDate: TcxDateEdit;
     dxLayoutControl1Item14: TdxLayoutItem;
+    EditMill: TcxComboBox;
+    dxLayoutControl1Item13: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditIDPropertiesButtonClick(Sender: TObject;
@@ -159,7 +161,8 @@ implementation
 
 {$R *.dfm}
 uses
-  IniFiles, ULibFun, UFormCtrl, UAdjustForm, USysDB, USysConst, UDataReport;
+  IniFiles, ULibFun, UFormCtrl, UAdjustForm, USysDB, USysConst, UDataReport,
+  USysBusiness;
 
 type
   TCusItem = record
@@ -351,6 +354,13 @@ begin
     AdjustStringsItem(EditStock.Properties.Items, False);
   end;
 
+  {$IFDEF StockMill}
+  dxLayoutControl1Item13.Visible:= True;
+  InitMill(EditMill);
+  {$ELSE}
+  dxLayoutControl1Item13.Visible:= False;
+  {$ENDIF}
+
   if cbxHhcl.Properties.Items.Count < 1 then
   begin
     nStr := 'Select D_Value from %s where D_Name=''%s'' ';
@@ -509,6 +519,13 @@ begin
     ShowMsg('请选择生产线', sHint); Exit;
   end;
 
+  {$IFDEF StockMill}
+  if EditMill.ItemIndex < 0 then
+  begin
+    EditMill.SetFocus;
+    ShowMsg('请选择水泥磨', sHint); Exit;
+  end;
+  {$ENDIF}
 
 
   if FRecordID = '' then

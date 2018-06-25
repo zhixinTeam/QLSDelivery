@@ -317,7 +317,7 @@ begin
         if Assigned(nTmp) then
              FLeaseRemoteUrl := nTmp.ValueAsString
         else FLeaseRemoteUrl := '';
-        
+
       end;
     end;
   finally
@@ -335,9 +335,9 @@ begin
   FListB := TStringList.Create;
   FListC := TStringList.Create;
 
-  FXMLBuilder := TNativeXml.Create; 
+  FXMLBuilder := TNativeXml.Create;
   FWaiter := TWaitObject.Create;
-  FWaiter.Interval := 6 * 1000;
+  FWaiter.Interval := 3 * 1000;
 end;
 
 destructor TScanAxMsgThread.Destroy;
@@ -411,14 +411,18 @@ begin
   try
     FSyncCS.Enter;
     nRepeat:= False;
-    nList := TStringList.Create; 
+    nList := TStringList.Create;
 
-    nSQL:= 'select top 1 * from %s where SyncCounter<10 and SyncDone is null';
+    nSQL:= 'select top 1 * from %s where SyncCounter<6 and SyncDone is null';
     nSQL:= Format(nSQL, [sTable_XT_TRANSPLAN]);
 
     with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
     if RecordCount > 0 then
     begin
+      nSQL:= 'update %s set SyncCounter=SyncCounter+1 where TRANSPLANID= ''%s''';
+      nSQL:= Format(nSQL, [sTable_XT_TRANSPLAN, FieldByName('TRANSPLANID').AsString]);
+      nList.Add(nSQL);
+
       for nIdx := 0 to FAXDATA.Count - 1 do
       begin
         nOldSDI:= FAXDATA[nIdx];
@@ -428,7 +432,7 @@ begin
           Break;
         end;
       end;
-          
+
       if not nRepeat then
       begin
         nSDI:= gMemDataManager.LockData(FIDSendDataInfo);
@@ -467,49 +471,54 @@ begin
             '<ITEMNAME>'+FieldByName('ITEMNAME').AsString+'</ITEMNAME>'+
             '<ITEMTYPE>'+FieldByName('ITEMTYPE').AsString+'</ITEMTYPE>';
         end;
-        
+
         nSQL:= 'update %s set SyncStart= ''%s'' where TRANSPLANID= ''%s''';
         nSQL:= Format(nSQL, [sTable_XT_TRANSPLAN, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz', Now), FieldByName('TRANSPLANID').AsString]);
         nList.Add(nSQL);
+        WriteLog('扫描到提货单:'+FieldByName('TRANSPLANID').AsString);
       end;
-    end;
-
-    //nSQL:= 'select top 10 CompanyId, XTProcessId, RefRecid, operation, RecId from %s where Processflag=0 order by COMPANYID';
-    nSQL:= 'select top 1 CompanyId, XTProcessId, RefRecid, operation, RecId from %s where SyncCounter<10 and SyncDone is null';
-    nSQL:= Format(nSQL,[sTable_XT_MsgTables]);
-
-    with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
-    if RecordCount > 0 then
+    end
+    else
     begin
+      //nSQL:= 'select top 10 CompanyId, XTProcessId, RefRecid, operation, RecId from %s where Processflag=0 order by COMPANYID';
+      nSQL:= 'select top 1 * from %s where SyncCounter<6 and SyncDone is null';
+      nSQL:= Format(nSQL,[sTable_XT_MsgTables]);
 
-      nIdx := 0;
-      //First;
-      //while not Eof do
+      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+      if RecordCount > 0 then
       begin
-        for nIdx := 0 to FAXDATA.Count - 1 do
-        begin
-          nOldSDI:= FAXDATA[nIdx];
-          if nOldSDI.FRecId = FieldByName('RecId').AsString then Exit;
-        end;
-          
-        nSDI:= gMemDataManager.LockData(FIDSendDataInfo);
-        FAXDATA.Add(nSDI);
-        
-        with nSDI^ do
-        begin
-          FMsgNo := '0';
-          FCompanyId := FieldByName('CompanyId').AsString;
-          FXTProcessId := FieldByName('XTProcessId').AsString;
-          FRefRecid := FieldByName('RefRecid').AsString;
-          Foperation := FieldByName('operation').AsString;
-          FRecId := FieldByName('RecId').AsString;
-          FXTIndexXML := FieldByName('XTINDEXXML').AsString;
-        end;
-        
-        nSQL:= 'update %s set SyncStart= ''%s'' where RecId= ''%s''';
-        nSQL:= Format(nSQL, [sTable_XT_MsgTables, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz', Now), FieldByName('RecId').AsString]);
+        nSQL:= 'update %s set SyncCounter=SyncCounter+1 where RecId= ''%s''';
+        nSQL:= Format(nSQL, [sTable_XT_MsgTables, FieldByName('RecId').AsString]);
         nList.Add(nSQL);
-        //Next;
+        nIdx := 0;
+        //First;
+        //while not Eof do
+        begin
+          for nIdx := 0 to FAXDATA.Count - 1 do
+          begin
+            nOldSDI:= FAXDATA[nIdx];
+            if nOldSDI.FRecId = FieldByName('RecId').AsString then Exit;
+          end;
+
+          nSDI:= gMemDataManager.LockData(FIDSendDataInfo);
+          FAXDATA.Add(nSDI);
+
+          with nSDI^ do
+          begin
+            FMsgNo := '0';
+            FCompanyId := FieldByName('CompanyId').AsString;
+            FXTProcessId := FieldByName('XTProcessId').AsString;
+            FRefRecid := FieldByName('RefRecid').AsString;
+            Foperation := FieldByName('operation').AsString;
+            FRecId := FieldByName('RecId').AsString;
+            FXTIndexXML := FieldByName('XTINDEXXML').AsString;
+          end;
+
+          nSQL:= 'update %s set SyncStart= ''%s'' where RecId= ''%s''';
+          nSQL:= Format(nSQL, [sTable_XT_MsgTables, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz', Now), FieldByName('RecId').AsString]);
+          nList.Add(nSQL);
+          //Next;
+        end;
       end;
     end;
 
@@ -537,7 +546,7 @@ begin
   inherited Create(False);
   FreeOnTerminate := False;
   FOwner := AOwner;
-  
+
   FListA := TStringList.Create;
   FListB := TStringList.Create;
   FListC := TStringList.Create;
@@ -548,7 +557,7 @@ begin
 end;
 
 destructor TSendAxMsgThread.Destroy;
-begin 
+begin
   FListA.Free;
   FListB.Free;
   FListC.Free;
@@ -663,12 +672,12 @@ begin
     nBool := False;
     nLease := False;
     nIdx := 0;
-    
+
     while nIdx < FAXDATA.Count do
     begin
       nSDI:= FAXDATA[nIdx];
       //data item
-      
+
       if CompareText(nCIU.FCompanyId, nSDI.FCompanyId) = 0 then
       begin
         nData := nSDI^;
@@ -688,7 +697,7 @@ begin
 
         gMemDataManager.UnLockData(nSDI);
         FAXDATA.Delete(nIdx);
-        
+
         nBool := True;
         Break;
       end else
@@ -720,4 +729,3 @@ initialization
 finalization
   FreeAndNil(gAxMsgManager);
 end.
- 

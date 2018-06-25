@@ -315,8 +315,10 @@ function CheckTruckCount(const nStockName: string):Boolean;
 function IFSaveBill(const nLID: string): Boolean;
 //是否已经保存提货单
 
-function GetCenterSUM(nStockNo,nCenterID:string):string;
+function GetCenterSUM(nStockNo,nStockType,nCenterID:string):string;
 //获取生产线余量
+function GetStockName(const nStockNo, nStockType:string): string;
+//获取物料名称
 
 
 function CallBusinessCommand(const nCmd: Integer; const nData,nExt: string;
@@ -3032,14 +3034,39 @@ end;
 
 //Date:2018-03-16
 //获取生产线余量
-function GetCenterSUM(nStockNo,nCenterID:string):string;
+function GetCenterSUM(nStockNo,nStockType,nCenterID:string):string;
 var nOut: TWorkerBusinessCommand;
+    nList: TStrings;
 begin
-  if CallBusinessCommand(cBC_GetAXInVentSum, nStockNo, nCenterID, @nOut) then
+  nList := TStringList.Create;
+  try
+    nList.Values['StockType'] := nStockType;
+    nList.Values['CenterID']  := nCenterID;
+    if CallBusinessCommand(cBC_GetAXInVentSum, nStockNo, nList.Text, @nOut) then
+    begin
+      Result := nOut.FData;
+    end else Result := '';
+    WriteLog(nStockNo+'  '+nStockType+'  '+nCenterID+'  '+Result);
+  finally
+    nList.Free;
+  end;
+end;
+
+//获取物料名称
+function GetStockName(const nStockNo, nStockType:string): string;
+var nSQL:string;
+    nIdx:Integer;
+begin
+  Result := '';
+  nSQL := 'select D_Value from %s where D_ParamB = ''%s'' and D_Memo = ''%s'' ';
+  nSQL := Format(nSQL,[sTable_SysDict, nStockNo, nStockType]);
+  with FDM.QueryTemp(nSQL) do
   begin
-    Result := nOut.FData;
-  end else Result := '';
-  WriteLog(nStockNo+'  '+nCenterID+'  '+Result);
+    if RecordCount > 0 then
+    begin
+      Result := Fields[0].AsString;
+    end;
+  end;
 end;
 
 end.

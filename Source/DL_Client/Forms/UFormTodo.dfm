@@ -1,8 +1,8 @@
 inherited fFormTodo: TfFormTodo
-  Left = 518
-  Top = 96
+  Left = 473
+  Top = 50
   Width = 448
-  Height = 514
+  Height = 642
   BorderStyle = bsSizeable
   Position = poDefault
   OnClose = FormClose
@@ -11,18 +11,18 @@ inherited fFormTodo: TfFormTodo
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
     Width = 432
-    Height = 476
+    Height = 604
     inherited BtnOK: TButton
       Left = 286
-      Top = 443
+      Top = 571
       Caption = #30830#23450
-      TabOrder = 6
+      TabOrder = 7
     end
     inherited BtnExit: TButton
       Left = 356
-      Top = 443
+      Top = 571
       Caption = #20851#38381
-      TabOrder = 7
+      TabOrder = 8
     end
     object cxLabel1: TcxLabel [2]
       Left = 23
@@ -59,7 +59,7 @@ inherited fFormTodo: TfFormTodo
     end
     object EditDate: TcxTextEdit [4]
       Left = 57
-      Top = 251
+      Top = 274
       ParentFont = False
       Properties.ReadOnly = True
       TabOrder = 2
@@ -67,7 +67,7 @@ inherited fFormTodo: TfFormTodo
     end
     object EditFrom: TcxTextEdit [5]
       Left = 57
-      Top = 276
+      Top = 299
       ParentFont = False
       Properties.ReadOnly = True
       TabOrder = 3
@@ -75,7 +75,7 @@ inherited fFormTodo: TfFormTodo
     end
     object EditEvent: TcxMemo [6]
       Left = 57
-      Top = 301
+      Top = 324
       ParentFont = False
       Properties.ReadOnly = True
       Properties.ScrollBars = ssVertical
@@ -86,16 +86,24 @@ inherited fFormTodo: TfFormTodo
     end
     object cxRadio1: TcxRadioGroup [7]
       Left = 23
-      Top = 361
+      Top = 489
       Caption = #22788#29702#26041#26696':'
       ParentFont = False
       Properties.Items = <>
       Properties.OnEditValueChanged = cxRadio1PropertiesEditValueChanged
       Style.Edges = [bLeft, bTop, bRight, bBottom]
-      TabOrder = 5
+      TabOrder = 6
       Transparent = True
       Height = 70
       Width = 394
+    end
+    object ImageTruck: TcxImage [8]
+      Left = 57
+      Top = 384
+      TabOrder = 5
+      OnClick = ImageTruckClick
+      Height = 100
+      Width = 140
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
       inherited dxGroup1: TdxLayoutGroup
@@ -132,6 +140,11 @@ inherited fFormTodo: TfFormTodo
         object dxLayout1Item6: TdxLayoutItem
           Caption = #20869#23481':'
           Control = EditEvent
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayout1Item9: TdxLayoutItem
+          Caption = #22270#29255':'
+          Control = ImageTruck
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item8: TdxLayoutItem

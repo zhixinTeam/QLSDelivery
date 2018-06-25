@@ -15,16 +15,16 @@ inherited fFormQLSBill: TfFormQLSBill
       Left = 328
       Top = 389
       Caption = #24320#21333
-      TabOrder = 14
+      TabOrder = 15
     end
     inherited BtnExit: TButton
       Left = 398
       Top = 389
-      TabOrder = 15
+      TabOrder = 16
     end
     object EditValue: TcxTextEdit [2]
       Left = 81
-      Top = 216
+      Top = 210
       ParentFont = False
       Properties.ReadOnly = True
       Style.BorderColor = clWindowFrame
@@ -34,7 +34,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object EditTruck: TcxTextEdit [3]
       Left = 264
-      Top = 116
+      Top = 110
       ParentFont = False
       Properties.MaxLength = 15
       Properties.ReadOnly = True
@@ -46,7 +46,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object EditLading: TcxComboBox [4]
       Left = 81
-      Top = 116
+      Top = 110
       Enabled = False
       ParentFont = False
       Properties.DropDownListStyle = lsEditFixedList
@@ -72,12 +72,12 @@ inherited fFormQLSBill: TfFormQLSBill
       Style.BorderColor = clWindowFrame
       Style.BorderStyle = ebsSingle
       Style.HotTrack = False
-      TabOrder = 12
+      TabOrder = 13
       Width = 121
     end
     object EditStock: TcxComboBox [6]
       Left = 81
-      Top = 191
+      Top = 185
       Enabled = False
       ParentFont = False
       Properties.ReadOnly = True
@@ -86,7 +86,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object EditJXSTHD: TcxTextEdit [7]
       Left = 277
-      Top = 141
+      Top = 135
       ParentFont = False
       Properties.ReadOnly = False
       TabOrder = 4
@@ -94,7 +94,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object cbxSampleID: TcxComboBox [8]
       Left = 277
-      Top = 241
+      Top = 235
       ParentFont = False
       Properties.DropDownListStyle = lsFixedList
       Properties.OnChange = cbxSampleIDPropertiesChange
@@ -103,7 +103,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object cbxCenterID: TcxComboBox [9]
       Left = 81
-      Top = 241
+      Top = 235
       ParentFont = False
       Properties.DropDownListStyle = lsFixedList
       Properties.OnEditValueChanged = cbxCenterIDPropertiesEditValueChanged
@@ -112,7 +112,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object cxLabel1: TcxLabel [10]
       Left = 399
-      Top = 241
+      Top = 235
       AutoSize = False
       ParentFont = False
       Height = 16
@@ -123,12 +123,12 @@ inherited fFormQLSBill: TfFormQLSBill
       Top = 389
       Caption = #20998#36710#25552#36135
       ParentFont = False
-      TabOrder = 13
+      TabOrder = 14
       Width = 121
     end
     object EditType: TcxComboBox [12]
       Left = 81
-      Top = 141
+      Top = 135
       Enabled = False
       ParentFont = False
       Properties.DropDownListStyle = lsFixedList
@@ -143,7 +143,7 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object EditHYCus: TComboBox [13]
       Left = 81
-      Top = 166
+      Top = 160
       Width = 358
       Height = 20
       Ctl3D = True
@@ -170,9 +170,17 @@ inherited fFormQLSBill: TfFormQLSBill
     end
     object cbxKw: TcxComboBox [15]
       Left = 81
-      Top = 266
+      Top = 260
       ParentFont = False
       TabOrder = 11
+      Width = 121
+    end
+    object EditMill: TcxComboBox [16]
+      Left = 81
+      Top = 285
+      ParentFont = False
+      Properties.DropDownListStyle = lsFixedList
+      TabOrder = 12
       Width = 121
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
@@ -274,6 +282,11 @@ inherited fFormQLSBill: TfFormQLSBill
         object dxLayout1Item3: TdxLayoutItem
           Caption = #24211'    '#20301':'
           Control = cbxKw
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayout1Item10: TdxLayoutItem
+          Caption = #27700' '#27877' '#30952':'
+          Control = EditMill
           ControlOptions.ShowBorder = False
         end
       end

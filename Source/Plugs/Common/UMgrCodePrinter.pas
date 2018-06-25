@@ -26,11 +26,12 @@ type
     FEnable : Boolean;           //启用
     FOnline : Boolean;           //在线
     FLastOn : Int64;             //上次在线
+    FReyTry : Integer;           //重试次数
   end;
 
   TCodePrinterManager = class;
   //define manager object
-  
+
   TCodePrinterBase = class(TObject)
   protected
     FPrinter: PCodePrinter;
@@ -189,7 +190,7 @@ begin
       try
         nPrinter := nil;
         if FMonIdx >= FPrinters.Count then Break;
-        
+
         nPrinter := FPrinters[FMonIdx];
         Inc(FMonIdx);
 
@@ -396,7 +397,7 @@ begin
     WriteLog(Format('通道[ %s ]没有配置喷码机.', [nTunnel]));
     Exit;
   end;
-  
+
   nDriver := nil;
   try
     nDriver := LockDriver(nPrinter.FDriver);
@@ -448,6 +449,7 @@ function TCodePrinterManager.PrintCode(const nTunnel, nCode: string;
   var nHint: string): Boolean;
 var nPrinter: PCodePrinter;
     nDriver: TCodePrinterBase;
+    nIdx: Integer;
 begin
   if not FEnablePrinter then
   begin
@@ -457,6 +459,7 @@ begin
 
   if FTunnelCode.Values[nTunnel] = nCode then
   begin
+    FTunnelCode.Values[nTunnel] := '';//清除上次喷码记录
     Result := True;
     Exit;
   end; //通道喷码已发送
@@ -474,7 +477,10 @@ begin
   try
     nDriver := LockDriver(nPrinter.FDriver);
     if Assigned(nDriver) then
-         Result := nDriver.Print(nPrinter, nCode, nHint)
+    begin
+      for nIdx := 1 to nPrinter.FReyTry do
+         Result := nDriver.Print(nPrinter, nCode, nHint);
+    end
     else nHint := Format('加载名称为[ %s ]的喷码机失败.', [nPrinter.FDriver]);
   finally
     UnlockDriver(nDriver);
@@ -489,7 +495,7 @@ end;
 procedure TCodePrinterManager.LoadConfig(const nFile: string);
 var nIdx: Integer;
     nXML: TNativeXml;
-    nNode,nTmp: TXmlNode;
+    nNode,nTmp,nTp: TXmlNode;
     nPrinter: PCodePrinter;
 begin
   nXML := TNativeXml.Create;
@@ -525,6 +531,11 @@ begin
           FTunnel := nNode.NodeByName('tunnel').ValueAsString;
           FDriver := nNode.NodeByName('driver').ValueAsString;
           FEnable := nNode.NodeByName('enable').ValueAsInteger = 1;
+
+          nTP := nNode.FindNode('retry');
+          if Assigned(nTP) then
+               FReyTry := nTP.ValueAsInteger
+          else FReyTry := 1;
 
           FOnline := False;
           FLastOn := 0;
@@ -909,21 +920,21 @@ begin
 
   FClient.Socket.Write(nData, Indy8BitEncoding);
 
-  SetLength(nBuf, 0);
-  FClient.Socket.ReadBytes(nBuf, 7, False);
-
-  nstr:= BytesToString(nBuf,Indy8BitEncoding);
-
-  nDatatemp :=  Char($23) + Char($30) + Char($31);
-  nDatatemp :=  nDatatemp + Char($11)+ Char($36) + Char($0D) + Char($0A);
-
-
-  if nstr = '' then
-   begin
-      nHint := '喷码机应答错误!'+'发送:'+nData+'接收:'+nstr+'正确应答:'+nDataTemp;
-      Result := False;
-      Exit;
-   end;
+//  SetLength(nBuf, 0);
+//  FClient.Socket.ReadBytes(nBuf, 7, False);
+//
+//  nstr:= BytesToString(nBuf,Indy8BitEncoding);
+//
+//  nDatatemp :=  Char($23) + Char($30) + Char($31);
+//  nDatatemp :=  nDatatemp + Char($11)+ Char($36) + Char($0D) + Char($0A);
+//
+//
+//  if nstr = '' then
+//   begin
+//      nHint := '喷码机应答错误!'+'发送:'+nData+'接收:'+nstr+'正确应答:'+nDataTemp;
+//      Result := False;
+//      Exit;
+//   end;
 
 
   Result := True;

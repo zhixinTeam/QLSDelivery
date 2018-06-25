@@ -864,6 +864,7 @@ var nVal, nNet, nAKVal: Double;
     nStr,nSQL: string;
     nPound: TLadingBillItems;
     nOut: TWorkerBusinessCommand;
+    nMan: string;
 begin
   Result := False;
   AnalyseBillItems(FIn.FData, nPound);
@@ -906,7 +907,7 @@ begin
             SF('D_RecID', FRecID)
             ], sTable_OrderDtl, '', True);
       FListA.Add(nSQL);
-    end;  
+    end;
   end else
 
   //----------------------------------------------------------------------------
@@ -987,7 +988,7 @@ begin
               SF('D_PMan', FIn.FBase.FFrom.FUser)
               ], sTable_OrderDtl, SF('D_ID', FID), False);
       FListA.Add(nSQL);
-    end;  
+    end;
 
   end else
 
@@ -1007,11 +1008,16 @@ begin
         //—È ’ø€‘”
        FListA.Add(nSQL);
 
+      if FIn.FBase.FFrom.FUser = '' then
+        nMan := FYSMan
+      else
+        nMan := FIn.FBase.FFrom.FUser;
+
       nSQL := MakeSQLByStr([
               SF('D_Status', FStatus),
               SF('D_NextStatus', FNextStatus),
               SF('D_YTime', sField_SQLServer_Now, sfVal),
-              SF('D_YMan', FIn.FBase.FFrom.FUser),
+              SF('D_YMan', nMan),
               SF('D_KZValue', FKZValue, sfVal),
               SF('D_YSResult', FYSValid),
               SF('D_Memo', FMemo)

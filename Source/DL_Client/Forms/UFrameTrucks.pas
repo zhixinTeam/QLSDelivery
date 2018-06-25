@@ -170,7 +170,7 @@ end;
 
 //办理电子标签
 procedure TfFrameTrucks.N4Click(Sender: TObject);
-var nStr, nRFIDCard, nRFIDCard2, nFlag: string;
+var nStr, nRFIDCard, nRFIDCard2, nFlag, nRID: string;
 begin
   if cxView1.DataController.GetSelectedCount > 0 then
   begin
@@ -178,22 +178,32 @@ begin
     nRFIDCard := SQLQuery.FieldByName('T_Card').AsString;
     nRFIDCard2 := SQLQuery.FieldByName('T_Card2').AsString;
     nFlag := SQLQuery.FieldByName('T_CardUse').AsString;
-    
+    nRID := SQLQuery.FieldByName('R_ID').AsString;
+
     if SetTruckRFIDCard(nStr, nRFIDCard, nRFIDCard2, nFlag, nRFIDCard, nRFIDCard2) then
     begin
-      nStr := 'Update %s Set T_Card=null,T_Card2=null,T_CardUse=''%s''  Where R_ID=%s';
-      nStr := Format(nStr, [sTable_Truck, {nRFIDCard,} nFlag,
-        SQLQuery.FieldByName('R_ID').AsString]);
-      //xxxxxx
 
-      FDM.ExecuteSQL(nStr);//将已经绑定该标签的电子签清除
+      FDM.ADOConn.BeginTrans;
+      try
+        nStr := 'Update %s Set T_Card=null,T_Card2=null,T_CardUse=''%s''  Where R_ID=%s';
+        nStr := Format(nStr, [sTable_Truck, {nRFIDCard,} nFlag, nRID]);
+        //xxxxxx
 
-      nStr := 'Update %s Set T_Card=''%s'',T_Card2=''%s'',T_CardUse=''%s''  Where R_ID=%s';
-      nStr := Format(nStr, [sTable_Truck, nRFIDCard, nRFIDCard2, nFlag,
-        SQLQuery.FieldByName('R_ID').AsString]);
-      //xxxxxx
+        FDM.ExecuteSQL(nStr);//将已经绑定该标签的电子签清除
 
-      FDM.ExecuteSQL(nStr);
+        nStr := 'Update %s Set T_Card=''%s'',T_Card2=''%s'',T_CardUse=''%s''  Where R_ID=%s';
+        nStr := Format(nStr, [sTable_Truck, nRFIDCard, nRFIDCard2, nFlag, nRID]);
+        //xxxxxx
+
+        FDM.ExecuteSQL(nStr);
+
+        FDM.ADOConn.CommitTrans;
+      except
+        FDM.ADOConn.RollbackTrans;
+        ShowMsg('办理电子标签失败', sHint);
+        Exit;
+      end;
+
       InitFormData(FWhere);
       ShowMsg('办理电子标签成功', sHint);
     end;

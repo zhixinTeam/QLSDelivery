@@ -58,6 +58,8 @@ type
     dxLayout1Group4: TdxLayoutGroup;
     EditHYCus: TComboBox;
     dxLayout1Item20: TdxLayoutItem;
+    EditMill: TcxComboBox;
+    dxLayout1Item19: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditStockPropertiesChange(Sender: TObject);
@@ -117,7 +119,7 @@ var
   gInfo: TCommonInfo;
   gStockList: array of TStockItem;
   gSelect:Integer;
-  gStockName,gType:string;
+  gStockName,gType,gStockNo:string;
   //全局使用
 
 class function TfFormBill.CreateForm(const nPopedom: string;
@@ -177,6 +179,12 @@ begin
       chkFenChe.Enabled:=False;
       chkFenChe.Visible:=False;
       {$ENDIF}
+    {$ENDIF}
+
+    {$IFDEF StockMill}
+    dxLayout1Item19.Visible:= True;
+    {$ELSE}
+    dxLayout1Item19.Visible:= False;
     {$ENDIF}
     LoadFormData;
     //try load data
@@ -330,7 +338,7 @@ begin
     nIdx := 0;
     SetLength(gStockList, RecordCount);
 
-    First;  
+    First;
     while not Eof do
     with gStockList[nIdx] do
     begin
@@ -387,7 +395,9 @@ begin
 
   LoadStockList;
   //load stock into window
-  
+  {$IFDEF StockMill}
+  InitMill(EditMill);
+  {$ENDIF}
   //EditType.ItemIndex := 0;
   ActiveControl := EditTruck;
 end;
@@ -472,7 +482,7 @@ begin
   begin
     Result := EditLading.ItemIndex > -1;
     nHint := '请选择有效的提货方式';
-  end; 
+  end;
 
   if Sender = EditValue then
   begin
@@ -528,6 +538,7 @@ begin
       FValue := StrToFloat(EditValue.Text);
       FValue := Float2Float(FValue, cPrecision, False);
       InitCenter(FStockNO,FType,cbxCenterID);
+      gStockNo:=FStockNo;
       gStockName:=FStockName;
       gType:=FType;
       {$IFDEF YDKP}
@@ -585,6 +596,13 @@ var nIdx: Integer;
     nStr,nCenterYL,nStockNo,nCenterID:string;
     nYL,nKdValue:Double;
 begin
+  {$IFDEF StockMill}
+  if EditMill.ItemIndex=-1 then
+  begin
+    ShowMsg('请选择水泥磨', sHint); Exit;
+  end;
+  {$ENDIF}
+
   {$IFDEF ZXKP}
   if not CheckTruckOK(Trim(EditTruck.Text)) then
   begin
@@ -597,7 +615,7 @@ begin
     Exit;
   end;
   if Pos('熟料',gStockName) <= 0 then
-  if not IsEleCardVaid(gType,EditTruck.Text) then
+  if not IsEleCardVaid(gType,EditTruck.Text,gStockNo) then
   begin
     ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
   end;
@@ -609,6 +627,21 @@ begin
     Exit;
   end;
   {$ENDIF}
+
+  {$IFDEF GLPURCH}
+  if not IsEleCardVaid(gType,EditTruck.Text,gStockNo) then
+  begin
+    ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
+  end;
+  {$ENDIF}
+
+  {$IFDEF QHSN}
+  if not IsEleCardVaid(gType,EditTruck.Text,gStockNo) then
+  begin
+    ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
+  end;
+  {$ENDIF}
+
   FSumTon:=0.00;
   if ListBill.Items.Count < 1 then
   begin
@@ -773,7 +806,7 @@ begin
       Values['SampleID'] := FSampleID;
       nStockNo:= Values['StockNO'];
       nKdValue:= FValue;
-      
+
       nList.Add(PackerEncodeStr(nTmp.Text));
       //new bill
       if (not nPrint) and (FBuDanFlag <> sFlag_Yes) then
@@ -803,6 +836,7 @@ begin
       Values['WebOrderID'] := '';
       Values['ToAddr'] := '';
       Values['IdNumber'] := '';
+      Values['Mill'] := Trim(EditMill.Text);
       {$IFDEF QHSN}
       if chkFenChe.Checked then
         Values['IfFenChe'] := 'Y'
@@ -836,7 +870,7 @@ begin
       Values['KuWei'] := '';
       Values['LocationID']:= 'A';
       {$ENDIF}
-      nCenterYL:=GetCenterSUM(nStockNo,Values['CenterID']);
+      nCenterYL:=GetCenterSUM(nStockNo,gType,Values['CenterID']);
       if nCenterYL <> '' then
       begin
         if IsNumber(nCenterYL,True) then

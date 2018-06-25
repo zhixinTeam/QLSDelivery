@@ -76,6 +76,8 @@ type
     FKeepPeer: Boolean;        //保持模式
     FKeepLast: Int64;          //上次活动
     FClient : TIdTCPClient;    //通信链路
+    FPost   : string;
+    FDept   : string;//所属门岗
   end;
 
   TM100ReaderThreadType = (ttAll, ttActive);
@@ -305,7 +307,7 @@ end;
 
 procedure TM100ReaderManager.LoadConfig(const nFile: string);
 var nIdx, i: Integer;
-    nXML: TNativeXml;  
+    nXML: TNativeXml;
     nReader: PM100ReaderItem;
     nRoot,nNode,nTmp: TXmlNode;
 begin
@@ -383,6 +385,16 @@ begin
         if Assigned(nTmp) then
           FTunnel := nTmp.ValueAsString;
         //通道号
+
+        nTmp := FindNode('Post');
+        if Assigned(nTmp) then
+          FPost := nTmp.ValueAsString
+        else FPost := 'Sout';
+
+        nTmp := FindNode('Dept');
+        if Assigned(nTmp) then
+          FDept := nTmp.ValueAsString
+        else FDept := '';
 
         nTmp := FindNode('virtual');
         if Assigned(nTmp) then

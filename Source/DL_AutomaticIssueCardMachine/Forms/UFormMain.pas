@@ -164,7 +164,7 @@ begin
     //启动读头
   except
   end;
-  {FSzttceApi := TSzttceApi.Create;
+  FSzttceApi := TSzttceApi.Create;
   if FSzttceApi.ErrorCode<>0 then
   begin
     nStr := '初始化自助发卡机失败，[ErrorCode=%d,ErrorMsg=%s]';
@@ -172,7 +172,7 @@ begin
     ShowMsg(nStr,sHint);
   end;
   FSzttceApi.ParentWnd := Self.Handle;
-  TimerInsertcard.Enabled := True; }
+  //TimerInsertcard.Enabled := True;
 
   FHotKeyMgr := THotKeyManager.Create(Self);
   FHotKeyMgr.OnHotKeyPressed := DoHotKeyHotKeyPressed;

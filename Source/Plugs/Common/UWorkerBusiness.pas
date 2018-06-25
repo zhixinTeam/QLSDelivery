@@ -773,7 +773,7 @@ begin
               MI('$CC', sTable_CusCredit)]);
     end;
   end;
-  
+
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
   begin
     if RecordCount <1 then
@@ -2160,20 +2160,111 @@ function TWorkerBusinessCommander.GetInVentSum(var nData: string): Boolean;
 var nStr: string;
     nIdx: Integer;
     nDBWorker: PDBWorker;
+    nFValue, nAXValue: Double;
+    nStockType, nCenterID, nKw: string;
+    nOnLineModel: string;
 begin
   Result := False;
+
+  nStr := 'select D_Value from %s where D_Name=''%s'' ';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_OnLineModel]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    nOnLineModel := Fields[0].AsString;
+  end
+  else
+    nOnLineModel := sFlag_Yes;
+
+  if nOnLineModel <> sFlag_Yes then
+  begin
+    FOut.FData:='10000';
+    Result := True;
+
+    nStr := '离线模式,无需判断负库存';
+    WriteLog(nStr);
+
+    Exit;
+  end;
+
+  nStr := 'select D_Value from %s '+
+          'where D_Value = ''%s'' and D_Name = ''%s'' ';
+  nStr := Format(nStr, [sTable_SysDict, FIn.FData, sFlag_NoKcStock]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    FOut.FData:='10000';
+    Result := True;
+
+    nStr := '物料编号[%s]无需判断负库存';
+    nStr := Format(nStr, [FIn.FData]);
+    WriteLog(nStr);
+
+    Exit;
+  end;
+
+  FListA.Clear;
+  FListA.Text := FIn.FExtParam;
+  nCenterID := FListA.Values['CenterID'];
+  if nCenterID = '' then
+  begin
+    WriteLog('生产线为空');
+    Exit;
+  end;
+
+  if FListA.Values['StockType'] = sFlag_Dai then
+  begin
+    nStockType := sFlag_Dai;
+    nKw := 'A04';
+  end
+  else
+  begin
+    nStockType := sFlag_San;
+    nKw := 'A05';
+  end;
+
+  nFValue := 0;
+  nAXValue := 0;
+
+  nStr := 'select Sum(L_Value) as L_TotalValue from %s where L_StockNo = ''%s'' '+
+          'and L_InvCenterId = ''%s'' and L_Type = ''%s'' and (L_OutFact is null) ';
+  nStr := Format(nStr, [sTable_Bill, FIn.FData, nCenterID, nStockType]);
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    nFValue := Fields[0].AsFloat;
+
+    nStr := '生产线[%s]物料编号[%s]厂内冻结量:[%s]';
+    nStr := Format(nStr, [nCenterID, FIn.FData + nStockType, FloatToStr(nFValue)]);
+    WriteLog(nStr);
+  end;
+
   nDBWorker := nil;
   try
     //nStr := 'select sum(PostedQty+Received-Deducted+Registered-Picked-ReservPhysical) as Yuliang from %s '+
     nStr := 'select sum(PostedQty+Received-Deducted+Registered-Picked) as Yuliang from %s '+
-            'where itemid=''%s'' and xtInventCenterId=''%s'' and dataareaid=''%s'' ';
-    nStr := Format(nStr, [sTable_AX_InventSum, FIn.FData, FIn.FExtParam, gCompanyAct]);
+            'where itemid=''%s'' and xtInventCenterId=''%s'' and dataareaid=''%s'' ' +
+            'and INVENTLOCATIONID=''%s''';
+    nStr := Format(nStr, [sTable_AX_InventSum, FIn.FData, nCenterID, gCompanyAct, nKw]);
     //xxxxx
-    WriteLog(nStr);
+    WriteLog('查询ERP生产线余量Sql:'+ nStr);
     with gDBConnManager.SQLQuery(nStr, nDBWorker, sFlag_DB_AX) do
     if RecordCount > 0 then
     begin
-      FOut.FData:=FieldByName('Yuliang').AsString;
+
+      nAXValue := Fields[0].AsFloat;
+      nStr := '生产线[%s]物料编号[%s]ERP余量:[%s]';
+      nStr := Format(nStr, [nCenterID, FIn.FData + nStockType, FloatToStr(nAXValue)]);
+
+      nFValue := nAXValue - nFValue;
+      nFValue := Float2PInt(nFValue, cPrecision, False) / cPrecision;
+
+      nStr := '生产线[%s]物料编号[%s]当前可用余量:[%s]';
+      nStr := Format(nStr, [nCenterID, FIn.FData + nStockType, FloatToStr(nFValue)]);
+
+      FOut.FData:= FloatToStr(nFValue);
     end else
     begin
       FOut.FData:='0';
@@ -2867,6 +2958,7 @@ var nStr: string;
 begin
   FListA.Clear;
   Result:=True;
+  Exit;//由于会影响电子标签,不再同步
   nDBWorker := nil;
   try
     if FIn.FData='' then
@@ -4576,18 +4668,39 @@ end;}
 
 function TWorkerBusinessCommander.GetSampleID(var nData: string):Boolean;//获取试样编号
 var
-  nStr:string;
+  nStr, nCenterID, nMill:string;
   nIdx:Integer;
 begin
   Result := True;
   SetLength(FHuaYan, 0);
   FOut.FData := '';
 
+  FListC.Clear;
+  FListC.Text := FIn.FExtParam;
+
+  nCenterID := FListC.Values['CenterID'];
+  nMill     := FListC.Values['Mill'];
+
   nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
           '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL, R_ValidDate from %s a,%s b '+
-          'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' and R_CenterID=''%s'' '+
-          'and R_BatValid=''%s'' order by a.R_ID';
-  nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, FIn.FExtParam, sFlag_Yes]);
+          'where a.R_PID = b.P_ID and b.P_Stock= ''%s'' '+
+          'and R_BatValid=''%s'' ';
+  nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, sFlag_Yes]);
+
+  if Length(nCenterID) > 0 then
+  begin
+    nStr := nStr + ' and R_CenterID=''%s'' ';
+    nStr := Format(nStr,[nCenterID]);
+  end;
+
+  if Length(nMill) > 0 then
+  begin
+    nStr := nStr + ' and R_Mill=''%s'' ';
+    nStr := Format(nStr,[nMill]);
+  end;
+
+  nStr := nStr + ' order by a.R_ID';
+
 //  {$ELSE}
 //  nStr := 'select R_SerialNo,R_BatQuaStart-R_BatQuaEnd as PCL, '+
 //          '(select SUM(L_Value) as zl from S_Bill where L_HYDan=R_SerialNo) as ZL from %s a,%s b '+
@@ -4595,7 +4708,7 @@ begin
 //  nStr := Format(nStr,[sTable_StockRecord, sTable_StockParam, FIn.FData, sFlag_Yes]);
 //  {$ENDIF}
 
-  WriteLog(nStr);
+  WriteLog('获取试样编号Sql:'+ nStr);
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
   if RecordCount > 0 then
@@ -4722,7 +4835,7 @@ end;
 //Desc: 抓拍比对
 function TWorkerBusinessCommander.VerifySnapTruck(var nData: string): Boolean;
 var nStr: string;
-    nTruck, nBill, nPos, nSnapTruck, nEvent: string;
+    nTruck, nBill, nPos, nSnapTruck, nEvent, nDept, nPicName: string;
     nUpdate, nNeedManu: Boolean;
 begin
   Result := False;
@@ -4734,6 +4847,7 @@ begin
   nTruck := FListA.Values['Truck'];
   nBill  := FListA.Values['Bill'];
   nPos   := FListA.Values['Pos'];
+  nDept  := FListA.Values['Dept'];
 
   nStr := 'Select D_Value From %s Where D_Name=''%s'' and D_Memo=''%s''';
   nStr := Format(nStr, [sTable_SysDict, sFlag_TruckInNeedManu,nPos]);
@@ -4746,13 +4860,55 @@ begin
       nNeedManu := FieldByName('D_Value').AsString = sFlag_Yes;
     end;
   end;
+  WriteLog('车牌识别:'+'岗位:'+nPos+'事件接收部门:'+nDept);
+  {$IFDEF SaveAllSnap}
+  nStr := 'Select * From %s Where S_ID=''%s''';
+  nStr := Format(nStr, [sTable_SnapTruck, nPos]);
+  //xxxxx
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount > 0 then
+      nSnapTruck := FieldByName('S_Truck').AsString;
+  end;
+
+  nStr := 'Select * From %s Where E_ID=''%s''';
+  nStr := Format(nStr, [sTable_ManualEvent, nBill+sFlag_ManualE]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount > 0 then
+      nUpdate := True
+    else
+      nUpdate := False;
+  end;
+
+  nEvent := '车辆[ %s ]车牌识别成功,抓拍车牌号:[ %s ]';
+  nEvent := Format(nEvent, [nTruck,nSnapTruck]);
+
+  nStr := SF('E_ID', nBill+sFlag_ManualE);
+  nStr := MakeSQLByStr([
+          SF('E_ID', nBill+sFlag_ManualE),
+          SF('E_Key', nTruck),
+          SF('E_From', nDept),
+          SF('E_Result', 'I'),
+          SF('E_ManDeal', 'Auto'),
+          SF('E_DateDeal', sField_SQLServer_Now, sfVal),
+          SF('E_Event', nEvent),
+          SF('E_Solution', sFlag_Solution_YN),
+          SF('E_Departmen', nDept),
+          SF('E_Date', sField_SQLServer_Now, sfVal)
+          ], sTable_ManualEvent, nStr, (not nUpdate));
+  //xxxxx
+  gDBConnManager.WorkerExec(FDBConn, nStr);
+  {$ENDIF}
 
   nData := '车辆[ %s ]车牌识别失败';
   nData := Format(nData, [nTruck]);
   FOut.FData := nData;
   //default
 
-  nStr := 'Select * From %s Where S_ID=''%s''';
+  nStr := 'Select * From %s Where S_ID=''%s'' order by R_ID desc ';
   nStr := Format(nStr, [sTable_SnapTruck, nPos]);
   //xxxxx
 
@@ -4767,16 +4923,29 @@ begin
       FOut.FData := nData;
       Exit;
     end;
-    nSnapTruck := FieldByName('S_Truck').AsString;
-    if Pos(nTruck,nSnapTruck) > 0 then
+
+    nPicName := '';
+
+    First;
+
+    while not Eof do
     begin
-      Result := True;
-      nData := '车辆[ %s ]车牌识别成功,抓拍车牌号:[ %s ]';
-      nData := Format(nData, [nTruck,nSnapTruck]);
-      FOut.FData := nData;
-      Exit;
+      nSnapTruck := FieldByName('S_Truck').AsString;
+      if nPicName = '' then//默认取最新一次抓拍
+        nPicName := FieldByName('S_PicName').AsString;
+      if Pos(nTruck,nSnapTruck) > 0 then
+      begin
+        Result := True;
+        nPicName := FieldByName('S_PicName').AsString;
+        //取得匹配成功的图片路径
+        nData := '车辆[ %s ]车牌识别成功,抓拍车牌号:[ %s ]';
+        nData := Format(nData, [nTruck,nSnapTruck]);
+        FOut.FData := nData;
+        Exit;
+      end;
+      //车牌识别成功
+      Next;
     end;
-    //车牌识别成功
   end;
 
   nStr := 'Select * From %s Where E_ID=''%s''';
@@ -4823,13 +4992,13 @@ begin
   nStr := SF('E_ID', nBill+sFlag_ManualE);
   nStr := MakeSQLByStr([
           SF('E_ID', nBill+sFlag_ManualE),
-          SF('E_Key', nTruck),
-          SF('E_From', sFlag_DepMenGang),
+          SF('E_Key', nPicName),
+          SF('E_From', nDept),
           SF('E_Result', 'Null', sfVal),
 
           SF('E_Event', nEvent),
           SF('E_Solution', sFlag_Solution_YN),
-          SF('E_Departmen', sFlag_DepMenGang),
+          SF('E_Departmen', nDept),
           SF('E_Date', sField_SQLServer_Now, sfVal)
           ], sTable_ManualEvent, nStr, (not nUpdate));
   //xxxxx

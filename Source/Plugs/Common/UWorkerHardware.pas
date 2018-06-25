@@ -453,7 +453,11 @@ begin
       nCode := Fields[0].AsString;
       nCode := Copy(nCode,3,Length(nCode)-2);
       //nCode := gCompanyAct+nCode+Fields[2].AsString+Fields[3].AsString;
+      {$IFDEF GLPURCH}
+      nCode := gCompanyAct+nCode+Fields[2].AsString+Fields[3].AsString;
+      {$ELSE}
       nCode := Copy(gCompanyAct,2,2)+nCode+Fields[3].AsString+Fields[4].AsString+Fields[2].AsString;
+      {$ENDIF}
     end;
   end;
 
@@ -684,7 +688,7 @@ end;
 function THardwareCommander.TruckAutoIn(var nData: string): Boolean;
 begin
   Result:= True;
-  MakeTruckIn(FIn.FData, '');
+  MakeTruckIn(FIn.FData, '', '','');
 end;
 
 initialization

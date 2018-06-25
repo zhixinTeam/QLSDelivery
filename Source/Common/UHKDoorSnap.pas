@@ -17,14 +17,15 @@ type
     FName      : string;            //名称
     FHost      : string;            //IP
     FPort      : Integer;           //端口
-    
+
     FUser     : string;           //登陆名
     FPassword : string;           //密码
     FChannel  : string;           //通道号
     FLinkMode : Integer;          //连接方式
     FUserID   : Integer;          //注册成功返回ID
     FRealHandle : LongInt;        //预览返回句柄
-    FFortifyHandle : Integer      //布防返回句柄
+    FFortifyHandle : Integer;     //布防返回句柄
+    FPreview  : Boolean;          //是否预览
   end;
 
   THKDoorSnapManager = class;
@@ -50,6 +51,8 @@ type
   private
     FEnabled: Boolean;
     //是否启用
+    FSnapPath: string;
+    //图片保存路径
     FDoorSnaps: array of THKDoorSnapParam;
     //卡列表
     FSender: THKDoorSnapSender;
@@ -94,6 +97,8 @@ procedure MessageCallback(lCommand: Longint; pAlarmer: LPNET_DVR_ALARMER;
 var struPlateResult:LPNET_DVR_PLATE_RESULT;
     nStr, nIP: string;
     nInt: Integer;
+    lHandle:THandle;
+    nFileName: String;
 begin
   if (lCommand = COMM_UPLOAD_PLATE_RESULT) then
   begin
@@ -108,7 +113,22 @@ begin
     nStr := Format('抓拍摄像机[%s]抓拍到车牌号: %s',
               [nIP, struPlateResult.struPlateInfo.sLicense]);
     WriteLog(nStr);
-    fFormMain.SaveSnapTruck(nIP,struPlateResult.struPlateInfo.sLicense);
+    if Pos('无车牌', struPlateResult.struPlateInfo.sLicense) <= 0 then
+    begin
+       nFileName := gHKDoorSnapManager.FSnapPath
+                    + struPlateResult.struPlateInfo.sLicense 
+                    + formatdatetime('yyyymmddhhmmsszzz',now)+'.jpg';
+       lHandle:= CreateFile(pchar(nFileName), GENERIC_WRITE,
+                 FILE_SHARE_READ, nil, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+       if (lHandle <> INVALID_HANDLE_VALUE) then
+       begin
+         dwReturn := 0;
+         WriteFile(lHandle, struPlateResult.pBuffer1^, struPlateResult.dwPicLen, dwReturn, nil);
+         CloseHandle(lHandle);
+       end;
+
+      fFormMain.SaveSnapTruck(nIP,struPlateResult.struPlateInfo.sLicense,nFileName);
+    end;
   end;
 end;
 
@@ -116,6 +136,7 @@ end;
 constructor THKDoorSnapManager.Create;
 begin
   FEnabled := True;
+  FSnapPath := '';
   FSender := nil;
 
   FSyncLock := TCriticalSection.Create;
@@ -137,6 +158,12 @@ var nErrIdx,nIdx,nCount: Integer;
 begin
   if not FEnabled then Exit;
   //xxxxx
+  if FSnapPath = '' then
+    raise Exception.Create('抓拍图片存放路径为空.');
+  //xxxxx
+
+  if not DirectoryExists(FSnapPath) then
+    CreateDir(PChar(FSnapPath));
 
   if Length(FDoorSnaps) < 1 then
     raise Exception.Create('DoorSnap List Is Null.');
@@ -183,17 +210,21 @@ begin
     nStruPlayInfo.lChannel := StrtoInt(FChannel);
     nStruPlayInfo.lLinkMode := FLinkMode;       //TCP
     nStruPlayInfo.sMultiCastIP := NIL;
-    case FPanelID of
-      1:
-        nStruPlayInfo.hPlayWnd := fFormMain.SnapView1.Handle;
-      2:
-        nStruPlayInfo.hPlayWnd := fFormMain.SnapView2.Handle;
-      3:
-        nStruPlayInfo.hPlayWnd := fFormMain.SnapView3.Handle;
-      4:
-        nStruPlayInfo.hPlayWnd := fFormMain.SnapView4.Handle;
-      else
-        nStruPlayInfo.hPlayWnd := fFormMain.SnapView1.Handle;
+
+    if FPreview then
+    begin
+      case FPanelID of
+        1:
+          nStruPlayInfo.hPlayWnd := fFormMain.SnapView1.Handle;
+        2:
+          nStruPlayInfo.hPlayWnd := fFormMain.SnapView2.Handle;
+        3:
+          nStruPlayInfo.hPlayWnd := fFormMain.SnapView3.Handle;
+        4:
+          nStruPlayInfo.hPlayWnd := fFormMain.SnapView4.Handle;
+        else
+          nStruPlayInfo.hPlayWnd := fFormMain.SnapView1.Handle;
+      end;
     end;
 
     FRealHandle := NET_DVR_RealPlay_V30(FUserID, @nStruPlayInfo, nil,  nil, TRUE);
@@ -330,6 +361,7 @@ begin
     begin
       nIdx := nTmp.NodeByName('enable').ValueAsInteger;
       FEnabled := nIdx = 1;
+      FSnapPath := nTmp.NodeByName('PicPath').ValueAsString;
     end;
 
     nTmp := nXML.Root.FindNode('Snaps');
@@ -358,6 +390,7 @@ begin
           FUserID := -1;
           FRealHandle := -1;
           FFortifyHandle := -1;
+          FPreview := nNode.NodeByName('preview').ValueAsInteger = 1;
         end;
       end;
     end;

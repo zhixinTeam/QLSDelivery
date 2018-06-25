@@ -65,7 +65,7 @@ object fFormHYRecord: TfFormHYRecord
     end
     object wPanel: TPanel
       Left = 23
-      Top = 268
+      Top = 293
       Width = 424
       Height = 240
       Align = alClient
@@ -772,7 +772,7 @@ object fFormHYRecord: TfFormHYRecord
     end
     object cxComboBox2: TcxComboBox
       Left = 99
-      Top = 186
+      Top = 211
       Hint = 'E.R_BatValid'
       ParentFont = False
       Properties.Items.Strings = (
@@ -809,7 +809,7 @@ object fFormHYRecord: TfFormHYRecord
     end
     object cbxCusGroup: TcxComboBox
       Left = 99
-      Top = 161
+      Top = 186
       Hint = 'E.R_CusGroup'
       ParentFont = False
       TabOrder = 11
@@ -817,10 +817,18 @@ object fFormHYRecord: TfFormHYRecord
     end
     object cxValidDate: TcxDateEdit
       Left = 99
-      Top = 211
+      Top = 236
       Hint = 'E.R_ValidDate'
       ParentFont = False
       TabOrder = 12
+      Width = 121
+    end
+    object EditMill: TcxComboBox
+      Left = 99
+      Top = 161
+      Hint = 'E.R_Mill'
+      Properties.DropDownListStyle = lsFixedList
+      TabOrder = 16
       Width = 121
     end
     object dxLayoutControl1Group_Root: TdxLayoutGroup
@@ -876,6 +884,11 @@ object fFormHYRecord: TfFormHYRecord
         object dxLayoutControl1Item8: TdxLayoutItem
           Caption = #39044#35686#37327'('#21544'):'
           Control = EditQuaEnd
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayoutControl1Item13: TdxLayoutItem
+          Caption = #27700' '#27877' '#30952':'
+          Control = EditMill
           ControlOptions.ShowBorder = False
         end
         object dxLayoutControl1Item12: TdxLayoutItem

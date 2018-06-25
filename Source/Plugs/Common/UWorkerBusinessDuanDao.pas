@@ -201,7 +201,7 @@ begin
   try
     if FIn.FData <> '' then
     begin
-      nSQL := 'Update %s Set T_Card=''%s'' Where T_Truck =''%s''';
+      nSQL := 'Update %s Set T_DDCard=''%s'' Where T_Truck =''%s''';
       nSQL := Format(nSQL, [sTable_Truck, FIn.FExtParam, FIn.FData]);
       gDBConnManager.WorkerExec(FDBConn, nSQL);
     end;
@@ -243,14 +243,14 @@ begin
 end;
 
 //Date: 2016/2/27
-//Parm: 
+//Parm:
 //Desc: ¶Ìµ¹ÒµÎñ×¢Ïú´Å¿¨
 function TWorkerBusinessDuanDao.LogoffDDCard(var nData: string): Boolean;
 var nStr: string;
 begin
   FDBConn.FConn.BeginTrans;
   try
-    nStr := 'Update %s Set T_Card=Null Where T_Card=''%s''';
+    nStr := 'Update %s Set T_DDCard=Null Where T_DDCard=''%s''';
     nStr := Format(nStr, [sTable_Truck, FIn.FData]);
     gDBConnManager.WorkerExec(FDBConn, nStr);
 
@@ -303,10 +303,10 @@ begin
     end;
   end;
 
-  nStr := 'Select T_Truck, T_MatePID, T_MateID, T_MateName, T_Card,' +
+  nStr := 'Select T_Truck, T_MatePID, T_MateID, T_MateName, T_DDCard,' +
           'T_PrePValue, T_PrePMan, T_PrePTime, ' +
           'T_SrcAddr, T_DestAddr From $Truck b ';
-  nStr := nStr + 'Where T_Card=''$CD''';
+  nStr := nStr + 'Where T_DDCard=''$CD''';
   nStr := MacroValue(nStr, [MI('$Truck', sTable_Truck),MI('$CD', FIn.FData)]);
   //xxxxx
 
@@ -331,7 +331,7 @@ begin
       FStockNo    := FieldByName('T_MateID').AsString;
       FStockName  := FieldByName('T_MateName').AsString;
 
-      FCard       := FieldByName('T_Card').AsString;
+      FCard       := FieldByName('T_DDCard').AsString;
       FStatus     := sFlag_TruckBFP;
       FNextStatus := sFlag_TruckBFM;
 
@@ -346,7 +346,7 @@ begin
 
       FMemo         := FieldByName('T_SrcAddr').AsString;
       FYSValid      := FieldByName('T_DestAddr').AsString;
-      
+
       FSelected := True;
     end;
   end;
@@ -429,7 +429,7 @@ begin
               SF('T_PrePMan', FIn.FBase.FFrom.FUser)
               ], sTable_Truck, SF('T_Truck', FTruck), False);
       FListA.Add(nSQL);
-    end;  
+    end;
 
   end else
 
@@ -544,7 +544,7 @@ begin
     nPacker := gBusinessPackerManager.LockPacker(sBus_BusinessCommand);
     nPacker.InitData(@nIn, True, False);
     //init
-    
+
     nStr := nPacker.PackIn(@nIn);
     nWorker := gBusinessWorkerManager.LockWorker(FunctionName);
     //get worker

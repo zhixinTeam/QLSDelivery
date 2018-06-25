@@ -1056,6 +1056,10 @@ var nStr: string;
 begin
   Result := False;
   FListA.Clear;
+
+  Result:= True;
+  Exit;//由于会影响电子标签,不再同步
+
   nDBWorker := nil;
   try
     nStr := 'Select VehicleId, CZ, DriverId, CMT_PrivateId, companyid, XTECB,'+
@@ -1692,6 +1696,24 @@ begin
 
   finally
     nXML.Free;
+  end;
+
+  if Pos('缓凝',FListA.Values['ITEMNAME']) > 0 then//此水泥名称不完整
+  begin
+    nStr := 'select D_Value from %s where D_ParamB = ''%s'' and D_Memo = ''%s'' ';
+    nStr := Format(nStr,[sTable_SysDict, FListA.Values['ITEMID'],
+                                         FListA.Values['ITEMTYPE']]);
+
+    with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+    begin
+      if RecordCount > 0 then
+      begin
+        nStr := Fields[0].AsString;
+        nStr := StringReplace(nStr,'袋装','',[rfReplaceAll]);
+        nStr := StringReplace(nStr,'散装','',[rfReplaceAll]);
+        FListA.Values['ITEMNAME'] := Trim(nStr);
+      end;
+    end;
   end;
 
   try

@@ -80,6 +80,10 @@ begin
   N2.Enabled := BtnEdit.Enabled;
   N3.Enabled := BtnEdit.Enabled;
   N7.Enabled := BtnEdit.Enabled;
+
+  N3.Enabled := True;
+  N7.Enabled := True;
+
 end;
 
 function TfFrameQueryDispatch.InitFormDataSQL(const nWhere: string): string;

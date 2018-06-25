@@ -95,7 +95,7 @@ type
     function GetOutASH(const nStr: string): string;
     //获取批次号条件
     function GetStockType(const nStockno:string):string;
-    function IsEleCardVaid(const nStockType, nTruckNo:string):Boolean;
+    function IsEleCardVaid(const nStockType, nTruckNo,nStockNo:string):Boolean;
     //电子标签是否启用
   public
     { Public declarations }
@@ -191,6 +191,7 @@ begin
     end;
     editWebOrderNo.SelectAll;
     if not DownloadOrder(nCardNo) then Exit;
+    FWebOrderID := Trim(editWebOrderNo.Text);
     btnOK.Enabled := True;
   finally
     btnQuery.Enabled := True;
@@ -238,7 +239,8 @@ begin
     gCusID := FieldByName('AX_CUSTOMERID').AsString;
     gFYPlanStatus := FieldByName('AX_FYPlanStatus').AsString;
     gInventLocationId := FieldByName('AX_InventLocationId').AsString;
-    EditCName.Text := GetCustomerExtQls(gCusID);
+    EditCName.Text := FieldByName('AX_CUSTOMERNAME').AsString;
+    //GetCustomerExtQls(gCusID);
     EditLading.ItemIndex := StrToIntDef(GetLadingWay(gZhiKa),0);
     EditType.ItemIndex := 0;
     InitCenter(nStockNO,gCusID,cbxCenterID);
@@ -246,7 +248,7 @@ begin
   begin
     ShowMsg(nStr, sHint); Exit;
   end;
-
+  
   nDBSales := LoadSalesInfo(gZhiKa,nStr);
   if Assigned(nDBSales) then
   with nDBSales do
@@ -314,6 +316,14 @@ begin
     LabInfo.Caption := '未查询网上订单';
     Exit;
   end;
+
+  if Trim(editWebOrderNo.Text) <> FWebOrderID then
+  begin
+    ShowMsg('提货单号已经更改,无法保存',sHint);
+    LabInfo.Caption := '提货单号已经更改,无法保存,请重新扫描';
+    Exit;
+  end;
+
   if not VerifyCtrl(EditTruck,nHint) then
   begin
     ShowMsg(nHint,sHint);
@@ -337,18 +347,37 @@ begin
     ShowMsg(EditTruck.Text+'非法，禁止开单',sHint);
     Exit;
   end;
+  if not IsEleCardVaid(gType,EditTruck.Text,gStockNo) then
+  begin
+    ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
+  end;
   {$ENDIF}
-  
+
   {$IFDEF CXSY}
   if cbxCenterID.Text= '' then
   begin
     ShowMsg('生产线为空！请联系管理员', sHint); Exit;
   end;
-  if not IsEleCardVaid(gType,EditTruck.Text) then
+  if not IsEleCardVaid(gType,EditTruck.Text,gStockNo) then
   begin
     ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
   end;
   {$ENDIF}
+
+  {$IFDEF GLPURCH}
+  if not IsEleCardVaid(gType,EditTruck.Text,gStockNo) then
+  begin
+    ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
+  end;
+  {$ENDIF}
+
+  {$IFDEF QHSN}
+  if not IsEleCardVaid(gType,EditTruck.Text,gStockNo) then
+  begin
+    ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
+  end;
+  {$ENDIF}
+
   if gSysParam.FUserID = '' then gSysParam.FUserID := 'AICM';
   nCenterID := cbxCenterID.Text;
   nSampleID := '';
@@ -367,42 +396,8 @@ begin
   else
     PrintFH.Checked := False;
 
-  if gSysParam.FCanCreateCard then
-  begin
-    nNewCardNo := '';
-    Fbegin := Now;
-  
-    //连续三次读卡均失败，则回收卡片，重新发卡
-    for i := 0 to 3 do
-    begin
-      for nIdx:=0 to 3 do
-      begin
-        if gMgrK720Reader.ReadCard(nNewCardNo) then Break;
-        //连续三次读卡,成功则退出。
-      end;
-      if nNewCardNo<>'' then Break;
-      gMgrK720Reader.RecycleCard;
-    end;
-
-    if nNewCardNo = '' then
-    begin
-      ShowDlg('卡箱异常,请查看是否有卡.', sWarn, Self.Handle);
-      Exit;
-    end;
-    Writelog('ReadCard: ' + nNewCardNo);
-    nNewCardNo := gMgrK720Reader.ParseCardNO(nNewCardNo);
-    WriteLog('ParseCardNO: ' + nNewCardNo);
-    if nNewCardNo = '' then
-    begin
-      ShowDlg('卡号异常,解析失败.', sWarn, Self.Handle);
-      Exit;
-    end;
-    //解析卡片
-    writelog('TfFormNewCard.SaveBillProxy 发卡机读卡-耗时：'+InttoStr(MilliSecondsBetween(Now, FBegin))+'ms');
-  end;
-
   //验证是否已经保存提货单
-  FNewBillID := Trim(editWebOrderNo.Text);
+  FNewBillID := FWebOrderID;
   nRet := IFSaveBill(FNewBillID);
 
   //保存提货单
@@ -457,10 +452,18 @@ begin
         Values['CenterID']:= nCenterID;
         Values['JXSTHD'] := '';
         Values['Project'] := Trim(EditCName.Text);
-        Values['IfFenChe'] := 'N';
+        {$IFDEF QHSN}
+        Values['IfFenChe'] := 'Y';
+        {$ELSE}
+          {$IFDEF MHSN}
+          Values['IfFenChe'] := 'Y';
+          {$ELSE}
+          Values['IfFenChe'] := 'N';
+          {$ENDIF}
+        {$ENDIF}
         Values['KuWei'] := '';
         Values['LocationID']:= 'A';
-        nCenterYL:=GetCenterSUM(nStockNo,Values['CenterID']);
+        nCenterYL:=GetCenterSUM(gStockNo,gType,Values['CenterID']);
         if nCenterYL <> '' then
         begin
           if IsNumber(nCenterYL,True) then
@@ -488,36 +491,8 @@ begin
     end;
   end;
   ShowMsg('提货单保存成功', sHint);
-  nRet := SaveBillCard(FNewBillID,nNewCardNo);
-  FBegin := Now;
-  
-  if nRet then
-  begin
-    nRet := False;
-    for nIdx := 0 to 3 do
-    begin
-      nRet := gMgrK720Reader.SendReaderCmd('FC0');
-      if nRet then Break;
-    end;
-    //发卡
-  end;
-  if nRet then
-  begin
-    nHint := '商城订单号['+editWebOrderNo.Text+']发卡成功,卡号['+nNewCardNo+'],请收好您的卡片';
-    WriteLog(nHint);
-    ShowMsg(nHint,sWarn);
-  end
-  else begin
-    gMgrK720Reader.RecycleCard;
-
-    nHint := '商城订单号['+editWebOrderNo.Text+'],卡号['+nNewCardNo+']关联订单失败，请到开票窗口重新关联。';
-    WriteLog(nHint);
-    ShowDlg(nHint,sHint,Self.Handle);
-    Close;
-  end;
-  writelog('TfFormNewCard.SaveBillProxy 发卡机出卡并关联磁卡号-耗时：'+InttoStr(MilliSecondsBetween(Now, FBegin))+'ms');
   //发卡
-  {if not FSzttceApi.IssueOneCard(nNewCardNo) then
+  if not FSzttceApi.IssueOneCard(nNewCardNo) then
   begin
     nHint := '出卡失败,请到开票窗口补办磁卡：[errorcode=%d,errormsg=%s]';
     nHint := Format(nHint,[FSzttceApi.ErrorCode,FSzttceApi.ErrorMsg]);
@@ -526,15 +501,12 @@ begin
   end
   else begin
     ShowMsg('发卡成功,卡号['+nNewCardNo+'],请收好您的卡片',sHint);
-    SetBillCard(FNewBillID, EditTruck.Text,nNewCardNo, True);
-  end; }
+    SaveBillCard(FNewBillID,nNewCardNo);
+  end;
 
   Result := True;
-  {$IFDEF PLKP}
-  if nPrint then  //平凉使用
-  {$ELSE}
-  if PrintYesNo then
-  {$ENDIF}
+
+  if nPrint then 
     PrintBillReport(FNewBillID, False);
   //print report
 
@@ -731,15 +703,33 @@ begin
 end;
 
 function TfFormNewCardQls.IsEleCardVaid(const nStockType,
-  nTruckNo: string): Boolean;
+  nTruckNo,nStockNo: string): Boolean;
 var
-  nSql:string;
+  nStr,nSql:string;
 begin
   Result := False;
-  if nStockType <> 'S' then
+  if nStockType <> sFlag_San then
   begin
     Result := True;
     Exit;
+  end;
+
+  nStr := 'Select D_Value,D_Memo,D_ParamB From $Table ' +
+          'Where D_Name=''$Name'' And D_Value=''$Value'' ' +
+          'And D_Memo=''$Memo'' Order By D_Index ASC';
+  nStr := MacroValue(nStr, [MI('$Table', sTable_SysDict),
+                            MI('$Name', sFlag_NoEleCard),
+                            MI('$Value', nStockNo),
+                            MI('$Memo', nStockType)]);
+  //xxxxx
+
+  with FDM.QueryTemp(nStr) do
+  begin
+    if RecordCount > 0 then
+    begin
+      Result := True;
+      Exit;
+    end;
   end;
   nSql := 'select * from %s where T_Truck = ''%s'' ';
   nSql := Format(nSql,[sTable_Truck,nTruckNo]);

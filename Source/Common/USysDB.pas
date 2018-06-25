@@ -195,6 +195,7 @@ ResourceString
   sFlag_NFStock       = 'NoFaHuoStock';              //现场无需发货
   sFlag_NFPurch       = 'NoFaHuoPurch';              //现场无需发货（原材料）
   sFlag_PEmpTWuCha    = 'EmpTruckWuCha';             //空车出厂误差
+  sFlag_NoEleCard     = 'NoEleCard';                 //无需办理电子标签
 
   sFlag_CommonItem    = 'CommonItem';                //公共信息
   sFlag_CardItem      = 'CardItem';                  //磁卡信息项
@@ -205,6 +206,7 @@ ResourceString
   sFlag_UserLogItem   = 'UserLogItem';               //用户登录项
 
   sFlag_StockItem     = 'StockItem';                 //水泥信息项
+  sFlag_StockMillItem = 'StockMillItem';             //水泥磨信息项
   sFlag_ContractItem  = 'ContractItem';              //合同信息项
   sFlag_SalesmanItem  = 'SalesmanItem';              //业务员信息项
   sFlag_ZhiKaItem     = 'ZhiKaItem';                 //纸卡信息项
@@ -254,6 +256,7 @@ ResourceString
   sFlag_Sgzl          = 'HuYanSgzl';                 //石膏种类
   sFlag_Hnzl          = 'HNZL';                      //混凝租赁
   sFlag_TruckInNeedManu = 'TruckInNeedManu';         //车牌识别需要人工干预
+  sFlag_NoKcStock     = 'NoKcStock';                 //无库存物料
 
   {*数据表*}
   sTable_Group        = 'Sys_Group';                 //用户组
@@ -1233,7 +1236,7 @@ const
        'T_PValue $Float Default 0, T_PTime Integer Default 0,' +
        'T_PlateColor varChar(12),T_Type varChar(12), T_LastTime DateTime, ' +
        'T_Card varChar(32),T_Card2 varChar(32), T_CardUse Char(1), T_NoVerify Char(1),' +
-       'T_Valid Char(1), T_VIPTruck Char(1), T_HasGPS Char(1),'+
+       'T_Valid Char(1), T_VIPTruck Char(1), T_HasGPS Char(1), T_DDCard varChar(32),'+
        'T_CompanyID varChar(10),T_XTECB varChar(10),T_VendAccount varChar(20),'+
        'T_Driver varChar(10), T_SaleID varChar(20), T_RecID bigint not null default ((0)),'+
        'T_MatePID varChar(15), T_MateID varChar(15), T_MateName varChar(80),' +
@@ -1282,6 +1285,7 @@ const
    *.T_DestAddr:倒入地址
    *.T_SaleID:订单号
    *.T_RecID：订单行编码
+   *.T_DDCard:短倒磁卡
    ---------------------------------------------------------------------------//
    *.T_Billing: 是否允许开单 Y：是 N：否
   -----------------------------------------------------------------------------}

@@ -4,6 +4,7 @@
 *******************************************************************************}
 unit UFormZTLine;
 
+{$I Link.inc}
 interface
 
 uses
@@ -47,6 +48,8 @@ type
     dxLayout1Item6: TdxLayoutItem;
     cbxLocationID: TcxComboBox;
     dxLayout1Item9: TdxLayoutItem;
+    EditMill: TcxComboBox;
+    dxLayout1Item11: TdxLayoutItem;
     procedure BtnOKClick(Sender: TObject);
     procedure EditStockIDPropertiesChange(Sender: TObject);
     procedure cbxLocationIDPropertiesChange(Sender: TObject);
@@ -55,6 +58,8 @@ type
     { Protected declarations }
     FID: string;
     //标识
+    FOldStockNo: string;
+    //旧编号
     procedure InitFormData(const nID: string);
     procedure GetData(Sender: TObject; var nData: string);
     function SetData(Sender: TObject; const nData: string): Boolean;
@@ -76,7 +81,7 @@ implementation
 {$R *.dfm}
 uses
   IniFiles, ULibFun, UMgrControl, UDataModule, UFormInputbox, USysGrid,
-  UFormCtrl, USysDB, USysConst ,USysLoger;
+  UFormCtrl, USysDB, USysConst ,USysLoger, USysBusiness;
 
 type
   TLineStockItem = record
@@ -148,6 +153,13 @@ procedure TfFormZTLine.InitFormData(const nID: string);
 var nStr: string;
     nIdx: Integer;
 begin
+  {$IFDEF StockMill}
+  dxLayout1Item11.Visible:= True;
+  InitMill(EditMill);
+  {$ELSE}
+  dxLayout1Item11.Visible:= False;
+  {$ENDIF}
+
   ResetHintAllForm(Self, 'T', sTable_ZTLines);
   //重置表名称
   if nID <> '' then
@@ -161,6 +173,7 @@ begin
       EditStockID.Text := FDM.SqlTemp.FieldByName('Z_StockNo').AsString;
       cbxCenterID.Text := FDM.SqlTemp.FieldByName('Z_CenterID').AsString;
       cbxLocationID.Text:= FDM.SqlTemp.FieldByName('Z_LocationID').AsString;
+      EditMill.Text:= FDM.SqlTemp.FieldByName('Z_Mill').AsString;
       LoadDataToCtrl(FDM.SqlTemp, Self, '', SetData);
     end;
   end;
@@ -251,6 +264,10 @@ begin
       Next;
     end;
   end;
+  if FID <> '' then
+    FOldStockNo := EditStockID.Text
+  else
+    FOldStockNo := '';
 end;
 
 procedure TfFormZTLine.EditStockIDPropertiesChange(Sender: TObject);
@@ -282,7 +299,7 @@ begin
       EditType.ItemIndex := 3
     else EditType.ItemIndex := 0;
   end else
-  
+
   if Sender = CheckValid then
   begin
     Result := True;
@@ -381,10 +398,29 @@ var nIdx: Integer;
 begin
   if not IsDataValid then Exit;
 
+  {$IFDEF StockMill}
+  if EditMill.ItemIndex < 0 then
+  begin
+    ShowMsg('请选择水泥磨', sHint); Exit;
+  end;
+  {$ENDIF}
+
+  if FID <> '' then
+  begin
+    if FOldStockNo <> EditStockID.Text then
+    begin
+      if not VerifyZTlineChange(FID) then
+      begin
+        ShowMsg('当前通道存在排队车辆,无法修改物料', sHint); Exit;
+      end;
+    end;
+  end;
+
   nList := TStringList.Create;
   try
     nIdx := Integer(EditStockID.Properties.Items.Objects[EditStockID.ItemIndex]);
     nList.Add(Format('Z_StockNo=''%s''', [gStockItems[nIdx].FID]));
+
     for nIdx:= Low(gCenterItem) to High(gCenterItem) do
     begin
       if gCenterItem[nIdx].FID+'.'+gCenterItem[nIdx].FName=Trim(cbxCenterID.Text) then
@@ -397,6 +433,7 @@ begin
     nList.Add(Format('Z_LocationID=''%s''', [gLocationItem[nIdx].FID])); }
 
     //ext fields
+    nList.Add(Format('Z_Mill=''%s''', [EditMill.Text]));
 
     if FID = '' then
     begin

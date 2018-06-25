@@ -834,6 +834,9 @@ begin
 
               SF('L_ContQuota', FListA.Values['ContQuota']),
               SF('L_ToAddr', FListA.Values['ToAddr']),
+              {$IFDEF StockMill}
+              SF('L_Mill', FListA.Values['Mill']),
+              {$ENDIF}
               SF('L_IdNumber', FListA.Values['IdNumber'])
               ], sTable_Bill, '', True);
       gDBConnManager.WorkerExec(FDBConn, nStr);
@@ -1837,7 +1840,7 @@ begin
           'L_StockName,L_Truck,L_Value,L_Price,L_ZKMoney,L_Status,' +
           'L_NextStatus,L_Card,L_IsVIP,L_PValue,L_MValue,L_SalesType,'+
           'L_EmptyOut,L_LineRecID,L_InvLocationId,L_InvCenterId,'+
-          'L_IfNeiDao,L_TriaTrade,L_TransPrice,L_HYDan From $Bill b ';
+          'L_IfNeiDao,L_TriaTrade,L_TransPrice,L_HYDan,L_Mill From $Bill b ';
   //xxxxx
 
   if nIsBill then
@@ -1907,7 +1910,7 @@ begin
       FCenterID     := FieldByName('L_InvCenterId').AsString;
       FNeiDao       := FieldByName('L_IfNeiDao').AsString;
       FTriaTrade    := FieldByName('L_TriaTrade').AsString;
-
+      FMill         := FieldByName('L_Mill').AsString;
       FSampleID     := FieldByName('L_HYDan').AsString;
       FSelected := True;
 
@@ -2168,11 +2171,17 @@ begin
         end;
 
         if nReiNo = '' then//不是特殊客户或者未获取到试样编号
-        if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
-          FStockName, FCenterID, @nOut) then
         begin
-          WriteLog(nOut.FData);
-          raise Exception.Create(nOut.FData);
+          FListC.Clear;
+          FListC.Values['CenterID'] := FCenterID;
+          FListC.Values['Mill']     := FMill;
+
+          if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
+            FStockName, FListC.Text, @nOut) then
+          begin
+            WriteLog(nOut.FData);
+            raise Exception.Create(nOut.FData);
+          end;
         end;
         if nOut.FData='' then
         begin
@@ -2263,12 +2272,19 @@ begin
         end;
 
         if nReiNo = '' then//不是特殊客户或者未获取到试样编号
-        if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
-          FStockName, FCenterID, @nOut) then
         begin
-          WriteLog(nOut.FData);
-          raise Exception.Create(nOut.FData);
+          FListC.Clear;
+          FListC.Values['CenterID'] := FCenterID;
+          FListC.Values['Mill']     := FMill;
+
+          if not TWorkerBusinessCommander.CallMe(cBC_GetSampleID,
+            FStockName, FListC.Text, @nOut) then
+          begin
+            WriteLog(nOut.FData);
+            raise Exception.Create(nOut.FData);
+          end;
         end;
+
         if nOut.FData='' then
         begin
           nData := '岗位[ %s ]试样编号使用完毕.';

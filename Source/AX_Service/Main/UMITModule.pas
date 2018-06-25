@@ -15,7 +15,7 @@ uses
   UWorkerBussinessMessage, UMITPacker, UMessageScan, UWorkerBusiness,
   UBusinessWorker, UBusinessPacker, UMgrDBConn, UMgrParam, UMgrPlug,
   UMgrChannel, UTaskMonitor, UChannelChooser, USAPConnection, USysShareMem,
-  USysLoger, UBaseObject;
+  USysLoger, UBaseObject, UMemDataPool;
   //系统对象
 
 procedure InitSystemObject(const nMainForm: THandle);
@@ -150,6 +150,9 @@ begin
 
   gCommonObjectManager := TCommonObjectManager.Create;
   //通用对象状态管理
+
+  gMemDataManager := TMemDataManager.Create;
+  //内存管理器
 
   {$IFDEF DBPool}
   gDBConnManager := TDBConnManager.Create;

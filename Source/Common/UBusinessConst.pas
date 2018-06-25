@@ -220,6 +220,8 @@ type
     FWorkOrder  : string;          //班别
     FNeiDao     : string;          //内倒
     FTriaTrade  : string;          //三角贸易
+    FMill       : string;          //水泥磨
+    FYSMan      : string;          //验收人(用于刷卡验收)
   end;
 
   TLadingBillItems = array of TLadingBillItem;
@@ -272,9 +274,9 @@ resourcestring
   sPlug_ModuleHD              = '{B584DCD6-40E5-413C-B9F3-6DD75AEF1C62}';
                                                         //硬件守护
   sPlug_ModuleRemote          = '{B584DCD7-40E5-413C-B9F3-6DD75AEF1C63}';
-                                                      //MIT互相访问                                                        
-                                                                                                   
-  {*common function*}  
+                                                      //MIT互相访问
+
+  {*common function*}
   sSys_BasePacker             = 'Sys_BasePacker';       //基本封包器
 
   {*business mit function name*}
@@ -407,6 +409,8 @@ begin
         FWorkOrder:= Values['WorkOrder'];         //班别
         FNeiDao   := Values['NeiDao'];            //内倒
         FTriaTrade:= Values['TriaTrade'];         //三角贸易
+        FMill     := Values['Mill'];              //水泥磨
+        FYSMan    := Values['YSMan'];             //验收人
       end;
 
       Inc(nInt);
@@ -496,6 +500,8 @@ begin
         Values['WorkOrder']  := FWorkOrder;         //班别
         Values['NeiDao']     := FNeiDao;            //内倒
         Values['TriaTrade']  := FTriaTrade;         //三角贸易
+        Values['Mill']       := FMill;              //水泥磨
+        Values['YSMan']      := FYSMan;              //水泥磨
       end;
 
       nListA.Add(PackerEncodeStr(nListB.Text));

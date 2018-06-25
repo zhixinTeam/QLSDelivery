@@ -45,6 +45,8 @@ type
     FOKTime  : Int64;
     FExtReader :string;
     FHyprinter :string;
+    FPost    : string;//所在岗位
+    FDept    : string;//所属门岗
   end;
 
   THardwareHelper = class;
@@ -433,6 +435,16 @@ begin
       if Assigned(nTP) then
            FHyprinter := nTP.ValueAsString
       else FHyprinter := '';
+
+      nTP := NodeByName('Post');
+      if Assigned(nTP) then
+           FPost := nTP.ValueAsString
+      else FPost := 'Sin';
+
+      nTP := NodeByName('Dept');
+      if Assigned(nTP) then
+           FDept := nTP.ValueAsString
+      else FDept := '';
 
       nTP := NodeByName('keeptime');
       if Assigned(nTP) then

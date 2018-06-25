@@ -35,7 +35,9 @@ uses
   UFormPurchReject,//原材料拒收
   UFormOnLineModel,//设置在线离线状态
   UFrameForceCenterID,//强制生产线
-  UFormTodo,//待处理事项
+  UFormTodo, UFormTodoSend, UFrameTodo,//待处理事项
+  UFormSnapTruckSet, UFormSnapView,
+  UFormOptions,
   UFrameUpInfo, UFramePoundWuCha, UFormPWuCha, UFrameZTQuery, UFormPoundKw,
   UFormWorkSet, UFrameUpPurchase, UFramePoundDevia, UFrameLSCard, UFormLSCard,
   UFormTransfer, UFrameQueryTransferDetail, UFrameSTCard, UFormSTCard,

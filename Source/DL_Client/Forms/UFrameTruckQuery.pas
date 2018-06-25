@@ -50,6 +50,8 @@ type
     FFilteDate: Boolean;
     //筛选日期
     FAll: Boolean;
+    FShadowWeight: Double;
+    //影子重量
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
     function InitFormDataSQL(const nWhere: string): string; override;
@@ -64,7 +66,8 @@ implementation
 
 {$R *.dfm}
 uses
-  ULibFun, UMgrControl, USysConst, USysDB, UDataModule, UFormDateFilter;
+  ULibFun, UMgrControl, USysConst, USysDB, UDataModule, UFormDateFilter,
+  USysPopedom;
 
 class function TfFrameTruckQuery.FrameID: integer;
 begin
@@ -76,6 +79,7 @@ begin
   inherited;
   FFilteDate := True;
   InitDateRange(Name, FStart, FEnd);
+  FShadowWeight := -1;
 end;
 
 procedure TfFrameTruckQuery.OnDestroyFrame;
@@ -86,6 +90,7 @@ end;
 
 //------------------------------------------------------------------------------
 function TfFrameTruckQuery.InitFormDataSQL(const nWhere: string): string;
+var nStr: string;
 begin
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
   //xxxxx
@@ -102,7 +107,32 @@ begin
          Result := Result + ' And (' + nWhere + ')'
     else Result := Result + ' Where (' + nWhere + ')';
   //xxxxx
-  
+
+  if not gPopedomManager.HasPopedom(PopedomItem, sPopedom_FullReport) then
+  begin
+    nStr := ' And L_CusID Not In (Select S_CusID From %s)';
+    Result := Result +  Format(nStr, [sTable_CusShadow]);
+
+    if FShadowWeight < 0 then
+    begin
+      FShadowWeight := 0;
+      nStr := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
+      nStr := Format(nStr, [sTable_SysDict, sFlag_SysParam, sFlag_ShadowWeight]);
+
+      with FDM.QueryTemp(nStr) do
+      if RecordCount > 0 then
+      begin
+        FShadowWeight := Fields[0].AsFloat;
+      end;
+    end;
+
+    if FShadowWeight > 0 then
+    begin
+      nStr := ' And L_Value<%f';
+      Result := Result +  Format(nStr, [FShadowWeight]);
+    end;
+  end;
+
   Result := MacroValue(Result, [MI('$Bill', sTable_Bill),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
