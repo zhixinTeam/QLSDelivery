@@ -401,17 +401,18 @@ end;
 procedure TScanAxMsgThread.DoNewScanMsg;
 var
   nIdx:Integer;
-  nSQL:string;
+  nSQL, nStr:string;
   nSDI, nOldSDI:PAXSendDataInfo;
-  nRepeat: Boolean;
+  nRepeat, nValidComp: Boolean;
   nList: TStrings;
+  nCIU: PCompanyIdUrl;
 begin
   nList := nil;
+  nList := TStringList.Create;
   with FOwner do
   try
     FSyncCS.Enter;
     nRepeat:= False;
-    nList := TStringList.Create;
 
     nSQL:= 'select top 1 * from %s where SyncCounter<6 and SyncDone is null';
     nSQL:= Format(nSQL, [sTable_XT_TRANSPLAN]);
@@ -487,37 +488,62 @@ begin
       with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
       if RecordCount > 0 then
       begin
-        nSQL:= 'update %s set SyncCounter=SyncCounter+1 where RecId= ''%s''';
-        nSQL:= Format(nSQL, [sTable_XT_MsgTables, FieldByName('RecId').AsString]);
-        nList.Add(nSQL);
-        nIdx := 0;
-        //First;
-        //while not Eof do
+        nStr :=Trim(FieldByName('COMPANYID').AsString);
+
+        nValidComp := False;
+        for nIdx := 0 to FURLDATA.Count - 1 do
         begin
-          for nIdx := 0 to FAXDATA.Count - 1 do
+          nCIU := FURLDATA[nIdx];
+          if CompareText(nCIU.FCompanyId, nStr) = 0 then
           begin
-            nOldSDI:= FAXDATA[nIdx];
-            if nOldSDI.FRecId = FieldByName('RecId').AsString then Exit;
+            nValidComp := True;
+            Break;
           end;
-
-          nSDI:= gMemDataManager.LockData(FIDSendDataInfo);
-          FAXDATA.Add(nSDI);
-
-          with nSDI^ do
-          begin
-            FMsgNo := '0';
-            FCompanyId := FieldByName('CompanyId').AsString;
-            FXTProcessId := FieldByName('XTProcessId').AsString;
-            FRefRecid := FieldByName('RefRecid').AsString;
-            Foperation := FieldByName('operation').AsString;
-            FRecId := FieldByName('RecId').AsString;
-            FXTIndexXML := FieldByName('XTINDEXXML').AsString;
-          end;
-
-          nSQL:= 'update %s set SyncStart= ''%s'' where RecId= ''%s''';
-          nSQL:= Format(nSQL, [sTable_XT_MsgTables, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz', Now), FieldByName('RecId').AsString]);
+        end;
+        if not nValidComp then//无法处理的数据
+        begin
+          nSQL:= 'update %s set SyncCounter=7 where RecId= ''%s''';
+          nSQL:= Format(nSQL, [sTable_XT_MsgTables, FieldByName('RecId').AsString]);
           nList.Add(nSQL);
-          //Next;
+          WriteLog('['+nStr+']'+':为无效的COMPANYID,跳过此条数据...');
+        end
+        else
+        begin
+          nSQL:= 'update %s set SyncCounter=SyncCounter+1 where RecId= ''%s''';
+          nSQL:= Format(nSQL, [sTable_XT_MsgTables, FieldByName('RecId').AsString]);
+          nList.Add(nSQL);
+          nIdx := 0;
+          //First;
+          //while not Eof do
+          begin
+            for nIdx := 0 to FAXDATA.Count - 1 do
+            begin
+              nOldSDI:= FAXDATA[nIdx];
+              if nOldSDI.FRecId = FieldByName('RecId').AsString then Exit;
+            end;
+
+            nSDI:= gMemDataManager.LockData(FIDSendDataInfo);
+            FAXDATA.Add(nSDI);
+
+            with nSDI^ do
+            begin
+              FMsgNo := '0';
+              FCompanyId := FieldByName('CompanyId').AsString;
+              FXTProcessId := FieldByName('XTProcessId').AsString;
+              FRefRecid := FieldByName('RefRecid').AsString;
+              Foperation := FieldByName('operation').AsString;
+              FRecId := FieldByName('RecId').AsString;
+              FXTIndexXML := FieldByName('XTINDEXXML').AsString;
+            end;
+
+            nSQL:= 'update %s set SyncStart= ''%s'' where RecId= ''%s''';
+            nSQL:= Format(nSQL, [sTable_XT_MsgTables, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz', Now), FieldByName('RecId').AsString]);
+            nList.Add(nSQL);
+            WriteLog('开始处理数据:CompanyId:'+FieldByName('CompanyId').AsString+
+                     'XTProcessId:'+FieldByName('XTProcessId').AsString+
+                     'RecId:'+FieldByName('RecId').AsString);
+            //Next;
+          end;
         end;
       end;
     end;

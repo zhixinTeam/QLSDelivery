@@ -2225,6 +2225,19 @@ begin
     nKw := 'A05';
   end;
 
+  nStr := 'select D_Value from %s '+
+          'where D_ParamB = ''%s'' and D_Name = ''%s'' and D_Memo = ''%s'' ';
+  nStr := Format(nStr, [sTable_SysDict, FIn.FData, sFlag_StockItem, nStockType]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    if Pos('ÊìÁÏ',Fields[0].AsString) > 0 then
+    begin
+      nKw := 'A03';
+    end;
+  end;
+
   nFValue := 0;
   nAXValue := 0;
 

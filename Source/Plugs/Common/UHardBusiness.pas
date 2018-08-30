@@ -13,7 +13,7 @@ uses
   UMgrHardHelper, U02NReader, UMgrERelay, UMgrRemotePrint,
   {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF}
   UMgrLEDDisp, UMgrRFID102, UMITConst, Graphics, UMgrTTCEM100,
-  UMgrVoiceNet, UMgrremoteSnap;
+  UMgrVoiceNet, UMgrremoteSnap, UMgrSendCardNo;
 
 procedure WhenReaderCardArrived(const nReader: THHReaderItem);
 procedure WhenTTCE_M100_ReadCard(const nItem: PM100ReaderItem);
@@ -1175,6 +1175,17 @@ begin
     Exit;
   end;
 
+  {$IFDEF RemoteSnap}
+  if not (nTrucks[0].FNeiDao=sFlag_Yes) then//内倒不判断
+  if not VerifySnapTruck(nTrucks[0].FTruck,nTrucks[0].FID,nPos,nDept,nSnapStr) then
+  begin
+    MakeGateSound(nSnapStr, nPos, False);
+    Exit;
+  end;
+  nStr := nSnapStr + ',请出厂';
+  MakeGateSound(nStr, nPos, True);
+  {$ENDIF}
+
   if nCardType = sFlag_Provide then
         nRet := SaveLadingOrders(sFlag_TruckOut, nTrucks)
   else  nRet := SaveLadingBills(sFlag_TruckOut, nTrucks);
@@ -1194,17 +1205,6 @@ begin
 
     Exit;
   end;
-
-  {$IFDEF RemoteSnap}
-  if not (nTrucks[0].FNeiDao=sFlag_Yes) then//内倒不判断
-  if not VerifySnapTruck(nTrucks[0].FTruck,nTrucks[0].FID,nPos,nDept,nSnapStr) then
-  begin
-    MakeGateSound(nSnapStr, nPos, False);
-    Exit;
-  end;
-  nStr := nSnapStr + ',请出厂';
-  MakeGateSound(nStr, nPos, True);
-  {$ENDIF}
 
   nStr := '';
   if (nReader <> '') and (Pos('V',nReader)<=0) then gHYReaderManager.OpenDoor(nReader);
@@ -1519,6 +1519,17 @@ begin
     Exit;
   end;
 
+  {$IFDEF RemoteSnap}
+  if not (nTrucks[0].FNeiDao=sFlag_Yes) then//内倒不判断
+  if not VerifySnapTruck(nTrucks[0].FTruck,nTrucks[0].FID,nPos,nDept,nSnapStr) then
+  begin
+    MakeGateSound(nSnapStr, nPos, False);
+    Exit;
+  end;
+  nStr := nSnapStr + ',请出厂';
+  MakeGateSound(nStr, nPos, True);
+  {$ENDIF}
+
   if nCardType = sFlag_Provide then
         nRet := SaveLadingOrders(sFlag_TruckOut, nTrucks)
   else  nRet := SaveLadingBills(sFlag_TruckOut, nTrucks);
@@ -1538,17 +1549,6 @@ begin
 
     Exit;
   end;
-
-  {$IFDEF RemoteSnap}
-  if not (nTrucks[0].FNeiDao=sFlag_Yes) then//内倒不判断
-  if not VerifySnapTruck(nTrucks[0].FTruck,nTrucks[0].FID,nPos,nDept,nSnapStr) then
-  begin
-    MakeGateSound(nSnapStr, nPos, False);
-    Exit;
-  end;
-  nStr := nSnapStr + ',请出厂';
-  MakeGateSound(nStr, nPos, True);
-  {$ENDIF}
 
   nStr := '';
   if (nReader <> '') and (Pos('V',nReader)<=0) then gHYReaderManager.OpenDoor(nReader);
@@ -2733,6 +2733,12 @@ begin
     nStr := Format(nStr, [nTrucks[0].FTruck]);
     WriteNearReaderLog(nStr);
 
+    {$IFDEF FixLoad}
+    WriteNearReaderLog('启动定置装车::'+nTunnel+'@'+nCard);
+    //发送卡号和通道号到定置装车服务器
+    gSendCardNo.SendCardNo(nTunnel+'@'+nCard);
+    {$ENDIF}
+
     {$IFDEF XHYY}
     MakeLadingSound(nPTruck, nPLine, nTunnel);
     //播放语音
@@ -2761,6 +2767,11 @@ begin
 
   TruckStartFH(nPTruck, nTunnel, nTunnelEx);
   //执行放灰
+  {$IFDEF FixLoad}
+  WriteNearReaderLog('启动定置装车::'+nTunnel+'@'+nCard);
+  //发送卡号和通道号到定置装车服务器
+  gSendCardNo.SendCardNo(nTunnel+'@'+nCard);
+  {$ENDIF}
 end;
 
 //Date: 2012-4-24
@@ -2828,6 +2839,12 @@ begin
   if Assigned(nHost.FOptions) then
     gERelayManager.LineClose(nHost.FOptions.Values['TunnelEx']);
   Sleep(100);
+  {$ENDIF}
+
+  {$IFDEF FixLoad}
+  WriteHardHelperLog('停止定置装车::'+nHost.FTunnel+'@Close');
+  //发送卡号和通道号到定置装车服务器
+  gSendCardNo.SendCardNo(nHost.FTunnel+'@Close');
   {$ENDIF}
 
   gERelayManager.LineClose(nHost.FTunnel);

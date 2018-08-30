@@ -37,7 +37,7 @@ uses
   UMgrQueue, UMgrLEDCard, UMgrHardHelper, UMgrRemotePrint, U02NReader,
   UMgrERelay, {$IFDEF MultiReplay}UMultiJS_Reply, {$ELSE}UMultiJS, {$ENDIF}
   UMgrRemoteVoice, UMgrCodePrinter, UMgrLEDDisp, UMgrRFID102,
-  UMgrVoiceNet, UMgrTTCEM100, UMgrRemoteSnap;
+  UMgrVoiceNet, UMgrTTCEM100, UMgrRemoteSnap, UMgrSendCardNo;
 
 class function THardwareWorker.ModuleInfo: TPlugModuleInfo;
 begin
@@ -137,6 +137,11 @@ begin
     end;
     {$ENDIF}
 
+    {$IFDEF FixLoad}
+    nStr := '¶¨ÖÃ×°³µ';
+    gSendCardNo.LoadConfig(nCfg + 'PLCController.xml');
+    {$ENDIF}
+
   except
     on E:Exception do
     begin
@@ -168,6 +173,10 @@ begin
 
   gHardShareData := WhenBusinessMITSharedDataIn;
   //hard monitor share
+
+  {$IFDEF FixLoad}
+  gSendCardNo := TReaderHelper.Create;
+  {$ENDIF}
 end;
 
 procedure THardwareWorker.BeforeStartServer;
@@ -235,6 +244,12 @@ begin
   gHKSnapHelper.StartSnap;
   //remote snap
   {$ENDIF}
+
+  {$IFDEF FixLoad}
+  if Assigned(gSendCardNo) then
+  gSendCardNo.StartPrinter;
+  //sendcard
+  {$ENDIF}
 end;
 
 procedure THardwareWorker.AfterStopServer;
@@ -294,6 +309,11 @@ begin
   {$IFDEF RemoteSnap}
   gHKSnapHelper.StopSnap;
   //remote snap
+  {$ENDIF}
+  {$IFDEF FixLoad}
+  if Assigned(gSendCardNo) then
+  gSendCardNo.StopPrinter;
+  //sendcard
   {$ENDIF}
 end;
 

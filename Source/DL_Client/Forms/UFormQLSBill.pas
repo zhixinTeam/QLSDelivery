@@ -449,6 +449,13 @@ begin
   end;
   {$ENDIF}
 
+  {$IFDEF CXSY}
+  if not IsEleCardVaid(gType,EditTruck.Text,gStockNo) then
+  begin
+    ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
+  end;
+  {$ENDIF}
+
   if not IsDealerLadingIDExit(EditJXSTHD.Text) then
   begin
     ShowMsg('经销商提货单号重复', sHint); Exit;

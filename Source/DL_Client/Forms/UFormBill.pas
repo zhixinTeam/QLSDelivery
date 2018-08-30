@@ -642,6 +642,20 @@ begin
   end;
   {$ENDIF}
 
+  {$IFDEF PLKP}
+  if not IsEleCardVaid(gType,EditTruck.Text,gStockNo) then
+  begin
+    ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
+  end;
+  {$ENDIF}
+
+  {$IFDEF CXSY}
+  if not IsEleCardVaid(gType,EditTruck.Text,gStockNo) then
+  begin
+    ShowMsg('车辆未办理电子标签或电子标签未启用！请联系管理员', sHint); Exit;
+  end;
+  {$ENDIF}
+
   FSumTon:=0.00;
   if ListBill.Items.Count < 1 then
   begin

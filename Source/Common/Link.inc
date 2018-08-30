@@ -64,15 +64,15 @@
   {$DEFINE MultiReplay}
   //计数器应答模式
   {$DEFINE M100Reader}
-  //启用M100Reader自动收卡机(成县,夏河,平凉,古浪,青海)
+  //启用M100Reader自动收卡机(成县,夏河,平凉,古浪,青海,文县,漳县)(无吞卡机:民和,甘谷)
 
-  {$DEFINE GLPURCH} 
+  {.$DEFINE GLPURCH} 
   //古浪
   {.$DEFINE YDKP} 
   //永登开票
   {.$DEFINE YDSN} 
   //永登、中川商砼、甘谷商砼
-  {.$DEFINE PLKP} 
+  {$DEFINE PLKP} 
   //平凉开票
   {.$DEFINE XHPZ} 
   //夏河、定西
@@ -102,8 +102,10 @@
   //格式化计数器车牌(漳县)
   {.$DEFINE XHYY}
   //夏河装车道语音
-  {.$DEFINE RemoteSnap}
+  {$DEFINE RemoteSnap}
   //车牌识别
+  {.$DEFINE FixLoad}
+  //转子秤定制装车
   {.$DEFINE StockMill}
   //水泥磨(夏河)
 {$ENDIF}

@@ -305,16 +305,11 @@ begin
         end;
       end;
 
-      FDBConn.FConn.BeginTrans;
       try
         nStr := 'Update %s Set SyncCounter=SyncCounter+1, SyncDone=''%s'' Where RecId in (%s)';
         nStr := Format(nStr, [sTable_XT_MsgTables, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz',Now), nZID]);
         gDBConnManager.WorkerExec(FDBConn, nStr);
-
-        FDBConn.FConn.CommitTrans;
-        //Finished
       except
-        FDBConn.FConn.RollbackTrans;
         nData := Format('AX变更消息[ %s ] 保存信息失败!', [FIn.FData]);
         Exit;
       end;
@@ -343,16 +338,11 @@ begin
         end;
       end;
 
-      FDBConn.FConn.BeginTrans;
       try
         nStr := 'Update %s Set SyncCounter=SyncCounter+1, SyncDone=''%s'' Where TRANSPLANID in (%s)';
         nStr := Format(nStr, [sTable_XT_TRANSPLAN, FormatDateTime('yyyy-mm-dd hh:mm:ss.zzz',Now), nZID]);
         gDBConnManager.WorkerExec(FDBConn, nStr);
-
-        FDBConn.FConn.CommitTrans;
-        //Finished
       except
-        FDBConn.FConn.RollbackTrans;
         nData := Format('AX变更消息[ %s ] 保存信息失败!', [FIn.FData]);
         Exit;
       end;
@@ -370,4 +360,3 @@ initialization
   gBusinessWorkerManager.RegisteWorker(TSendAXMsgWorker, sPlug_ModuleBus);
 
 end.
- 
