@@ -1720,7 +1720,7 @@ begin
   Result := 0;
   if nID = '' then Exit;
 
-  nSQL := 'Select L_Value From %s Where L_ID=''%s'' ';
+  nSQL := 'Select L_HasDone From %s Where L_ID=''%s'' ';
   nSQL := Format(nSQL, [sTable_Bill, nID]);
 
   with FDM.QueryTemp(nSQL) do

@@ -115,6 +115,18 @@ begin
   FUIData := nBills[0];
 
   FHasDone := ReadDoneValue(FUIData.FID);
+
+  if FHasDone >= FUIData.FValue then
+  begin
+    nStr := '交货单[ %s ]开单量[ %.2f ],已装量[ %.2f ],无法继续装车';
+    nStr := Format(nStr, [FUIData.FID, FUIData.FValue, FHasDone]);
+    WriteLog(nStr);
+    LineClose(FOPCTunnel.FID, sFlag_Yes);
+    ShowLedText(FOPCTunnel.FID, '装车量已达到开单量');
+    SetUIData(True);
+    Exit;
+  end;
+
   EditValue.Text := Format('%.2f', [FHasDone]);
 
   SetUIData(False);

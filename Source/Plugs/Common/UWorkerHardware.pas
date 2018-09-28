@@ -461,7 +461,7 @@ begin
       nCode := Copy(nCode,3,Length(nCode)-2);
       //nCode := gCompanyAct+nCode+Fields[2].AsString+Fields[3].AsString;
       {$IFDEF GLPURCH}
-      nCode := gCompanyAct+nCode+Fields[2].AsString+Fields[3].AsString;
+      nCode := Copy(gCompanyAct,2,2)+nCode+Fields[3].AsString+'@2'+Fields[4].AsString+Fields[2].AsString;
       {$ELSE}
       nCode := Copy(gCompanyAct,2,2)+nCode+Fields[3].AsString+Fields[4].AsString+Fields[2].AsString;
       {$ENDIF}
