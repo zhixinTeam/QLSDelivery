@@ -10,7 +10,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters,
-  cxContainer, cxEdit, cxLabel, ExtCtrls, CPort, StdCtrls, Buttons,Uszttce_api,
+  cxContainer, cxEdit, cxLabel, ExtCtrls, CPort, StdCtrls, Buttons,
   UHotKeyManager,uReadCardThread, USysBusiness;
 
 type
@@ -57,7 +57,6 @@ type
     //上次查询
     FTimeCounter: Integer;
     //计时
-    FSzttceApi:TSzttceApi;
     FDownLoadWay:Integer;
     //数据下载途径
     FLines: TZTLineItems;
@@ -164,14 +163,6 @@ begin
     //启动读头
   except
   end;
-  FSzttceApi := TSzttceApi.Create;
-  if FSzttceApi.ErrorCode<>0 then
-  begin
-    nStr := '初始化自助发卡机失败，[ErrorCode=%d,ErrorMsg=%s]';
-    nStr := Format(nStr,[FSzttceApi.ErrorCode,FSzttceApi.ErrorMsg]);
-    ShowMsg(nStr,sHint);
-  end;
-  FSzttceApi.ParentWnd := Self.Handle;
   //TimerInsertcard.Enabled := True;
 
   FHotKeyMgr := THotKeyManager.Create(Self);
@@ -199,7 +190,6 @@ begin
     ActionComPort(True);
   except
   end;
-  FSzttceApi.Free;
   FHotKeyMgr.Free;
 end;
 
@@ -287,7 +277,6 @@ begin
     LabelCenterID.Caption := '生 产 线:';
     LabelCus.Caption := '客户名称:';
     LabelHint.Caption := '请您刷卡';
-    if FCardType=ctttce then FSzttceApi.ResetMachine;
     TimerInsertCard.Enabled := True;
   end else
   begin
@@ -643,7 +632,6 @@ begin
       if not Assigned(fFormNewCardQls) then
       begin
         fFormNewCardQls := TfFormNewCardQls.Create(nil);
-        fFormNewCardQls.SzttceApi := FSzttceApi;
         fFormNewCardQls.SetControlsClear;
       end;
       fFormNewCardQls.BringToFront;
@@ -666,7 +654,6 @@ begin
       if not Assigned(fFormNewCard) then
       begin
         fFormNewCard := TfFormNewCard.Create(nil);
-        fFormNewCard.SzttceApi := FSzttceApi;
         fFormNewCard.SetControlsClear;
       end;
       fFormNewCard.BringToFront;
@@ -680,8 +667,7 @@ begin
     begin
      if not Assigned(fFormNewPurchaseCard) then
       begin
-        fFormNewPurchaseCard := TfFormNewPurchaseCard.Create(nil);
-        fFormNewPurchaseCard.SzttceApi := FSzttceApi;
+        fFormNewPurchaseCard := TfFormNewPurchaseCard.Create(nil);;
         fFormNewPurchaseCard.SetControlsClear;
       end;
       fFormNewPurchaseCard.BringToFront;

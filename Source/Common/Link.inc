@@ -64,7 +64,9 @@
   {$DEFINE MultiReplay}
   //计数器应答模式
   {$DEFINE M100Reader}
-  //启用M100Reader自动收卡机(成县,夏河,平凉,古浪,青海,文县,漳县)(无吞卡机:民和,甘谷)
+  //启用M100Reader自动收卡机(成县,夏河,平凉,古浪,青海,文县,漳县,兰州商砼)(无吞卡机:民和,甘谷)
+  {.$DEFINE PackMachine}
+  //自动包装机(成县)
 
   {.$DEFINE GLPURCH} 
   //古浪
@@ -72,7 +74,7 @@
   //永登开票
   {.$DEFINE YDSN} 
   //永登、中川商砼、甘谷商砼
-  {$DEFINE PLKP} 
+  {.$DEFINE PLKP} 
   //平凉开票
   {.$DEFINE XHPZ} 
   //夏河、定西
@@ -90,7 +92,7 @@
   //成县空车出厂
   {.$DEFINE LZST} 
   //兰州商砼水泥內倒
-  {.$DEFINE QHSN} 
+  {$DEFINE QHSN} 
   //青海
   {.$DEFINE MHSN} 
   //民和

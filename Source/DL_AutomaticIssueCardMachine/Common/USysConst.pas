@@ -238,6 +238,7 @@ type
     FSanZhuangACIM:Boolean;                          //散装是否允许自助办卡
     FAutoClose_Mintue:Integer;                       //用户自助办卡窗口自动关闭时间
     FWebOrderLength:Integer;                         //微信商城订单长度
+    FTTCEK720ID : string;                            //指定发卡机
   end;
   //系统参数
 

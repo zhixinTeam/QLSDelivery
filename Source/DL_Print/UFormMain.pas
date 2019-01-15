@@ -251,19 +251,42 @@ begin
   end;
 end;
 
+//获取分票打印设定
+function GetFenCheSet(nNet:Double; var nLPro,nRPro:Double):Boolean;
+var
+  nStr:string;
+begin
+  Result:=False;
+  nLPro:=0.00;
+  nRPro:=1.00;
+
+  try
+    nStr := 'Select * From %s Where ((F_StartValue<=%s) and (F_EndValue>%s)) ';
+    nStr := Format(nStr, [sTable_FenCheSet, FloatToStr(nNet), FloatToStr(nNet)]);
+    with FDM.SQLQuery(nStr, FDM.SQLQuery1) do
+    if RecordCount > 0 then
+    begin
+      nLPro:=FieldByName('F_LPro').AsFloat / 10;
+      nRPro:=FieldByName('F_RPro').AsFloat / 10;
+      Result:=True;
+    end;
+  except
+  end;
+end;
+
 //------------------------------------------------------------------------------
 //Date: 2016-10-28
 //Parm: 交货单号;提示;数据对象;打印机
 //Desc: 打印nBill交货单号
 function PrintBill4(const nBill: string; var nHint: string;
- const nPrinter: string = ''): Boolean;
+ const nPrinter: string = '';nPro :string='1'): Boolean;
 var nStr,nIfFenChe: string;
     nDS: TDataSet;
 begin
   Result := False;
   try
-    nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID From %s b Where L_ID=''%s''';
-    nStr := Format(nStr, [sTable_Bill, nBill]);
+    nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID,''%s'' as L_FenChePro From %s b Where L_ID=''%s''';
+    nStr := Format(nStr, [nPro, sTable_Bill, nBill]);
 
     nDS := FDM.SQLQuery(nStr, FDM.SQLQuery1);
     if not Assigned(nDS) then Exit;
@@ -313,14 +336,14 @@ end;
 //Parm: 交货单号;提示;数据对象;打印机
 //Desc: 打印nBill交货单号
 function PrintBill6(const nBill: string; var nHint: string;
- const nPrinter: string = ''): Boolean;
+ const nPrinter: string = '';nPro :string='1'): Boolean;
 var nStr,nIfFenChe: string;
     nDS: TDataSet;
 begin
   Result := False;
   try
-    nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID From %s b Where L_ID=''%s''';
-    nStr := Format(nStr, [sTable_Bill, nBill]);
+    nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID,''%s'' as L_FenChePro From %s b Where L_ID=''%s''';
+    nStr := Format(nStr, [nPro, sTable_Bill, nBill]);
 
     nDS := FDM.SQLQuery(nStr, FDM.SQLQuery1);
     if not Assigned(nDS) then Exit;
@@ -374,6 +397,7 @@ function PrintBillReport(const nBill: string; var nHint: string;
 var nStr,nIfFenChe: string;
     nDS: TDataSet;
     nP4OK,nP6OK:Boolean;
+    nLPro, nRPro: Double;
 begin
   Result := False;
   try
@@ -389,39 +413,81 @@ begin
       nHint := Format(nHint, [nBill]);
       Exit;
     end;
-    nIfFenChe:= nDS.FieldByName('L_IfFenChe').AsString;
-    //gIfHY:= nDS.Fieldbyname('L_IfHYPrint').AsString;
-    if nIfFenChe='Y' then
-    begin
-      nP4OK:=PrintBill4(nBill,nHint,nPrinter);
-      Sleep(200);
-      nP6OK:=PrintBill6(nBill,nHint,nPrinter);
-      Result:=True;
-    end else
-    begin
-      nStr := gPath + 'Report\LadingBill.fr3';
-      if not FDR.LoadReportFile(nStr) then
-      begin
-        nHint := '无法正确加载报表文件';
-        Exit;
-      end;
 
-      if nPrinter = '' then
-           FDR.Report1.PrintOptions.Printer := 'My_Default_Printer'
-      else FDR.Report1.PrintOptions.Printer := nPrinter;
-
-      FDR.Dataset1.DataSet := FDM.SQLQuery1;
-      FDR.PrintReport;
-      Result := FDR.PrintSuccess;
-      if Result then
+    if GetFenCheSet(nDS.FieldByName('L_Value').AsFloat, nLPro, nRPro) then
+    begin
+      if (nLPro = 0) or (nRPro = 0) then
       begin
-        nStr := 'update %s set L_BDPrint=L_BDPrint+1 Where L_ID=''%s''';
-        nStr := Format(nStr, [sTable_Bill, nBill]);
-        with FDM.SQLTemp do
+        nStr := gPath + 'Report\LadingBill.fr3';
+        if not FDR.LoadReportFile(nStr) then
         begin
-          Close;
-          SQL.Text:=nStr;
-          ExecSQL;
+          nHint := '无法正确加载报表文件';
+          Exit;
+        end;
+
+        if nPrinter = '' then
+             FDR.Report1.PrintOptions.Printer := 'My_Default_Printer'
+        else FDR.Report1.PrintOptions.Printer := nPrinter;
+
+        FDR.Dataset1.DataSet := FDM.SQLQuery1;
+        FDR.PrintReport;
+        Result := FDR.PrintSuccess;
+        if Result then
+        begin
+          nStr := 'update %s set L_BDPrint=L_BDPrint+1 Where L_ID=''%s''';
+          nStr := Format(nStr, [sTable_Bill, nBill]);
+          with FDM.SQLTemp do
+          begin
+            Close;
+            SQL.Text:=nStr;
+            ExecSQL;
+          end;
+        end;
+      end
+      else
+      begin
+        nP4OK:=PrintBill4(nBill,nHint,nPrinter,FloatToStr(nLPro));
+        Sleep(200);
+        nP6OK:=PrintBill6(nBill,nHint,nPrinter,FloatToStr(nRPro));
+        Result:=True;
+      end;
+    end
+    else
+    begin
+      nIfFenChe:= nDS.FieldByName('L_IfFenChe').AsString;
+      //gIfHY:= nDS.Fieldbyname('L_IfHYPrint').AsString;
+      if nIfFenChe='Y' then
+      begin
+        nP4OK:=PrintBill4(nBill,nHint,nPrinter);
+        Sleep(200);
+        nP6OK:=PrintBill6(nBill,nHint,nPrinter);
+        Result:=True;
+      end else
+      begin
+        nStr := gPath + 'Report\LadingBill.fr3';
+        if not FDR.LoadReportFile(nStr) then
+        begin
+          nHint := '无法正确加载报表文件';
+          Exit;
+        end;
+
+        if nPrinter = '' then
+             FDR.Report1.PrintOptions.Printer := 'My_Default_Printer'
+        else FDR.Report1.PrintOptions.Printer := nPrinter;
+
+        FDR.Dataset1.DataSet := FDM.SQLQuery1;
+        FDR.PrintReport;
+        Result := FDR.PrintSuccess;
+        if Result then
+        begin
+          nStr := 'update %s set L_BDPrint=L_BDPrint+1 Where L_ID=''%s''';
+          nStr := Format(nStr, [sTable_Bill, nBill]);
+          with FDM.SQLTemp do
+          begin
+            Close;
+            SQL.Text:=nStr;
+            ExecSQL;
+          end;
         end;
       end;
     end;

@@ -84,6 +84,7 @@ begin
       FSanZhuangACIM := ReadBool(FProgID,'SanZhuangACIM',False);
       FCanCreateCard := ReadBool(FProgID,'CanCreateCard',True);
       FAutoClose_Mintue := ReadInteger(FProgID, 'AutoCloseMintue', 1);
+      FTTCEK720ID   := ReadString(FProgID,'TTCEK720ID','FK001');
 
       FProberUser := 0;
       FVoiceUser := 0;

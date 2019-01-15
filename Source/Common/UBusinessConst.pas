@@ -137,6 +137,8 @@ const
   cBC_SyncVehNoAX             = $0134;   //同步车号到AX
   cBC_SyncAXCement            = $0135;   //远程同步水泥类型
 
+  cBC_SaveBusinessCard        = $0136;   //保存当前刷卡信息
+
   cBC_VerifPrintCode          = $0091;   //验证喷码信息
   cBC_WaitingForloading       = $0092;   //工厂待装查询
   cBC_BillSurplusTonnage      = $0093;   //网上订单可下单数量查询

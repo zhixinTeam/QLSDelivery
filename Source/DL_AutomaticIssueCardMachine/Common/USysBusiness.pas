@@ -319,6 +319,7 @@ function GetCenterSUM(nStockNo,nStockType,nCenterID:string):string;
 //获取生产线余量
 function GetStockName(const nStockNo, nStockType:string): string;
 //获取物料名称
+function IsCardValid(const nCard: string): Boolean;
 
 
 function CallBusinessCommand(const nCmd: Integer; const nData,nExt: string;
@@ -3065,6 +3066,27 @@ begin
     if RecordCount > 0 then
     begin
       Result := Fields[0].AsString;
+    end;
+  end;
+end;
+
+function IsCardValid(const nCard: string): Boolean;
+var
+  nSql:string;
+begin
+  Result := False;
+
+  nSql := 'select C_Card2,C_Card3 from %s where C_Card = ''%s'' ';
+  nSql := Format(nSql,[sTable_Card,nCard]);
+
+  with FDM.QueryTemp(nSql) do
+  begin
+    if recordcount>0 then
+    begin
+      if (Trim(Fields[0].AsString) <> '') or (Trim(Fields[1].AsString) <> '')then
+      begin
+        Result := True;
+      end;
     end;
   end;
 end;

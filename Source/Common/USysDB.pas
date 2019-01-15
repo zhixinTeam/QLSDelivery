@@ -267,6 +267,7 @@ ResourceString
   sTable_Entity       = 'Sys_Entity';                //字典实体
   sTable_DictItem     = 'Sys_DataDict';              //字典明细
   sTable_ManualEvent  = 'Sys_ManualEvent';           //人工干预事件
+  sTable_ZTCard       = 'S_ZTCard';                  //当前刷卡信息表
 
   sTable_SysDict      = 'Sys_Dict';                  //系统字典
   sTable_ExtInfo      = 'Sys_ExtInfo';               //附加信息
@@ -360,6 +361,7 @@ ResourceString
   sTable_STInOutFact     = 'L_STInOutFact';          //商砼车进出表
   sTable_AxPlanInfo      = 'E_AxPlanInfo';           //提货信息表
   sTable_AxMsgList       = 'E_AxMsgList';            //AX消息队列表
+  sTable_FenCheSet       = 'Sys_FenCheSet';          //分车设置表
 
   sTable_K3_SyncItem  = 'DL_SyncItem';               //数据同步项
   sTable_K3_Customer  = 'T_Organization';            //组织结构(客户)
@@ -2111,6 +2113,34 @@ const
    *.S_Date: 抓拍时间
   -----------------------------------------------------------------------------}
 
+  sSQL_NewZTCard = 'Create Table $Table(R_ID $Inc, C_Truck varChar(15), ' +
+       'C_Card varChar(20), C_Bill varChar(20), C_Line varChar(20), ' +
+       'C_BusinessTime DateTime)';
+  {-----------------------------------------------------------------------------
+   客户信息表: Customer
+   *.R_ID: 记录号
+   *.C_Truck: 车牌号
+   *.C_Card: 磁卡号
+   *.C_Bill: 单据号
+   *.C_Line: 装车道
+   *.C_BusinessTime: 刷卡时间
+  -----------------------------------------------------------------------------}
+
+  sSQL_NewFenCheSet = 'Create Table $Table(ID $Inc, F_Type Char(1),' +
+       'F_StartValue $Float, F_EndValue $Float, '+
+       'F_LPro int, F_RPro int, F_Memo varChar(60), '+
+       'F_Date datetime)';
+  {-----------------------------------------------------------------------------
+   分车设置表：Sys_FenCheSet
+   *.F_Type: 类型 1 水泥 2 其它
+   *.F_StartValue：开始吨位
+   *.F_EndValue：结束吨位
+   *.F_LPro：左比例
+   *.F_RPro：右比例
+   *.F_Memo：备注
+   *.F_Date: 操作日期
+  -----------------------------------------------------------------------------}
+
 function CardStatusToStr(const nStatus: string): string;
 //磁卡状态
 function TruckStatusToStr(const nStatus: string): string;
@@ -2274,6 +2304,8 @@ begin
   AddSysTableItem(sTable_AxMsgList, sSQL_NewAxMsgList,'');
   AddSysTableItem(sTable_YSLines, sSQL_NewYSLines, '');
   AddSysTableItem(sTable_SnapTruck,sSQL_SnapTruck,'');
+  AddSysTableItem(sTable_ZTCard,sSQL_NewZTCard,'');
+  AddSysTableItem(sTable_FenCheSet,sSQL_NewFenCheSet,'');
 end;
 
 //Desc: 清理系统表

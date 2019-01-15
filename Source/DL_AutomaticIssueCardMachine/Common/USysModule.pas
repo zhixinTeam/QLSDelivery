@@ -20,7 +20,7 @@ implementation
 
 uses
   UMgrChannel, UChannelChooser, UDataModule, USysDB, USysMAC, SysUtils,
-  USysLoger, USysConst, UMemDataPool, USysFun, UMgrK720Reader;
+  USysLoger, USysConst, UMemDataPool, USysFun, UMgrTTCEDispenser;
 
 //Desc: 初始化系统对象
 procedure InitSystemObject;
@@ -39,16 +39,14 @@ begin
   gChannelChoolser := TChannelChoolser.Create(gPath+sConfigFile);
   gChannelChoolser.AutoUpdateLocal := False;
   //channel
-  gMgrK720Reader := TK720ReaderManager.Create;
-  gMgrK720Reader.LoadConfig(gPath + 'K720Reader.XML');
+  gDispenserManager := TDispenserManager.Create;
+  gDispenserManager.LoadConfig(gPath + 'TTCE_K720.xml');
 end;
 
 //Desc: 运行系统对象
 procedure RunSystemObject;
 var nStr: string;
 begin
-  gMgrK720Reader.StartReader;
-  //启动读卡器
   with gSysParam do
   begin
     FLocalMAC   := MakeActionID_MAC;
@@ -153,11 +151,16 @@ begin
     gSysParam.FHardMonURL := Fields[0].AsString;
   end;
   LoadSysParameter(nil);
+  
+  gDispenserManager.StartDispensers;
+  //启动读卡器
 end;
 
 //Desc: 释放系统对象
 procedure FreeSystemObject;
 begin
+  gDispenserManager.StopDispensers;
+  //关闭读卡器
   FreeAndNil(gSysLoger);
 end;
 

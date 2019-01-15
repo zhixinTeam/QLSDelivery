@@ -341,7 +341,7 @@ inherited fFormBill: TfFormBill
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item19: TdxLayoutItem
-          Caption = #29983' '#20135' '#32447':'
+          Caption = #27700' '#27877' '#30952':'
           Control = EditMill
           ControlOptions.ShowBorder = False
         end

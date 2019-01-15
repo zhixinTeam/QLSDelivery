@@ -94,6 +94,8 @@ type
     //存取车辆称重数据
     function VerifySnapTruck(var nData: string): Boolean;
     //车牌比对
+    function SaveBusinessCard(var nData: string): Boolean;
+    //保存刷卡信息
     {$IFDEF QLS}
     function SyncAXCustomer(var nData: string): Boolean;//同步AX客户信息到DL
     function SyncAXProviders(var nData: string): Boolean;//同步AX供应商信息到DL
@@ -416,6 +418,7 @@ begin
    cBC_UserLogin           : Result := Login(nData);
    cBC_UserLogOut          : Result := LogOut(nData);
    cBC_VerifySnapTruck     : Result := VerifySnapTruck(nData);
+   cBC_SaveBusinessCard    : Result := SaveBusinessCard(nData);
    {$IFDEF QLS}
    cBC_SyncCustomer        : Result := SyncAXCustomer(nData);
    cBC_SyncProvider        : Result := SyncAXProviders(nData);
@@ -5016,6 +5019,34 @@ begin
           ], sTable_ManualEvent, nStr, (not nUpdate));
   //xxxxx
   gDBConnManager.WorkerExec(FDBConn, nStr);
+end;
+
+//Date: 2018-12-6
+//Parm: 车牌号(Truck); 交货单号(Bill);车道(Pos)
+//Desc: 保存当前刷卡信息
+function TWorkerBusinessCommander.SaveBusinessCard(var nData: string): Boolean;
+var nStr: string;
+begin
+  Result := False;
+  FListA.Text := FIn.FData;
+
+  nStr := 'Delete From %s Where C_Line=''%s''';
+  nStr := Format(nStr, [sTable_ZTCard, FListA.Values['Line']]);
+
+  gDBConnManager.WorkerExec(FDBConn, nStr);
+
+  nStr := MakeSQLByStr([
+      SF('C_Truck', FListA.Values['Truck']),
+      SF('C_Card', FListA.Values['Card']),
+      SF('C_Bill', FListA.Values['Bill']),
+      SF('C_Line', FListA.Values['Line']),
+      SF('C_BusinessTime', sField_SQLServer_Now, sfVal)
+      ], sTable_ZTCard, '', True);
+  gDBConnManager.WorkerExec(FDBConn, nStr);
+
+  nData := sFlag_Yes;
+  FOut.FData := nData;
+  Result := True;
 end;
 
 initialization

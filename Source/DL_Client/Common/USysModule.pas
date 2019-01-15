@@ -38,6 +38,7 @@ uses
   UFormTodo, UFormTodoSend, UFrameTodo,//待处理事项
   UFormSnapTruckSet, UFormSnapView,
   UFormOptions,
+  UFrameFenCheSet, UFormFenCheSet,
   UFrameUpInfo, UFramePoundWuCha, UFormPWuCha, UFrameZTQuery, UFormPoundKw,
   UFormWorkSet, UFrameUpPurchase, UFramePoundDevia, UFrameLSCard, UFormLSCard,
   UFormTransfer, UFrameQueryTransferDetail, UFrameSTCard, UFormSTCard,

@@ -48,6 +48,7 @@ procedure MakeLadingSound(const nTruck: PTruckItem; const nLine: PLineItem;
   const nPost: string);
 function VerifySnapTruck(const nTruck,nBill,nPos,nDept: string;var nResult: string): Boolean;
 //³µÅÆÊ¶±ð
+function SaveBusinessCardInfo(const nTruck,nCard,nBill,nLine: string): Boolean;
 
 function SaveDBImage(const nDS: TDataSet; const nFieldName: string;
       const nImage: string): Boolean; overload;
@@ -2502,6 +2503,10 @@ begin
     if not TruckStartJS(nPTruck.FTruck, nTunnel, nPTruck.FBill, nStr,
        GetHasDai(nPTruck.FBill) < 1) then
       WriteNearReaderLog(nStr);
+
+    {$IFDEF PackMachine}
+    SaveBusinessCardInfo(FTruck, nCard, FID, nTunnel);
+    {$ENDIF}
     Exit;
   end;
 
@@ -2521,6 +2526,10 @@ begin
 
   if not TruckStartJS(nPTruck.FTruck, nTunnel, nPTruck.FBill, nStr) then
     WriteNearReaderLog(nStr);
+
+  {$IFDEF PackMachine}
+  SaveBusinessCardInfo(nTrucks[0].FTruck, nCard, nTrucks[0].FID, nTunnel);
+  {$ENDIF}
   Exit;
 end;
 
@@ -3081,6 +3090,24 @@ begin
 
     Result := CallBusinessCommand(cBC_VerifySnapTruck, nList.Text, '', @nOut);
     nResult := nOut.FData;
+  finally
+    nList.Free;
+  end;
+end;
+
+function SaveBusinessCardInfo(const nTruck,nCard,nBill,nLine: string): Boolean;
+var nList: TStrings;
+    nOut: TWorkerBusinessCommand;
+    nID,nDefDept: string;
+begin
+  nList := TStringList.Create;
+  try
+    nList.Values['Truck'] := nTruck;
+    nList.Values['Bill'] := nBill;
+    nList.Values['Card'] := nCard;
+    nList.Values['Line'] := nLine;
+
+    Result := CallBusinessCommand(cBC_SaveBusinessCard, nList.Text, '', @nOut);
   finally
     nList.Free;
   end;

@@ -13,7 +13,7 @@ uses
   cxContainer, cxEdit, cxLabel, Menus, StdCtrls, cxButtons, cxGroupBox,
   cxRadioGroup, cxTextEdit, cxCheckBox, ExtCtrls, dxLayoutcxEditAdapters,
   dxLayoutControl, cxDropDownEdit, cxMaskEdit, cxButtonEdit,
-  USysConst, cxListBox, ComCtrls,Uszttce_api,Contnrs, dxSkinsCore,
+  USysConst, cxListBox, ComCtrls,Contnrs, dxSkinsCore,
   dxSkinsDefaultPainters;
 
 type
@@ -82,7 +82,6 @@ type
     FErrorCode:Integer;
     FErrorMsg:string;
     FNewBillID,FWebOrderID:string;
-    FSzttceApi:TSzttceApi;
     FAutoClose:Integer;
     Fbegin:TDateTime;
     function DownloadOrder(const nCard:string):Boolean;
@@ -100,7 +99,6 @@ type
   public
     { Public declarations }
     procedure SetControlsClear;
-    property SzttceApi:TSzttceApi read FSzttceApi write FSzttceApi;
   end;
 
 var
@@ -109,8 +107,8 @@ var
 implementation
 uses
   ULibFun,UBusinessPacker,USysLoger,UBusinessConst,UFormMain,USysBusiness,USysDB,
-  UAdjustForm,UFormCard,UFormBase,UDataReport,UDataModule,NativeXml,DB,UMgrK720Reader,
-  DateUtils;
+  UAdjustForm,UFormCard,UFormBase,UDataReport,UDataModule,NativeXml,DB,
+  DateUtils, UMgrTTCEDispenser;
 {$R *.dfm}
 
 var
@@ -158,10 +156,13 @@ procedure TfFormNewCardQls.BtnOKClick(Sender: TObject);
 begin
   BtnOK.Enabled := False;
   try
-    if not SaveBillProxy then Exit;
+    if not SaveBillProxy then
+    begin
+      BtnOK.Enabled := True;
+      Exit;
+    end;
     Close;
-  finally
-    BtnOK.Enabled := True;
+  except
   end;
 end;
 
@@ -291,13 +292,13 @@ end;
 function TfFormNewCardQls.SaveBillProxy: Boolean;
 var
   nBillValue:Double;
-  nHint:string;
+  nHint,nMsg:string;
 
   nList,nTmp,nStocks: TStrings;
   nPrint:Boolean;
   nBillID:string;
   nBillData:string;
-  nNewCardNo:string;
+  nNewCardNo, nCard:string;
   nStr,nType:string;
   nPos:Integer;
   nZID,nCenterID,nSampleID:string;
@@ -404,6 +405,33 @@ begin
   else
     PrintFH.Checked := False;
 
+  for nIdx:=0 to 3 do
+  begin
+    nCard := gDispenserManager.GetCardNo(gSysParam.FTTCEK720ID, nHint, False);
+    if nCard <> '' then
+      Break;
+    Sleep(500);
+  end;
+  //连续三次读卡,成功则退出。
+
+  if nCard = '' then
+  begin
+    nMsg := '卡箱异常,请查看是否有卡.';
+    ShowMsg(nMsg, sWarn);
+    Exit;
+  end;
+
+  WriteLog('读取到卡片: ' + nCard);
+  //解析卡片
+  if not IsCardValid(nCard) then
+  begin
+    gDispenserManager.RecoveryCard(gSysParam.FTTCEK720ID, nHint);
+    nMsg := '卡号' + nCard + '非法,回收中,请稍后重新取卡';
+    WriteLog(nMsg);
+    ShowMsg(nMsg, sWarn);
+    Exit;
+  end;
+
   //验证是否已经保存提货单
   FNewBillID := FWebOrderID;
   nRet := IFSaveBill(FNewBillID);
@@ -498,18 +526,34 @@ begin
       nTmp.Free;
     end;
   end;
-  ShowMsg('提货单保存成功', sHint);
-  //发卡
-  if not FSzttceApi.IssueOneCard(nNewCardNo) then
+
+  nRet := SaveBillCard(FNewBillID,nCard);
+  if not nRet then
   begin
-    nHint := '出卡失败,请到开票窗口补办磁卡：[errorcode=%d,errormsg=%s]';
-    nHint := Format(nHint,[FSzttceApi.ErrorCode,FSzttceApi.ErrorMsg]);
-    ShowMsg(nHint,sHint);
-    LabInfo.Caption := nHint;
+    nMsg := '办理磁卡失败,请重试.';
+    ShowMsg(nMsg, sHint);
+    Exit;
+  end;
+
+  nRet := gDispenserManager.SendCardOut(gSysParam.FTTCEK720ID, nHint);
+  //发卡
+
+  if nRet then
+  begin
+    nMsg := '提货单[ %s ]发卡成功,卡号[ %s ],请收好您的卡片';
+    nMsg := Format(nMsg, [FNewBillID, nCard]);
+
+    WriteLog(nMsg);
+    ShowMsg(nMsg,sWarn);
   end
   else begin
-    ShowMsg('发卡成功,卡号['+nNewCardNo+'],请收好您的卡片',sHint);
-    SaveBillCard(FNewBillID,nNewCardNo);
+    gDispenserManager.RecoveryCard(gSysParam.FTTCEK720ID, nHint);
+
+    nMsg := '卡号[ %s ]关联订单失败,请到开票窗口重新关联.';
+    nMsg := Format(nMsg, [nCard]);
+
+    WriteLog(nMsg);
+    ShowMsg(nMsg,sWarn);
   end;
 
   Result := True;
@@ -521,8 +565,6 @@ begin
   //if IFPrintFYD then
   //  PrintBillFYDReport(FNewBillID, True);
   //打印发运单
-
-  Close;
 end;
 
 function TfFormNewCardQls.VerifyCtrl(Sender: TObject;

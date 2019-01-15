@@ -141,6 +141,20 @@ begin
     ShowMsg('请输入车牌号码', sHint);
     Exit;
   end;
+
+  nStr := 'Select Count(*) From %s Where T_Truck=''%s''';
+  nStr := Format(nStr, [sTable_Truck, nTruck]);
+  //xxxxx
+
+  with FDM.QueryTemp(nStr) do
+  if Fields[0].AsInteger > 0 then
+  begin
+    nStr := '车辆[ %s ]已存在';
+    nStr := Format(nStr, [nTruck]);
+    ShowMsg(nStr, sHint);
+    Exit;
+  end;
+
   if not IsNumber(EditPrePValue.Text,True) then
   begin
     ActiveControl := EditPrePValue;

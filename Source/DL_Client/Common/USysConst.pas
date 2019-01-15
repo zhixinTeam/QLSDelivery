@@ -197,6 +197,9 @@ const
   cFI_FrameStockMatch    = $1113;                    //多品种共用道
   cFI_FormStockMatch     = $1114;                    //多品种共用道设置
 
+  cFI_FrameFenCheSet     = $1121;                    //分票打印设置
+  cFI_FormFenCheSet      = $1122;                    //分票打印设置
+
 
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
@@ -345,6 +348,7 @@ begin
   AddMenuModuleItem('MAIN_A12', cFI_FormOptions, mtForm);
   AddMenuModuleItem('MAIN_A13', cFI_FormOnLineModel, mtForm);
   AddMenuModuleItem('MAIN_A14', cFI_FormSnapTruckSet, mtForm);
+  AddMenuModuleItem('MAIN_A15', cFI_FrameFenCheSet);
 
   AddMenuModuleItem('MAIN_B01', cFI_FormBaseInfo, mtForm);
   AddMenuModuleItem('MAIN_B02', cFI_FrameCustomer);

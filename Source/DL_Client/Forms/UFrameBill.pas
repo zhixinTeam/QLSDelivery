@@ -299,17 +299,32 @@ end;
 procedure TfFrameBill.N1Click(Sender: TObject);
 var
   nStr,nIfFenChe: string;
+  nLPro, nRPro: Double;
 begin
   if cxView1.DataController.GetSelectedCount > 0 then
   begin
     nStr := SQLQuery.FieldByName('L_ID').AsString;
-    nIfFenChe := SQLQuery.FieldByName('L_IfFenChe').AsString;
-    if nIfFenChe='Y' then
+
+    if GetFenCheSet(SQLQuery.FieldByName('L_Value').AsFloat, nLPro, nRPro) then
     begin
-      PrintBill4(nStr, False);
-      PrintBill6(nStr, False);
-    end else
-      PrintBillReport(nStr, False);
+      if (nLPro = 0) or (nRPro = 0) then
+        PrintBillReport(nStr, False)
+      else
+      begin
+        PrintBill4(nStr, False, FloatToStr(nLPro));
+        PrintBill6(nStr, False, FloatToStr(nRPro));
+      end;
+    end
+    else
+    begin
+      nIfFenChe := SQLQuery.FieldByName('L_IfFenChe').AsString;
+      if nIfFenChe='Y' then
+      begin
+        PrintBill4(nStr, False);
+        PrintBill6(nStr, False);
+      end else
+        PrintBillReport(nStr, False);
+    end;
   end;
 end;
 

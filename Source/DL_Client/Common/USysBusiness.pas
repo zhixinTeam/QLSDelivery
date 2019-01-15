@@ -231,9 +231,9 @@ function PrintShouJuReport(const nSID: string; const nAsk: Boolean): Boolean;
 //打印收据
 function PrintBillReport(nBill: string; const nAsk: Boolean): Boolean;
 //打印提货单
-function PrintBill4(nBill: string; const nAsk: Boolean): Boolean;
+function PrintBill4(nBill: string; const nAsk: Boolean;nPro :string='1'): Boolean;
 //分车打印提货单4
-function PrintBill6(nBill: string; const nAsk: Boolean): Boolean;
+function PrintBill6(nBill: string; const nAsk: Boolean;nPro :string='1'): Boolean;
 //分车打印提货单6
 function PrintOrderReport(const nOrder: string;  const nAsk: Boolean): Boolean;
 //打印采购单
@@ -361,6 +361,10 @@ procedure ChangeHYPrintStatus(const nID: string);
 //空车出厂不打印化验单  漳县用
 function VerifyZTlineChange(const nLineID: string): Boolean;
 //校验装车线nLineID水泥品种变更时如果存在排队车辆则无法修改
+function GetDaoCheTruck(const nTruck:string):Boolean;
+//车辆是否倒车下磅
+function GetFenCheSet(nNet:Double; var nLPro,nRPro:Double):Boolean;
+//获取分票打印设定
 
 implementation
 
@@ -2340,7 +2344,7 @@ begin
 end;
 
 //lih 2016-10-28 分车打印提货单4
-function PrintBill4(nBill: string; const nAsk: Boolean): Boolean;
+function PrintBill4(nBill: string; const nAsk: Boolean;nPro :string='1'): Boolean;
 var nStr: string;
     nParam: TReportParamItem;
 begin
@@ -2355,8 +2359,8 @@ begin
   nBill := AdjustListStrFormat(nBill, '''', True, ',', False);
   //添加引号
 
-  nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID From %s b Where L_ID In(%s)';
-  nStr := Format(nStr, [sTable_Bill, nBill]);
+  nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID,''%s'' as L_FenChePro From %s b Where L_ID In(%s)';
+  nStr := Format(nStr, [nPro, sTable_Bill, nBill]);
   //xxxxx
 
   if FDM.QueryTemp(nStr).RecordCount < 1 then
@@ -2393,7 +2397,7 @@ begin
 end;
 
 //lih 2016-10-28 分车打印提货单6
-function PrintBill6(nBill: string; const nAsk: Boolean): Boolean;
+function PrintBill6(nBill: string; const nAsk: Boolean;nPro :string='1'): Boolean;
 var nStr: string;
     nParam: TReportParamItem;
 begin
@@ -2408,8 +2412,8 @@ begin
   nBill := AdjustListStrFormat(nBill, '''', True, ',', False);
   //添加引号
 
-  nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID From %s b Where L_ID In(%s)';
-  nStr := Format(nStr, [sTable_Bill, nBill]);
+  nStr := 'Select *,substring(L_ID,3,LEN(L_ID)-2) as L_CID, ''%s'' as L_FenChePro From %s b Where L_ID In(%s)';
+  nStr := Format(nStr, [nPro, sTable_Bill, nBill]);
   //xxxxx
 
   if FDM.QueryTemp(nStr).RecordCount < 1 then
@@ -3472,6 +3476,45 @@ begin
       Result := False;
       Exit;
     end;
+  end;
+end;
+
+//车辆是否倒车下磅
+function GetDaoCheTruck(const nTruck:string):Boolean;
+var
+  nSQL:string;
+begin
+  Result:= False;
+  nSQL := 'Select D_Value From %s Where D_Name=''DaoCheTruck'' and D_Value=''%s''';
+  nSQL := Format(nSQL, [sTable_SysDict, nTruck]);
+
+  with FDM.QueryTemp(nSQL) do
+  if RecordCount > 0 then
+  begin
+    Result:=True;
+  end;
+end;
+
+//获取分票打印设定
+function GetFenCheSet(nNet:Double; var nLPro,nRPro:Double):Boolean;
+var
+  nStr:string;
+begin
+  Result:=False;
+  nLPro:=0.00;
+  nRPro:=1.00;
+
+  try
+    nStr := 'Select * From %s Where ((F_StartValue<=%s) and (F_EndValue>%s)) ';
+    nStr := Format(nStr, [sTable_FenCheSet, FloatToStr(nNet), FloatToStr(nNet)]);
+    with FDM.QueryTemp(nStr) do
+    if RecordCount > 0 then
+    begin
+      nLPro:=FieldByName('F_LPro').AsFloat / 10;
+      nRPro:=FieldByName('F_RPro').AsFloat / 10;
+      Result:=True;
+    end;
+  except
   end;
 end;
 

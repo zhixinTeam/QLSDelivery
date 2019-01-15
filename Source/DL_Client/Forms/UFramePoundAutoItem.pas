@@ -463,6 +463,35 @@ begin
     end; }
     {$ENDIF}
 
+    {$IFDEF LZST}
+    if (FNextStatus=sFlag_TruckNone) then
+    begin
+      if (FCardUsed=sFlag_Provide) then
+      begin
+        if SavePurchaseOrders(sFlag_TruckIn, nBills) then
+        begin
+          ShowMsg('车辆进厂成功', sHint);
+          LoadBillItems(FCardTmp);
+          Exit;
+        end else
+        begin
+          ShowMsg('车辆进厂失败', sHint);
+        end;
+      end else
+      begin
+        if SaveLadingBills(nFoutData, sFlag_TruckIn, nBills) then
+        begin
+          ShowMsg('车辆进厂成功', sHint);
+          LoadBillItems(FCardTmp);
+          Exit;
+        end else
+        begin
+          ShowMsg('车辆进厂失败', sHint);
+        end;
+      end;
+    end;
+    {$ENDIF}
+
     {$IFDEF ZXKP}
     if (FNextStatus=sFlag_TruckNone) and (FCardUsed=sFlag_Provide) then
     begin
@@ -1335,6 +1364,11 @@ begin
       //开红绿灯
       {$IFDEF LZST}
       if (FCardUsed = sFlag_Provide) and (GetNeiDao(FUIData.FStockNo)) then
+      begin
+        nStr:=OpenDoor(FCardTmp,'0');
+        WritesysLog(FCardTmp+'开启入道闸');
+      end else
+      if GetDaoCheTruck(FUIData.FTruck) then
       begin
         nStr:=OpenDoor(FCardTmp,'0');
         WritesysLog(FCardTmp+'开启入道闸');
