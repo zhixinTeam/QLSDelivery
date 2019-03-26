@@ -65,7 +65,7 @@
   //计数器应答模式
   {$DEFINE M100Reader}
   //启用M100Reader自动收卡机(成县,夏河,平凉,古浪,青海,文县,漳县,兰州商砼)(无吞卡机:民和,甘谷)
-  {.$DEFINE PackMachine}
+  {$DEFINE PackMachine}
   //自动包装机(成县)
 
   {.$DEFINE GLPURCH} 
@@ -86,13 +86,13 @@
   //中川商砼、甘谷商砼
   {.$DEFINE GGJC} 
   //甘谷、兰州商砼、中川商砼、甘谷商砼自动出厂
-  {.$DEFINE CXSY} 
+  {$DEFINE CXSY} 
   //成县试样编号
-  {.$DEFINE CXKC}
+  {$DEFINE CXKC}
   //成县空车出厂
   {.$DEFINE LZST} 
   //兰州商砼水泥內倒
-  {$DEFINE QHSN} 
+  {.$DEFINE QHSN} 
   //青海
   {.$DEFINE MHSN} 
   //民和
@@ -107,7 +107,7 @@
   {$DEFINE RemoteSnap}
   //车牌识别
   {.$DEFINE FixLoad}
-  //转子秤定制装车
+  //转子秤定制装车(民和、文县)
   {.$DEFINE StockMill}
   //水泥磨(夏河)
 {$ENDIF}

@@ -58,6 +58,7 @@ type
     FStarted    : Boolean;     //是否启动
     FCenID      : string;      //生产线
     FTruckMill  : string;      //水泥磨
+    FCusName    : string;      //客户名称
   end;
 
   TQueueParam = record

@@ -258,6 +258,14 @@ ResourceString
   sFlag_TruckInNeedManu = 'TruckInNeedManu';         //车牌识别需要人工干预
   sFlag_NoKcStock     = 'NoKcStock';                 //无库存物料
 
+  sFlag_WxItem        = 'WxItem';                    //微信相关
+  sFlag_InOutBegin    = 'BeginTime';                 //进出厂查询起始时间
+  sFlag_InOutEnd      = 'EndTime';                   //进出厂查询结束时间
+
+  sFlag_WXFactory     = 'WXFactoryID';               //微信标识
+  sFlag_WXServiceMIT  = 'WXServiceMIT';              //微信工厂服务
+  sFlag_WXSrvRemote   = 'WXServiceRemote';           //微信远程服务
+
   {*数据表*}
   sTable_Group        = 'Sys_Group';                 //用户组
   sTable_User         = 'Sys_User';                  //用户表
@@ -362,6 +370,7 @@ ResourceString
   sTable_AxPlanInfo      = 'E_AxPlanInfo';           //提货信息表
   sTable_AxMsgList       = 'E_AxMsgList';            //AX消息队列表
   sTable_FenCheSet       = 'Sys_FenCheSet';          //分车设置表
+  sTable_AuditTruck      = 'S_AuditTruck';                //车辆审核
 
   sTable_K3_SyncItem  = 'DL_SyncItem';               //数据同步项
   sTable_K3_Customer  = 'T_Organization';            //组织结构(客户)

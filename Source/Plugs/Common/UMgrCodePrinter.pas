@@ -920,6 +920,7 @@ begin
 
   FClient.Socket.Write(nData, Indy8BitEncoding);
 
+  Sleep(1000);
 //  SetLength(nBuf, 0);
 //  FClient.Socket.ReadBytes(nBuf, 7, False);
 //
