@@ -185,7 +185,7 @@ const
   cBC_WX_DownLoadPic          = $0522;   //微信：下载图片
   cBC_WX_get_shoporderbyTruck = $0523;   //微信：根据车牌号获取订单信息
   cBC_WX_GetInOutFactoryCustomer = $0524;//微信：获取客户进出厂统计
-
+  cBC_WX_GetSerialInfor       = $0525;   //微信：获取可用批次
 type
   PWorkerQueryFieldData = ^TWorkerQueryFieldData;
   TWorkerQueryFieldData = record

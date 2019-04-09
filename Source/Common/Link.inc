@@ -64,8 +64,8 @@
   {$DEFINE MultiReplay}
   //计数器应答模式
   {$DEFINE M100Reader}
-  //启用M100Reader自动收卡机(成县,夏河,平凉,古浪,青海,文县,漳县,兰州商砼)(无吞卡机:民和,甘谷)
-  {$DEFINE PackMachine}
+  //启用M100Reader自动收卡机(成县,夏河,平凉,古浪,青海,文县,漳县,兰州商砼,陇南,定西)(无吞卡机:民和,甘谷)
+  {.$DEFINE PackMachine}
   //自动包装机(成县)
 
   {.$DEFINE GLPURCH} 
@@ -76,19 +76,19 @@
   //永登、中川商砼、甘谷商砼
   {.$DEFINE PLKP} 
   //平凉开票
-  {.$DEFINE XHPZ} 
+  {$DEFINE XHPZ} 
   //夏河、定西
-  {.$DEFINE DXSN} 
+  {$DEFINE DXSN} 
   //定西
-  {.$DEFINE ZXKP} 
+  {$DEFINE ZXKP} 
   //漳县、定西
   {.$DEFINE ZCST}
   //中川商砼、甘谷商砼
   {.$DEFINE GGJC} 
   //甘谷、兰州商砼、中川商砼、甘谷商砼自动出厂
-  {$DEFINE CXSY} 
+  {.$DEFINE CXSY} 
   //成县试样编号
-  {$DEFINE CXKC}
+  {.$DEFINE CXKC}
   //成县空车出厂
   {.$DEFINE LZST} 
   //兰州商砼水泥內倒
@@ -104,8 +104,8 @@
   //格式化计数器车牌(漳县)
   {.$DEFINE XHYY}
   //夏河装车道语音
-  {$DEFINE RemoteSnap}
-  //车牌识别
+  {.$DEFINE RemoteSnap}
+  //车牌识别(成县、青海、古浪、漳县、平凉)
   {.$DEFINE FixLoad}
   //转子秤定制装车(民和、文县)
   {.$DEFINE StockMill}
