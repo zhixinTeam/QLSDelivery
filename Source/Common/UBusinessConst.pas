@@ -255,6 +255,10 @@ type
     FTriaTrade  : string;          //三角贸易
     FMill       : string;          //水泥磨
     FYSMan      : string;          //验收人(用于刷卡验收)
+    FInTime     : TDateTime;       //进厂日期
+    FInMan      : string;          //操作员
+    FMakeTime   : TDateTime;       //开卡日期
+    FMakeMan    : string;          //操作员
   end;
 
   TLadingBillItems = array of TLadingBillItem;
@@ -444,6 +448,10 @@ begin
         FTriaTrade:= Values['TriaTrade'];         //三角贸易
         FMill     := Values['Mill'];              //水泥磨
         FYSMan    := Values['YSMan'];             //验收人
+        FInTime   := Str2DateTime(Values['InTime']);
+        FInMan    := Values['InMan'];
+        FMakeTime := Str2DateTime(Values['MakeTime']);
+        FMakeMan  := Values['MakeMan'];
       end;
 
       Inc(nInt);
@@ -535,6 +543,10 @@ begin
         Values['TriaTrade']  := FTriaTrade;         //三角贸易
         Values['Mill']       := FMill;              //水泥磨
         Values['YSMan']      := FYSMan;              //水泥磨
+        Values['InMan']      := FInMan;
+        Values['InTime']     := DateTime2Str(FInTime);
+        Values['MakeMan']    := FMakeMan;
+        Values['MakeTime']   := DateTime2Str(FMakeTime);
       end;
 
       nListA.Add(PackerEncodeStr(nListB.Text));

@@ -39,6 +39,7 @@ uses
   UFormSnapTruckSet, UFormSnapView,
   UFormOptions,
   UFrameFenCheSet, UFormFenCheSet,
+  UFramePriceControl, UFormPriceControl, UFrameSendBill,
   UFrameUpInfo, UFramePoundWuCha, UFormPWuCha, UFrameZTQuery, UFormPoundKw,
   UFormWorkSet, UFrameUpPurchase, UFramePoundDevia, UFrameLSCard, UFormLSCard,
   UFormTransfer, UFrameQueryTransferDetail, UFrameSTCard, UFormSTCard,

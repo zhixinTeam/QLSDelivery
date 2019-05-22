@@ -76,11 +76,11 @@
   //永登、中川商砼、甘谷商砼
   {.$DEFINE PLKP} 
   //平凉开票
-  {$DEFINE XHPZ} 
+  {.$DEFINE XHPZ} 
   //夏河、定西
-  {$DEFINE DXSN} 
+  {.$DEFINE DXSN} 
   //定西
-  {$DEFINE ZXKP} 
+  {.$DEFINE ZXKP} 
   //漳县、定西
   {.$DEFINE ZCST}
   //中川商砼、甘谷商砼
@@ -96,9 +96,9 @@
   //青海
   {.$DEFINE MHSN} 
   //民和
-  {.$DEFINE WDFH}
+  {$DEFINE WDFH}
   //陇南武都散装共用道放灰
-  {.$DEFINE ZTLineChange}
+  {$DEFINE ZTLineChange}
   //装车线变更校验(陇南)
   {.$DEFINE JSTruck}
   //格式化计数器车牌(漳县)

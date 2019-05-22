@@ -200,6 +200,9 @@ const
   cFI_FrameFenCheSet     = $1121;                    //分票打印设置
   cFI_FormFenCheSet      = $1122;                    //分票打印设置
 
+  cFI_FramePriceControl  = $1123;                    //单价控制
+  cFI_FormPriceControl   = $1124;                    //单价控制
+  cFI_FrameSendBill      = $1125;                    //提货单中间表
 
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
@@ -372,6 +375,8 @@ begin
   AddMenuModuleItem('MAIN_D06', cFI_FrameBill);
   AddMenuModuleItem('MAIN_D08', cFI_FormTruckEmpty, mtForm);
   AddMenuModuleItem('MAIN_D09', cFI_FormQLSBill, mtForm);
+  AddMenuModuleItem('MAIN_D10', cFI_FramePriceControl);
+  AddMenuModuleItem('MAIN_D11', cFI_FrameSendBill);
 
   AddMenuModuleItem('MAIN_E01', cFI_FramePoundManual);
   AddMenuModuleItem('MAIN_E02', cFI_FramePoundAuto);

@@ -1840,7 +1840,8 @@ begin
           'L_StockName,L_Truck,L_Value,L_Price,L_ZKMoney,L_Status,' +
           'L_NextStatus,L_Card,L_IsVIP,L_PValue,L_MValue,L_SalesType,'+
           'L_EmptyOut,L_LineRecID,L_InvLocationId,L_InvCenterId,'+
-          'L_IfNeiDao,L_TriaTrade,L_TransPrice,L_HYDan,L_Mill From $Bill b ';
+          'L_IfNeiDao,L_TriaTrade,L_TransPrice,L_HYDan,L_Mill,L_InTime,L_InMan,'+
+          'L_Man,L_Date From $Bill b ';
   //xxxxx
 
   if nIsBill then
@@ -1912,6 +1913,13 @@ begin
       FTriaTrade    := FieldByName('L_TriaTrade').AsString;
       FMill         := FieldByName('L_Mill').AsString;
       FSampleID     := FieldByName('L_HYDan').AsString;
+
+      FInTime       := FieldByName('L_InTime').AsDateTime;
+      FInMan        := FieldByName('L_InMan').AsString;
+
+      FMakeTime     := FieldByName('L_Date').AsDateTime;
+      FMakeMan      := FieldByName('L_Man').AsString;
+
       FSelected := True;
 
       Inc(nIdx);
@@ -1940,6 +1948,8 @@ var nStr,nSQL,nTmp: string;
     nHint,nReiNo: string;
     nTriaTrade: string;
     nTriCusID, nCompanyId,nCusGroup: string;
+    nOutDate, nSendStock,nPriceControl,nStockNo : string;
+    nSendPrice : Double;
 begin
   Result := False;
   AnalyseBillItems(FIn.FData, nBills);
@@ -2760,11 +2770,12 @@ begin
     begin
       FListB.Add(FID);
       //交货单列表
+      nOutDate := sField_SQLServer_Now;
 
       nSQL := MakeSQLByStr([SF('L_Status', sFlag_TruckOut),
               SF('L_NextStatus', ''),
               SF('L_Card', ''),
-              SF('L_OutFact', sField_SQLServer_Now, sfVal),
+              SF('L_OutFact', nOutDate, sfVal),
               SF('L_OutMan', FIn.FBase.FFrom.FUser)
               ], sTable_Bill, SF('L_ID', FID), False);
       FListA.Add(nSQL); //更新交货单
@@ -2941,6 +2952,91 @@ begin
     {$ENDIF}
   end;
 
+  {$IFDEF QHSN}
+  if FIn.FExtParam = sFlag_TruckOut then
+  begin
+    nPriceControl := sFlag_No;
+    nStr := 'Select C_Valid From %s ' +
+            'Where C_CusName=''%s''';
+    nStr := Format(nStr, [sTable_PriceControl, sFlag_PriceControlTotal]);
+
+    with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+    if RecordCount > 0 then
+    begin
+      nPriceControl := Fields[0].AsString;
+    end;
+    WriteLog('价格管理总控制:' + nPriceControl);
+
+    if nOutDate = '' then
+      nOutDate := sField_SQLServer_Now;
+
+    for nIdx:=Low(nBills) to High(nBills) do
+    with nBills[nIdx] do
+    begin
+      nStr := 'Select S_CusID From %s ' +
+              'Where S_CusID=''%s''';
+      nStr := Format(nStr, [sTable_CusShadow, FCusID]);
+
+      with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+      if RecordCount > 0 then
+      begin
+        WriteLog('影子客户:' + FCusID + '跳过...');
+        Continue;
+      end;
+
+      nSendPrice := FPrice;
+      if Copy(FStockNo, Length(FStockNo) - 1, 1) <> FType then
+        nStockNo := FStockNo + FType
+      else
+        nStockNo := FStockNo;
+
+      if nPriceControl = sFlag_Yes then
+      begin
+        nStr := 'Select C_Price From %s ' +
+                'Where C_CusID=''%s'' and C_StockNo=''%s'' and C_Valid = ''%s''';
+        nStr := Format(nStr, [sTable_PriceControl, FCusID, nStockNo, sFlag_Yes]);
+        WriteLog('价格管理查询SQL:' + nStr);
+
+        with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+        if RecordCount > 0 then
+        begin
+          nSendPrice := Fields[0].AsFloat;
+          WriteLog('价格管理:' + FloatToStr(FPrice) + '-->' + FloatToStr(nSendPrice));
+        end;
+      end;
+
+      if FType = sFlag_Dai then
+        nSendStock := '袋装'
+      else
+        nSendStock := '散装';
+
+      nSendStock := '祁连山/' + FStockName + '/' + nSendStock;
+      nVal := Float2Float(nSendPrice * FValue, cPrecision, True);
+      //提货金额
+
+      nSQL := MakeSQLByStr([SF('S_ID', FID),
+              SF('S_CusID', FCusID),
+              SF('S_CusName', FCusName),
+              SF('S_Type', FType),
+              SF('S_StockNo', nStockNo),
+              SF('S_StockName', nSendStock),
+              SF('S_Value', FValue, sfVal),
+              SF('S_Price', nSendPrice, sfVal),
+              SF('S_Money', nVal, sfVal),
+              SF('S_Truck', FTruck),
+              SF('S_InTime', FInTime),
+              SF('S_InMan', FInMan),
+              SF('S_PValue', FPData.FValue, sfVal),
+              SF('S_MValue', FMData.FValue, sfVal),
+              SF('S_OutFact', nOutDate, sfVal),
+              SF('S_OutMan', FIn.FBase.FFrom.FUser),
+              SF('S_Date', FMakeTime),
+              SF('S_Man', FMakeMan)
+              ], sTable_SendBill, '', True);
+      gDBConnManager.WorkerExec(FDBConn, nSQL);
+    end;
+  end;
+  {$ENDIF}
 end;
 
 procedure TWorkerBusinessBills.SaveHyDanEvent(const nCenterID,nStockno,nStockType,

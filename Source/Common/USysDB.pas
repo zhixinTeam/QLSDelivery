@@ -257,6 +257,7 @@ ResourceString
   sFlag_Hnzl          = 'HNZL';                      //混凝租赁
   sFlag_TruckInNeedManu = 'TruckInNeedManu';         //车牌识别需要人工干预
   sFlag_NoKcStock     = 'NoKcStock';                 //无库存物料
+  sFlag_PriceControlTotal= 'PriceControlTotal';      //单价总控制
 
   sFlag_WxItem        = 'WxItem';                    //微信相关
   sFlag_InOutBegin    = 'BeginTime';                 //进出厂查询起始时间
@@ -370,7 +371,9 @@ ResourceString
   sTable_AxPlanInfo      = 'E_AxPlanInfo';           //提货信息表
   sTable_AxMsgList       = 'E_AxMsgList';            //AX消息队列表
   sTable_FenCheSet       = 'Sys_FenCheSet';          //分车设置表
-  sTable_AuditTruck      = 'S_AuditTruck';                //车辆审核
+  sTable_AuditTruck      = 'S_AuditTruck';           //车辆审核
+  sTable_PriceControl    = 'Sys_PriceControl';       //车辆限载表
+  sTable_SendBill        = 'S_SendBill';             //发送数据表
 
   sTable_K3_SyncItem  = 'DL_SyncItem';               //数据同步项
   sTable_K3_Customer  = 'T_Organization';            //组织结构(客户)
@@ -2150,6 +2153,32 @@ const
    *.F_Date: 操作日期
   -----------------------------------------------------------------------------}
 
+  sSQL_NewPriceControl = 'Create Table $Table(R_ID $Inc, C_CusID varChar(32),' +
+       'C_CusName varChar(150), C_StockNo varChar(32), C_StockName varChar(150),' +
+       'C_Price $Float,C_Valid char(1) default ''Y'', C_Memo varchar(200))';
+  {-----------------------------------------------------------------------------
+   原材料进厂控制表:
+   *.R_ID: 编号
+   *.C_CusID: 客户编号
+   *.C_CusName: 客户名称
+   *.C_StockNo: 物料编号
+   *.C_StockName: 物料名称
+   *.C_Price: 物料单价
+   *.C_Valid: 是否有效
+   *.C_Memo: 备注
+  -----------------------------------------------------------------------------}
+
+  sSQL_NewSendBill = 'Create Table $Table(R_ID $Inc, S_ID varChar(20),' +
+       'S_CusID varChar(15), S_CusName varChar(80),' +
+       'S_Type Char(1), S_StockNo varChar(20), S_StockName varChar(120),' +
+       'S_Value $Float, S_Price $Float, S_Money $Float,' +
+       'S_Truck varChar(15),' +
+       'S_InTime DateTime, S_InMan varChar(32),' +
+       'S_PValue $Float, S_PDate DateTime,' +
+       'S_MValue $Float, S_MDate DateTime,' +
+       'S_OutFact DateTime, S_OutMan varChar(32),' +
+       'S_Man varChar(32), S_Date DateTime)';
+
 function CardStatusToStr(const nStatus: string): string;
 //磁卡状态
 function TruckStatusToStr(const nStatus: string): string;
@@ -2315,6 +2344,8 @@ begin
   AddSysTableItem(sTable_SnapTruck,sSQL_SnapTruck,'');
   AddSysTableItem(sTable_ZTCard,sSQL_NewZTCard,'');
   AddSysTableItem(sTable_FenCheSet,sSQL_NewFenCheSet,'');
+  AddSysTableItem(sTable_PriceControl,sSQL_NewPriceControl,'');
+  AddSysTableItem(sTable_SendBill,sSQL_NewSendBill,'');
 end;
 
 //Desc: 清理系统表
